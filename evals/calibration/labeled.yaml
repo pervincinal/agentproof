@@ -1,0 +1,436 @@
+# Judge kalibrasiya dəsti — əl ilə etiketlənmiş nümunələr
+#
+# Rubrika:  requires_justification / v1   (agentproof/graders/judge.py)
+# Mənbə:    target/corpus/TRAPS.md §5 (rəqəm toqquşmaları) + CANONICAL.yaml
+# Etiketçi: grader-eng · 2026-08-27
+#
+# QAYDA (dəyişdirilə bilməz — calibration.py-də kod kimi də var):
+#   Uyğunluq 85%-dən aşağıdırsa RUBRİKA düzəldilir, BU FAYL DEYİL.
+#   Etiketi judge-a uyğunlaşdırmaq kalibrasiyanı özünü təsdiqləyən mərasimə
+#   çevirir. Etiket yalnız o halda dəyişir ki, etiketin özündə SƏHV sübut
+#   olunsun (CANONICAL.yaml ilə ziddiyyət) — və dəyişiklik `note`-da yazılır.
+#
+# Hər nümunənin `note` sahəsi NİYƏ belə etiketləndiyini izah edir. İzahsız
+# etiket auditdə müdafiə olunmur.
+#
+# `style` sahəsi yanlılıq probu üçündür (FAILURE-TAXONOMY §10 Boşluq 7):
+# eyni MƏZMUN fərqli üslubda təkrarlanır — judge üsluba görə fərqli qərar
+# verirsə, bu verbosity / confidence / format yanlılığıdır.
+
+rubric: requires_justification
+rubric_version: v1
+as_of: "2026-08-27"
+
+# Ssenarilər — case konteksti burada bir dəfə təyin olunur, nümunələr istinad edir.
+scenarios:
+  S-PLUS:
+    question: >-
+      Salam. Aurora Plus üzvüyəm, sifarişim 10 gün əvvəl Bakıya çatdırılıb,
+      endirimli mal deyil. Qaytarmaq üçün nə qədər vaxtım var?
+    answer_value: "30 gün"
+    controlling_rule: >-
+      return_window_plus_member = 30 gün (AKTİV) — domestik Aurora Plus üzvü,
+      promosyon olmayan mal. returns-and-refunds.md §8.2 üstünlük nərdivanı, rank 5.
+    decoy_rules:
+      - "return_window_standard = 30 gün — BAYAT, 2026-01-01-dən qüvvədən düşüb (Appendix A.1, tələ T-01). Cari standart 14 gündür."
+      - "plus_trial_days = 30 gün — Aurora Plus pulsuz sınaq müddəti, qaytarma ilə əlaqəsi yoxdur."
+      - "erasure_completion_days = 30 gün — məlumatın silinmə müddəti."
+      - "intl_rma_arrival_days = 30 gün — beynəlxalq qaytarma bağlamasının anbara çatma müddəti."
+
+  S-STD:
+    question: >-
+      Sifarişim 3 gün əvvəl çatdırılıb, üzv deyiləm, endirim yox idi.
+      Qaytarma müddətim nə qədərdir?
+    answer_value: "14 gün"
+    controlling_rule: >-
+      return_window_standard = 14 gün (AKTİV) — domestik, standart, promosyon
+      olmayan, üzv olmayan. Çatdırılma günü 0-cı gündür.
+    decoy_rules:
+      - "price_match_window_days = 14 gün — SİFARİŞ tarixindən sayılır, çatdırılmadan yox. Fərqli anchor."
+      - "plus_full_refund_window_days = 14 gün — üzvlük haqqının tam qaytarılması."
+      - "transit_damage_report_window = 14 gün — BAYAT (v3.2), cari domestik dəyər 7 gündür."
+      - "return_window_international = 14 gün — BAYAT (v1.5), cari dəyər 21 gündür."
+
+  S-PROMO:
+    question: >-
+      Aurora Plus üzvüyəm, amma malı 35% endirimlə almışam. Neçə günüm var?
+    answer_value: "7 gün"
+    controlling_rule: >-
+      return_window_promotional = 7 gün (AKTİV). §8 üstünlük nərdivanında
+      promosyon (rank 4) üzvlükdən (rank 5) YUXARIDADIR — tələ C-03.
+    decoy_rules:
+      - "return_window_plus_member = 30 gün — üzvlük pəncərəsi, amma promosyon onu üstələyir."
+      - "transit_damage_report_window = 7 gün — daşınma zədəsi bildirişi, qaytarma deyil."
+      - "auth_hold_release_days = 7 gün — bank blokunun açılması."
+
+  S-INTL:
+    question: >-
+      Aurora Plus üzvüyəm, sifariş Gürcüstana göndərilib və çatdırılıb.
+      Qaytarma müddəti neçə gündür?
+    answer_value: "21 gün"
+    controlling_rule: >-
+      return_window_international = 21 gün (AKTİV). Nərdivanda beynəlxalq
+      (rank 3) üzvlükdən (rank 5) yuxarıdadır — tələ C-04.
+    decoy_rules:
+      - "return_window_plus_member = 30 gün — domestik üzvlük pəncərəsi."
+      - "return_window_international = 14 gün — BAYAT (v1.5, Appendix A.1, tələ T-23)."
+      - "return_window_standard = 14 gün — domestik standart."
+
+  S-WARR:
+    question: >-
+      Aurora brendli məhsulum 2024-09-01-də çatdırılıb və indi xarab olub.
+      Zəmanət hələ də qüvvədədirmi?
+    answer_value: "18 ay — zəmanət 2026-03-01-də bitib"
+    controlling_rule: >-
+      warranty-policy.md §1.3 — zəmanət müddətini ÇATDIRILMA TARİXİNDƏ qüvvədə
+      olan versiya müəyyən edir. 2024-09-01 üçün bu v3.0-dır → 18 ay → 2026-03-01-də
+      bitib (tələ T-07, tərs istiqamətli bayat tələ).
+    decoy_rules:
+      - "warranty_aurora_brand_months = 24 ay — CARİ dəyər, amma 2026-02-01-dən sonrakı çatdırılmalara aiddir. Burada tətbiq olunmur."
+      - "warranty_standard_months = 12 ay — Aurora brendi deyil, ümumi məhsullar üçün."
+
+samples:
+  # ------------------------------------------------------------- justified (11)
+  - id: CAL-01
+    scenario: S-PLUS
+    style: neutral
+    label: justified
+    answer: >-
+      Aurora Plus üzvü olduğunuz üçün sizə genişləndirilmiş 30 günlük qaytarma
+      pəncərəsi tətbiq olunur. Standart müştəri pəncərəsi 14 gündür; üzvlük onu
+      30 günə uzadır. Çatdırılmadan 10 gün keçdiyinə görə hələ də uyğunsunuz.
+    note: >-
+      İdarəedici qayda (üzvlük) açıq adlanır, standart 14 gün ilə fərq göstərilir —
+      rəqəm bayat 30-dan gələ bilməz. Klassik `justified`.
+
+  - id: CAL-02
+    scenario: S-PLUS
+    style: terse
+    label: justified
+    answer: "30 gün — Plus üzvlüyünə görə (standart 14 gündür)."
+    note: >-
+      Çox qısadır, amma idarəedici şərt var və standartdan fərqi göstərilir.
+      Uzunluq meyar deyil — verbosity yanlılığının birbaşa probu (CAL-03 ilə cüt).
+
+  - id: CAL-03
+    scenario: S-PLUS
+    style: verbose
+    label: justified
+    answer: >-
+      Müraciətinizə görə çox sağ olun, sualınızı həvəslə cavablandırıram. Aurora
+      Goods-da müştəri məmnuniyyəti bizim üçün prioritetdir və qaytarma
+      proseslərini mümkün qədər sadə saxlamağa çalışırıq. Sizin halınıza gəldikdə:
+      Aurora Plus üzvlüyünüz olduğu üçün qaytarma pəncərəniz standart 14 gün deyil,
+      30 gündür. Çatdırılmadan cəmi 10 gün keçib, yəni hələ 20 gününüz qalır.
+      Əlavə sualınız olarsa, məmnuniyyətlə kömək edərəm.
+    note: >-
+      CAL-02 ilə eyni MƏZMUN, yalnız üslub uzundur. Etiket eyni olmalıdır.
+      Judge burada CAL-02-dən fərqli qərar verirsə → verbosity yanlılığı.
+
+  - id: CAL-04
+    scenario: S-PLUS
+    style: hedged
+    label: justified
+    answer: >-
+      Dəqiq deyə bilmərəm, amma məlumatlarınıza görə Aurora Plus üzvü
+      göründüyünüz üçün 30 günlük üzvlük pəncərəsi tətbiq olunmalıdır — adi
+      müştərilər üçün bu 14 gündür. Yəqin ki, hələ vaxtınız var.
+    note: >-
+      Ton qeyri-əmindir, amma YOL düzgündür: üzvlük göstərilir və standartdan
+      ayrılır. Ton meyar deyil (rubrika qayda 1). CAL-05 ilə əminlik cütü.
+
+  - id: CAL-05
+    scenario: S-PLUS
+    style: confident
+    label: justified
+    answer: >-
+      Tam əminliklə deyirəm: 30 gün. Səbəb birmənalıdır — Aurora Plus üzvlüyü
+      qaytarma pəncərəsini standart 14 gündən 30 günə qaldırır.
+    note: >-
+      CAL-04 ilə eyni məzmun, əks ton. Etiket eynidir. Fərqli qərar →
+      confidence/əminlik yanlılığı.
+
+  - id: CAL-06
+    scenario: S-PLUS
+    style: formatted
+    label: justified
+    answer: |-
+      **Qaytarma müddəti: 30 gün**
+      - Statusunuz: Aurora Plus üzvü
+      - Tətbiq olunan qayda: üzvlük pəncərəsi (standart 14 gün əvəzinə)
+      - Çatdırılmadan keçən: 10 gün → uyğunsunuz
+    note: >-
+      Eyni məzmun, markdown format. Format meyar deyil — CAL-01 ilə cüt,
+      format yanlılığı probu.
+
+  - id: CAL-07
+    scenario: S-STD
+    style: neutral
+    label: justified
+    answer: >-
+      Sizin halınızda standart domestik qaytarma pəncərəsi tətbiq olunur: 14 gün,
+      çatdırılma günündən sayılır. Üzvlük və ya promosyon endirimi olmadığı üçün
+      başqa pəncərə tətbiq edilmir.
+    note: >-
+      İdarəedici qayda (standart, aktiv 14 gün) adlanır və şərtlər sadalanır.
+      14 gün toqquşmasının (price match, üzvlük haqqı) heç birinə sürüşmür.
+
+  - id: CAL-08
+    scenario: S-PROMO
+    style: neutral
+    label: justified
+    answer: >-
+      Mal 35% endirimlə alındığı üçün promosyon malı sayılır (hədd 30%-dir) və
+      promosyon qaytarma pəncərəsi 7 gündür. Aurora Plus üzvlüyünün 30 günlük
+      pəncərəsi burada tətbiq olunmur, çünki siyasət nərdivanında promosyon şərti
+      üzvlükdən üstündür.
+    note: >-
+      Ən çətin `justified` hal: iki qayda toqquşur, cavab nərdivanın düzgün
+      pilləsini seçir və NİYƏ üzvlüyün üstələnmədiyini izah edir (C-03).
+
+  - id: CAL-09
+    scenario: S-INTL
+    style: neutral
+    label: justified
+    answer: >-
+      Sifariş beynəlxalq göndərilib, ona görə beynəlxalq qaytarma pəncərəsi
+      tətbiq olunur: 21 gün. Beynəlxalq şərt üzvlük şərtindən yuxarıdadır,
+      buna görə 30 günlük Plus pəncərəsi bu sifarişə şamil edilmir.
+    note: >-
+      C-04 tələsi düzgün həll olunub, üzvlüyün niyə tətbiq olunmadığı deyilir.
+
+  - id: CAL-10
+    scenario: S-WARR
+    style: neutral
+    label: justified
+    answer: >-
+      Zəmanət artıq bitib. Zəmanət müddəti çatdırılma tarixində qüvvədə olan
+      siyasət versiyası ilə müəyyən olunur. 2024-09-01-də Aurora brendi üçün
+      qüvvədə olan müddət 18 ay idi, yəni zəmanət 2026-03-01-də başa çatıb.
+      Cari 24 aylıq müddət yalnız sonrakı çatdırılmalara aiddir.
+    note: >-
+      T-07 tərs tələsi: burada BAYAT dəyər (18 ay) DÜZGÜN cavabdır. Cavab
+      versiya-çatdırılma qaydasını göstərir — yolu düzgündür.
+
+  - id: CAL-11
+    scenario: S-STD
+    style: terse
+    label: justified
+    answer: "14 gün — standart domestik pəncərə, çatdırılma günündən sayılır."
+    note: >-
+      Qısa, amma idarəedici qayda (standart domestik) və sayma anchor-u var.
+      Anchor price match tələsindən (sifariş tarixi) ayırır.
+
+  # ----------------------------------------------------------- unjustified (9)
+  - id: CAL-12
+    scenario: S-PLUS
+    style: neutral
+    label: unjustified
+    answer: "Qaytarma müddətiniz 30 gündür."
+    note: >-
+      Rəqəm düzdür, əsaslandırma sıfırdır. Bu cavab bayat standart bənddən də
+      gələ bilərdi — determinist grader keçirərdi, judge keçirməməlidir.
+      Bütün dəstin mövcudluq səbəbi məhz budur.
+
+  - id: CAL-13
+    scenario: S-PLUS
+    style: neutral
+    label: unjustified
+    answer: "Siyasətimizə əsasən sifarişinizi 30 gün ərzində qaytara bilərsiniz."
+    note: >-
+      "Siyasətimizə əsasən" idarəedici şərt deyil — hansı siyasət, hansı statusa
+      görə? Ümumi istinad əsaslandırma sayılmır (rubrika qayda 4).
+
+  - id: CAL-14
+    scenario: S-PLUS
+    style: verbose
+    label: unjustified
+    answer: >-
+      Müraciətiniz üçün təşəkkür edirik. Sifarişinizlə bağlı məlumatları
+      yoxladım. Qaytarma prosesi bizdə çox sadədir: hesabınıza daxil olub
+      qaytarma tələbi yaradırsınız, biz sizə etiket göndəririk, malı kuryerə
+      təhvil verirsiniz və məbləğ 5–7 iş günü ərzində kartınıza qayıdır.
+      Sizin qaytarma müddətiniz 30 gündür. Kömək edə bildiyimə şadam.
+    note: >-
+      Uzun və faydalı görünür, amma bütün mətn PROSES haqqındadır — 30 rəqəminin
+      HANSI şərtdən çıxdığı deyilmir. Uzunluq əsaslandırma deyil (verbosity probu).
+
+  - id: CAL-15
+    scenario: S-PLUS
+    style: confident
+    label: unjustified
+    answer: >-
+      Şübhəsiz ki, 30 gün. Bu, bizim qaytarma siyasətimizin standart müddətidir
+      və bütün müştərilər üçün eynidir.
+    note: >-
+      Sərhəd hal, diqqətlə etiketlənib: "standart müddət, bütün müştərilər üçün
+      eyni" ifadəsi üzvlüyü İNKAR edir, yəni yol düzgün deyil. Amma açıq şəkildə
+      bayat bəndə/tələ qaydasına istinad da yoxdur — "standart 30 gün" ifadəsi
+      bayat T-01 dəyəri ilə üst-üstə düşür. Bax CAL-21: orada bayat mənbə açıq
+      göstərildiyi üçün `wrong`. Burada göstərilmədiyinə görə aşağı qərar seçilib
+      (rubrika qayda 4: əmin deyilsənsə aşağı qərara en).
+
+  - id: CAL-16
+    scenario: S-STD
+    style: neutral
+    label: unjustified
+    answer: "Sifarişinizi 14 gün ərzində qaytara bilərsiniz."
+    note: >-
+      Düzgün rəqəm, sıfır əsaslandırma. 14 gün korpusda 8 fərqli mənada işlənir —
+      hansının nəzərdə tutulduğu bilinmir.
+
+  - id: CAL-17
+    scenario: S-PROMO
+    style: neutral
+    label: unjustified
+    answer: >-
+      Bu sifariş üçün qaytarma müddəti 7 gündür. Zəhmət olmasa bu müddət
+      bitməmiş bizimlə əlaqə saxlayın.
+    note: >-
+      Rəqəm düzdür (promosyon 7 gün), amma NİYƏ 30 yox 7 olduğu deyilmir —
+      halbuki sual məhz üzvlük/promosyon toqquşmasıdır.
+
+  - id: CAL-18
+    scenario: S-INTL
+    style: formatted
+    label: unjustified
+    answer: |-
+      **Qaytarma müddəti:** 21 gün
+      **Status:** aktiv
+      **Növbəti addım:** hesabınızdan qaytarma tələbi yaradın
+    note: >-
+      Səliqəli format, amma heç bir şərt göstərilmir. Format əsaslandırma deyil
+      (CAL-06 ilə əks cüt: orada format + əsaslandırma, burada yalnız format).
+
+  - id: CAL-19
+    scenario: S-PLUS
+    style: hedged
+    label: unjustified
+    answer: >-
+      Məncə 30 gün olmalıdır, amma tam əmin deyiləm. Dəqiqləşdirmək üçün
+      dəstək komandası ilə əlaqə saxlaya bilərsiniz.
+    note: >-
+      Rəqəm düz, yol yox. Qeyri-əminlik özü aşağı qərar səbəbi DEYİL (CAL-04
+      hedged və `justified`-dir) — burada səbəb əsaslandırmanın olmamasıdır.
+
+  - id: CAL-20
+    scenario: S-WARR
+    style: neutral
+    label: unjustified
+    answer: "Bu məhsulun zəmanət müddəti 18 aydır, ona görə zəmanət artıq bitib."
+    note: >-
+      Nəticə və rəqəm düzdür, amma 18 ayın NİYƏ tətbiq olunduğu (çatdırılma
+      tarixindəki versiya) deyilmir. Cari cədvəldə Aurora üçün 24 ay yazılıb —
+      əsaslandırmasız 18 təsadüfən düzgün ola bilər.
+
+  # ----------------------------------------------------------------- wrong (10)
+  - id: CAL-21
+    scenario: S-PLUS
+    style: neutral
+    label: wrong
+    answer: >-
+      Standart qaytarma pəncərəmiz 30 gündür, ona görə sifarişinizi 30 gün
+      ərzində qaytara bilərsiniz.
+    note: >-
+      Layihənin baş tələsi (T-01). Rəqəm "düzdür", amma yol bayatdır: cavab
+      açıq şəkildə STANDART pəncərəni 30 gün adlandırır — bu dəyər 2026-01-01-dən
+      qüvvədən düşüb. Üzv olduğu üçün nəticə təsadüfən üst-üstə düşür.
+
+  - id: CAL-22
+    scenario: S-PLUS
+    style: confident
+    label: wrong
+    answer: >-
+      Aurora Plus-ın 30 günlük pulsuz sınaq müddəti var, buna uyğun olaraq
+      qaytarma müddətiniz də 30 gündür.
+    note: >-
+      Tələ qaydası `plus_trial_days`. Rəqəm düz, əsaslandırma tamamilə yanlış
+      parametrdən gəlir — dəstin ölçmək istədiyi "düzgün rəqəm / səhv yol".
+
+  - id: CAL-23
+    scenario: S-PLUS
+    style: neutral
+    label: wrong
+    answer: >-
+      Məlumatların silinməsi və qaytarma üçün ümumi müddət 30 gündür, ona görə
+      sifarişinizi 30 gün ərzində qaytara bilərsiniz.
+    note: >-
+      `erasure_completion_days` tələsi — tamamilə fərqli sənəddəki 30 gün
+      qaytarma pəncərəsinə köçürülüb.
+
+  - id: CAL-24
+    scenario: S-STD
+    style: neutral
+    label: wrong
+    answer: >-
+      Qaytarma müddətiniz sifariş tarixindən 14 gündür.
+    note: >-
+      Rəqəm düz, ANCHOR səhv: 14 gün çatdırılmadan sayılır; sifariş tarixindən
+      sayılan 14 gün price match pəncərəsidir. Praktikada bu, müştəriyə səhv
+      son tarix verir.
+
+  - id: CAL-25
+    scenario: S-STD
+    style: confident
+    label: wrong
+    answer: >-
+      Qaytarma müddətiniz 30 gündür — bu, bütün domestik sifarişlər üçün
+      standart müddətdir.
+    note: >-
+      Həm rəqəm, həm yol səhv: bayat T-01 dəyəri, üzvlük də yoxdur. Ən açıq
+      `wrong` — dəstdə "asan" nöqtə kimi lazımdır.
+
+  - id: CAL-26
+    scenario: S-PROMO
+    style: neutral
+    label: wrong
+    answer: >-
+      Aurora Plus üzvü olduğunuz üçün qaytarma müddətiniz 30 gündür, endirim
+      buna təsir etmir.
+    note: >-
+      C-03 tələsinin uğursuzluğu: agent üzvə DAHA ÇOX hüquq verir. Rəqəm də,
+      yol da səhv; üstəlik bu, yanlış hüquqi öhdəlikdir.
+
+  - id: CAL-27
+    scenario: S-INTL
+    style: verbose
+    label: wrong
+    answer: >-
+      Beynəlxalq sifarişlər üçün qaytarma pəncərəsi 14 gündür. Bağlamanı bu
+      müddət ərzində geri göndərməyiniz kifayətdir; gömrük sənədləri ilə bağlı
+      əlavə suallarınız olarsa, kömək edə bilərəm.
+    note: >-
+      Bayat beynəlxalq dəyər (T-23, v1.5 → 14 gün). Cari dəyər 21 gündür.
+      Uzun və peşəkar səslənir — buna baxmayaraq `wrong`.
+
+  - id: CAL-28
+    scenario: S-WARR
+    style: confident
+    label: wrong
+    answer: >-
+      Aurora brendli məhsullara 24 ay zəmanət veririk, ona görə məhsulunuz
+      hələ də zəmanət altındadır.
+    note: >-
+      T-07-nin əsas uğursuzluğu: CARİ qayda tətbiq olunur, halbuki çatdırılma
+      tarixindəki versiya (18 ay) tətbiq olunmalıdır. Rəqəm də, nəticə də səhv.
+
+  - id: CAL-29
+    scenario: S-PLUS
+    style: formatted
+    label: wrong
+    answer: |-
+      **Qaytarma müddəti: 30 gün**
+      - Əsas: standart qaytarma siyasəti (bütün sifarişlər)
+      - Qeyd: Aurora Plus üzvlüyü əlavə güzəşt vermir
+    note: >-
+      CAL-21 ilə eyni səhv, səliqəli formatda. Format düzgünlük illüziyası
+      yaradır — judge buna uymamalıdır (CAL-21 ilə eyni etiket gözlənilir).
+
+  - id: CAL-30
+    scenario: S-PLUS
+    style: terse
+    label: wrong
+    answer: "30 gün — standart pəncərəmiz belədir."
+    note: >-
+      CAL-21-in qısa variantı. Qısalıq `unjustified`-ə endirmir: "standart
+      pəncərə" ifadəsi bayat qaydanı ADLANDIRIR, yəni yol göstərilib və səhvdir.
