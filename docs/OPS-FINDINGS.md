@@ -47,3 +47,48 @@ Korpus indeksləndikdən sonra iki tələ sorğusu ilə yoxlanıldı:
 3. Bu, `docs/FAILURE-TAXONOMY.md` R6 rejimini və §"Boşluq 2"-ni (faithfulness kanonik həqiqətə qarşı deyil, retrieved kontekstə qarşı ölçülür) **canlı şəraitdə** təsdiqləyir: RAGAS bu halda `faithfulness = 1.0` verər, cavab isə yanlış olar.
 
 **Metodoloji əhəmiyyəti:** tələ süni deyil, real retrieval davranışıdır. Hesabatda bu ölçmə tələ dizaynının etibarlılığını sübut edən dayaq kimi göstərilməlidir — "biz tələ qurduq və işlədi" yox, "tələ real sistemdə belə davranır".
+
+## OPS-02 — Agent tətbiqində xüsusi (API) alətlər SSRF proxy tərəfindən bloklanır, quraşdırma anında isə heç bir siqnal yoxdur
+
+**Sistem:** Dify 1.17.0 · **Tarix:** 2026-08-27
+**Yer:** `api/core/helper/ssrf_proxy.py:258` → `ToolSSRFError`; `ssrf_proxy` konteynerində `/etc/squid/dify_common.conf.template:13-27` → `acl to_private_networks`
+
+Dify xüsusi (custom / API) alət çağırışlarını `ssrf_proxy.py` vasitəsilə squid proxy-yə yönləndirir. Squid şablonu bütün RFC1918, loopback və link-local təyinatlarını rədd edir. Docker Desktop-da `host.docker.internal` → `192.168.65.254`, yəni `192.168.0.0/16` daxilindədir — nəticədə `http://host.docker.internal:8099` ünvanındakı mock servisə hər alət çağırışı `ToolSSRFError` ilə sınır.
+
+**Tələ:** `docker-api-1` konteynerinin içindən sadə `curl` həmin URL-ə **HTTP 200** qaytarır, çünki curl proxy-dən keçmir. Yalnız real kod yolu sınır. Əlçatanlığı ən açıq üsulla yoxlayan komanda "yaşıl" görür, sonra işləməyən agenti debug etməyə başlayır.
+
+**Ədalətli qeyd:** bu, quraşdırma mərhələsində bloklayıcıdır, amma Dify-ın xəta mətni gözləniləndən yaxşıdır — dəqiq env dəyişənini adlandırır, kopyalanabilən nümunə CIDR verir (`SSRF_PROXY_ALLOW_PRIVATE_IPS=172.21.0.0/16`) və əlaqəli issue-ya link qoyur. Problem sənədləşmənin keyfiyyəti deyil, vaxtıdır: bu mesaj yalnız birinci uğursuz alət çağırışından **sonra** görünür.
+
+**Tətbiq edilən həll:** `~/agentproof-stack/dify/docker/.env`-ə `SSRF_PROXY_ALLOW_PRIVATE_DOMAINS=host.docker.internal` (entrypoint həm `_IPS`, həm `_DOMAINS` açarını dəstəkləyir), sonra `docker compose up -d ssrf_proxy` — **restart yox, recreate**, çünki `/etc/squid/dify_allow_private.conf` faylını entrypoint yenidən generasiya edir. Təsdiq: `ssrf_proxy.post(...)` 200 qaytarır. Əvvəlki env-in ehtiyat nüsxəsi: `docker/.env.pre-ssrf-fix`.
+
+Həllin işləməsi `include` sırasından asılıdır: `squid.conf.template`-də `dify_allow_private.conf` **12-ci sətirdə**, `http_access deny to_private_networks` isə **13-cü sətirdə**dir.
+
+**Təsir:** orta. Data itkisi yoxdur; diaqnostikanın çətinliyi xəta mesajından yox, yoxlama metodunun yanıltıcılığından gəlir.
+
+## OPS-03 — Agent tətbiqində tətbiq səviyyəsindəki `top_k` səssizcə iqnor edilir; faktiki default 2-dir
+
+**Sistem:** Dify 1.17.0 · **Tarix:** 2026-08-27
+
+Üç yer bir-birini üst-üstə yazır:
+
+1. `api/core/tools/utils/dataset_retriever_tool.py:53-55` — `get_dataset_tools()` `retrieve_strategy`-ni `SINGLE`-a məcbur edir, şərh: *"Agent only support SINGLE mode"*. Tətbiqin `dataset_configs.retrieval_model` dəyəri nə olursa olsun.
+2. `api/core/rag/retrieval/dataset_retrieval.py:1312-1331` — `to_dataset_retriever_tool()` `SINGLE` yolunda `top_k` / `search_method` / rerank dəyərlərini **datasetin öz** `retrieval_model` sütunundan götürür, tətbiq konfiqurasiyasından yox.
+3. Həmin funksiyanın lokal defaultu (`:1319`) `top_k: 2`-dir; modul səviyyəsindəki `default_retrieval_model` (`:104`) isə `top_k: 4`. Lokal dəyər modul dəyərini kölgələyir.
+
+**Nəticə:** Service API ilə açıq `retrieval_model` verilmədən yaradılan datasetin `datasets.retrieval_model` sütunu `NULL` qalır. Bu halda agent tətbiqi **2 bənd** çəkir, halbuki onun öz UI/DSL-i `4` göstərir. Heç bir xəbərdarlıq yoxdur.
+
+**Niyə əhəmiyyətlidir:** bu, birbaşa VALID-01 ilə müqayisə edilə bilənliyi pozur — VALID-01 `top_k=4` ilə ölçülüb. Eyni korpus, eyni sorğu, amma agent yolunda iki dəfə az kontekst.
+
+**Tətbiq edilən azaldıcı tədbir:** datasetin `retrieval_model`-i `PATCH /v1/datasets/{id}` ilə DSL-ə uyğun sabitləndi — `semantic_search`, `top_k: 4`, rerank yox, threshold yox; postgres-də təsdiqləndi. Bax: `target/app/IMPORT.md §1`.
+
+**Təsir:** ölçmə etibarlılığı üçün yüksək, istismar üçün orta.
+
+## OPS-04 (kiçik) — `PATCH`/`GET /v1/datasets/{id}` yazılan `retrieval_model`-i geri qaytarmır
+
+**Sistem:** Dify 1.17.0 · **Tarix:** 2026-08-27
+
+Yazma əməliyyatı işləyir və qalıcıdır (`api/controllers/service_api/dataset/dataset.py:675` → `update_data["retrieval_model"]`; postgres-də təsdiqləndi). Amma cavab modelində (`api/fields/dataset_fields.py`, `DatasetDetailResponse`) `retrieval_model` sahəsi deklarasiya olunmayıb — yalnız `retrieval_model_dict` var. Ona görə həm `PATCH` cavabı, həm də ardınca gələn `GET` `retrieval_model: null` qaytarır.
+
+**Nəticə:** yazını API cavabı ilə yoxlayan çağırıcı əməliyyatın uğursuz olduğu qənaətinə gəlir. Yeganə etibarlı yoxlama nöqtəsi baza və ya UI-dır.
+
+**Təsir:** aşağı. Funksional pozuntu yoxdur, amma skriptlə qurulan setup-ı məhz bu cür detallar "qeyri-sabit" göstərir.

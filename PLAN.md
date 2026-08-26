@@ -125,3 +125,33 @@ Qorunan invariantlar (testlə):
 **Hər case-dən sonra `POST /admin/reset` çağırılmalıdır.** Əks halda case *n*-də yaradılan RMA case *n+1*-də `RMA_ALREADY_EXISTS` verər və nəticələr bir-birinə sızar. Bu, orta qaçışda susqun korlanmaya gətirir.
 
 Bunu sənədə güvənmək olmaz — **test tələb olunur**: ardıcıl iki case eyni sifarişə `initiate_return` etsin, ikincisi də təmiz vəziyyət görsün.
+
+## ⚠️ DÜZƏLİŞ — `blocking` DƏSTƏKLƏNMİR (əvvəlki qeyd səhv idi)
+
+DSL agenti `agent-chat`-in `blocking` dəstəklədiyini iddia etmişdi və `service_api/app/completion.py:60`-a istinad etmişdi. **Bu səhvdir.** Həmin funksiya nəzarətçi qatındakı ayrı bir yoxlamadır; əsl məhdudiyyət daha dərindədir:
+
+```
+core/app/apps/agent_chat/app_generator.py:94
+    raise ValueError("Agent Chat App does not support blocking mode")
+```
+
+Canlı sistemdə təsdiqləndi:
+```
+POST /v1/chat-messages  response_mode=blocking
+→ 400 {"code":"invalid_param","message":"Agent Chat App does not support blocking mode"}
+```
+
+**Nəticə:** harness adapterinə SSE oxuyan yol LAZIMDIR (~150 sətir). Risk #1 yenidən açıqdır.
+
+`advanced-chat`-ə keçmək `blocking` verərdi, amma tool ardıcıllığını qrafda sabitləyir — modelin tool seçimini özünün etməsi isə məhz ölçdüyümüz şeydir. Ona görə app tipi dəyişmir, adapter uyğunlaşır.
+
+**Dərs:** nəzarətçi qatındakı yoxlamanı görüb "dəstəklənir" nəticəsi çıxarmaq kifayət deyil — icra yolunun sonuna qədər getmək və ya canlı sistemdə sınamaq lazımdır.
+
+## Ucdan-uca ilk qaçış (streaming, təsdiqlənib)
+
+```
+tokens: 7492 · xərc: $0.0254/case · retriever_resources: 4 · dataset tool ×2
+cavab: "standard return window ... 14 calendar days"  ← cari bənd, bayat 30 deyil
+```
+
+Proqnoz: 150 case × 3 seed ≈ $11.4 (SUT) + judge, büdcə daxilində.

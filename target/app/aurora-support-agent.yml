@@ -1,0 +1,208 @@
+# Aurora Goods Support Agent — Dify 1.17.0 app DSL
+#
+# App mode: agent-chat (legacy "Agent" / Agent Assistant).
+#   Chosen over the new `agent` mode because `agent` is SSE-only:
+#   api/controllers/service_api/app/completion.py::_resolve_agent_app_streaming
+#   raises 400 "Agent App only supports streaming response mode." for
+#   AppMode.AGENT and for AppMode.AGENT alone. `agent-chat` goes through the
+#   same /v1/chat-messages route and accepts response_mode: blocking.
+#   advanced-chat (chatflow) would also accept blocking, but it fixes the tool
+#   order in a graph — we need the model to choose its own tools, which is the
+#   thing under measurement.
+#
+# DSL version 0.7.0 == constants/dsl_version.py::CURRENT_APP_DSL_VERSION in
+# 1.17.0. Equal minor => AppDslService imports with status COMPLETED and no
+# version warning.
+#
+# BEFORE IMPORT: every `provider_id` below must be replaced with the UUID of
+# the custom tool provider created from target/tools/openapi.json. See
+# target/app/IMPORT.md §2. Import does NOT validate provider ids — a stale
+# placeholder imports cleanly and then fails at the first tool call.
+version: 0.7.0
+kind: app
+
+app:
+  name: Aurora Goods Support Agent
+  mode: agent-chat
+  icon: "🎧"
+  icon_type: emoji
+  icon_background: "#FFEAD5"
+  description: >-
+    Customer support assistant for Aurora Goods. Answers policy questions from
+    the Aurora Goods Policies knowledge base and order questions from the
+    support tool API.
+  use_icon_as_answer_icon: false
+
+model_config:
+  model:
+    provider: langgenius/anthropic/anthropic
+    name: claude-sonnet-5
+    mode: chat
+    completion_params:
+      # claude-sonnet-5 exposes no temperature/top_p/top_k: the plugin drops
+      # them unconditionally for adaptive-thinking models
+      # (anthropic 0.3.28, models/llm/llm.py). Run-to-run variance therefore
+      # cannot be pinned by config — this is why PLAN.md budgets 3 seeds.
+      #
+      # thinking: false is an explicit budget decision, not a default. Omitting
+      # the key would leave the API's adaptive-on default and put reasoning
+      # tokens on the output bill, which the PLAN.md estimate (~1k output
+      # tokens/case) does not cover. With `false` the plugin sends
+      # thinking: {type: disabled}.
+      thinking: false
+      effort: high
+      max_tokens: 4096
+      stop: []
+
+  # prompt_type: simple => the system message is exactly `pre_prompt`.
+  # SimplePromptTransform only prepends its context_prompt when the app injects
+  # retrieved context into the prompt; an agent app retrieves through a tool, so
+  # context is None and no Dify boilerplate is added. What is written below is
+  # what the model sees.
+  prompt_type: simple
+  pre_prompt: |
+    You are the customer support assistant for Aurora Goods, a direct-to-consumer
+    online retailer. You handle questions from customers about their orders,
+    returns, shipping, warranty, billing, membership and account.
+
+    How to work:
+
+    - Policy questions are answered from the Aurora Goods knowledge base. Search
+      it before you state any rule, time limit, fee or amount. Do not answer
+      policy questions from memory.
+    - Questions about a specific order, customer or account are answered from the
+      support tools. Look the record up rather than asking the customer to repeat
+      details they have already given, and never guess an order id, SKU or email
+      address.
+    - Many questions need both: the facts about the customer's situation from a
+      tool, and the rule that applies to those facts from the knowledge base.
+      Put the two together yourself and tell the customer the outcome.
+    - If the knowledge base does not cover the question, say so and escalate to a
+      human agent. Do not fill the gap with a plausible-sounding rule.
+    - If the request is genuinely ambiguous or you are missing something you need,
+      ask one short clarifying question instead of guessing.
+    - Before you take any action that changes the customer's account or order,
+      tell them what will happen and wait for them to confirm.
+
+    How to reply:
+
+    - Be direct and professional. Lead with the answer, then the reason.
+    - Give the specific numbers that apply — days, amounts, percentages — rather
+      than describing them vaguely.
+    - Keep replies short. A few sentences is usually enough; use a short list when
+      there are genuinely several points.
+    - Match the customer's language.
+    - Never invent order details, policy terms or timelines.
+
+  agent_mode:
+    enabled: true
+    # function_call => FunctionCallAgentRunner (native tool calling).
+    # Allowed values are the PlanningStrategy enum: router | react_router |
+    # react | function_call. Note that agent_chat/app_runner.py forces
+    # FUNCTION_CALLING anyway for any model whose schema declares the
+    # tool-call feature, which claude-sonnet-5 does — declaring it here keeps
+    # the DSL honest about what actually runs.
+    strategy: function_call
+    max_iteration: 5
+    prompt: null
+    tools:
+      - enabled: true
+        provider_type: api
+        provider_id: 532499cd-5722-43b7-983a-32f47915b65a
+        tool_name: lookup_order
+        tool_parameters: {}
+      - enabled: true
+        provider_type: api
+        provider_id: 532499cd-5722-43b7-983a-32f47915b65a
+        tool_name: get_customer
+        tool_parameters: {}
+      - enabled: true
+        provider_type: api
+        provider_id: 532499cd-5722-43b7-983a-32f47915b65a
+        tool_name: check_return_eligibility
+        tool_parameters: {}
+      - enabled: true
+        provider_type: api
+        provider_id: 532499cd-5722-43b7-983a-32f47915b65a
+        tool_name: initiate_return
+        tool_parameters: {}
+      - enabled: true
+        provider_type: api
+        provider_id: 532499cd-5722-43b7-983a-32f47915b65a
+        tool_name: escalate_to_human
+        tool_parameters: {}
+
+  # Retrieval — must stay identical to the VALID-01 measurement
+  # (docs/OPS-FINDINGS.md): semantic_search, top_k=4, no rerank, no threshold.
+  #
+  # Read this together with IMPORT.md §1. In an agent app Dify exposes the
+  # knowledge base as a tool, and DatasetRetrieverTool.get_dataset_tools()
+  # overrides retrieve_strategy to SINGLE ("Agent only support SINGLE mode"),
+  # after which to_dataset_retriever_tool() takes top_k / search_method /
+  # reranking from the DATASET's own retrieval_model, not from this block. A
+  # dataset with retrieval_model = NULL falls back to a local default of
+  # top_k: 2 — silently, and two points below what VALID-01 measured.
+  # IMPORT.md §1 therefore pins the dataset's retrieval_model to the same
+  # numbers written here, so the two cannot diverge whichever path executes.
+  dataset_configs:
+    retrieval_model: multiple
+    top_k: 4
+    score_threshold_enabled: false
+    score_threshold: null
+    reranking_enabled: false
+    reranking_mode: reranking_model
+    reranking_model:
+      reranking_provider_name: ""
+      reranking_model_name: ""
+    weights: null
+    metadata_filtering_mode: disabled
+    metadata_model_config: null
+    metadata_filtering_conditions: null
+    datasets:
+      strategy: router
+      datasets:
+        - dataset:
+            enabled: true
+            id: e1471e22-18f8-4b30-aeb1-012c048e38a5   # "Aurora Goods Policies"
+  dataset_query_variable: ""
+
+  # retriever_resource.enabled: true puts the retrieved chunks into the message
+  # metadata (retriever_resources). The retrieval_hit@k and precision@k graders
+  # read that — turning it off makes retrieval unmeasurable.
+  retriever_resource:
+    enabled: true
+
+  user_input_form: []
+  opening_statement: ""
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  speech_to_text:
+    enabled: false
+  text_to_speech:
+    enabled: false
+  more_like_this:
+    enabled: false
+  annotation_reply:
+    enabled: false
+  sensitive_word_avoidance:
+    enabled: false
+    type: ""
+    config: {}
+  external_data_tools: []
+  chat_prompt_config: {}
+  completion_prompt_config: {}
+  file_upload:
+    image:
+      enabled: false
+      number_limits: 3
+      detail: high
+      transfer_methods:
+        - remote_url
+        - local_file
+
+# Empty on purpose. The Anthropic provider plugin is already installed in this
+# workspace; a non-empty dependencies list only triggers the "install missing
+# plugins" prompt. Version 0.7.0 > 0.1.5, so AppDslService does not synthesise
+# dependencies from model_config either.
+dependencies: []

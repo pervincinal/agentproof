@@ -282,7 +282,7 @@ Adversarial kateqoriya xüsusilə dəyərlidir: sifariş qeydi (order note) sah�
 - **Knowledge:** yuxarıdakı 8 sənəd, retrieval parametrləri DSL-də açıq (top_k, score_threshold, chunk ölçüsü)
 - **Tools:** mock servisin OpenAPI spec-i custom tool provider kimi import olunur
 - **Artefaktlar (hamısı repo-ya commit olunur):**
-  - `target/dify-app.yml` — DSL export (system prompt + model params + tool bağlantıları + retrieval ayarları)
+  - `target/app/aurora-support-agent.yml` — DSL export (system prompt + model params + tool bağlantıları + retrieval ayarları)
   - `target/tools/openapi.json` — mock servisin spec-i
   - `evals/kb/*.md` — 8 sənəd
   - `evals/fixtures/orders.json` — deterministik sifariş DB-si
@@ -401,7 +401,7 @@ Aşağıdakılar **mənim tərəfimdən icra edilmədi**. Onları "işləyir" ki
 
 1. `http://localhost:8088/install` aç, admin hesabı yarat
 2. Anthropic + embedding plugin-lərini quraşdır, açarları daxil et, **versiyaları §5-dəki boşluğa yaz**
-3. Agent app yarat, KB bağla, DSL-i `target/dify-app.yml`-ə export et
+3. Agent app yarat, KB bağla, DSL-i `target/app/aurora-support-agent.yml`-ə export et
 4. §7-dəki `POST /v1/chat-messages` ilə smoke test et
 5. Nəticəni bu bölməyə əlavə et
 
