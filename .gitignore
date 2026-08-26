@@ -1,0 +1,10 @@
+.env
+.env.*
+*.key
+__pycache__/
+.venv/
+venv/
+node_modules/
+reports/runs/
+target/data/
+.DS_Store
