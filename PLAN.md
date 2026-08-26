@@ -16,8 +16,10 @@
 | 2 | Sınma nöqtələrinin ovu | hunter | `FINDINGS.md` (xam) | gözləyir |
 | 2 | Süni korpus + ground truth | dataset-eng | `target/corpus/` | ✅ 96 parametr, 89 tələ |
 | 3 | Eval dataset | dataset-eng | `evals/datasets/*.jsonl` | gözləyir |
-| 3 | Qiymətləndiricilər | grader-eng | `evals/graders/` | gözləyir |
-| 4 | Qaçış mühərriki + CI | harness-eng | `evals/run.py`, `.github/workflows/` | gözləyir |
+| 3 | Qiymətləndiricilər (11) | harness-eng | `agentproof/graders/` | ✅ 89 test yaşıl |
+| 2 | R1 spike + harness skeleti | harness-eng | `agentproof/`, `evals/run.py` | ✅ R1 bağlandı |
+| 4 | HTML hesabat + CI workflow | harness-eng | `report/html.py`, `.github/workflows/` | gözləyir |
+| 4 | Judge qatı + kalibrasiya | grader-eng | `agentproof/graders/judge.py` | gözləyir |
 | 5 | Hesabat + public yazı | writer | `FINDINGS.md`, `docs/writeup.md` | gözləyir |
 
 ## Keyfiyyət qaydaları (pozulmaz)
@@ -79,3 +81,30 @@ Flowise rədd səbəbi: image tag pin-lənməyib (`:latest`) və öz eval funksi
 
 `.env`-dəki `INIT_PASSWORD` silindi. Təyin olunduqda Dify `/install`-dan əvvəl ayrıca init doğrulaması tələb edir (`setup_system` → `NotInitValidateError`) və istifadəçi səssizcə `/install`-a qaytarılır. Lokal test instansiyasında bu qorumaya ehtiyac yoxdur. Ehtiyat nüsxə: `.env.bak`.
 Parol qaydası: `^(?=.*[a-zA-Z])(?=.*\d).{8,}$`.
+
+
+## R1 bağlandı (ölçülmüş qərar)
+
+Hər iki yol eyni 5 case / eyni mock / eyni grader-lərlə qaçırıldı (`evals/spike/r1_spike.py`), ikisi də funksional işlədi — fərq qiymətdə çıxdı:
+
+```
+a: ModelAPI provider      kecen=5/5  hedefe sorgu=25  (ideal 5)
+b: Custom Agent (solver)  kecen=5/5  hedefe sorgu=5   (ideal 5)
+```
+
+**Seçilən: (b) Inspect Custom Agent.** `eval(model=None)` işləyir — model provayderi və API açarı lazım deyil, Inspect-in paralellik/retry/log maşını qalır.
+
+(a) rədd səbəbi ölçülüb: `generate()` solver-i hədəfin tool **izini** tool **sorğusu** kimi oxuyur → hədəfi təkrar çağırır. 5× çoxaltma ~$16 büdcəni ~$80 edərdi.
+
+**Qərar sənəddə deyil, testdə saxlanılır:** `test_run_issues_exactly_one_target_call_per_case` (5 case → tam 5 sorğu). Kimsə ModelAPI yoluna qayıtsa test sınır. Əsaslandırma: `docs/R1-SPIKE.md`.
+
+Memarlıq qaydası da maşınla qorunur: `graders/` paketinin `inspect_ai` import etmədiyi AST yoxlaması + izolyasiya edilmiş import testi ilə təsdiqlənir.
+
+## Açıq risklər (harness)
+
+1. **Mock ≠ real Dify.** Ən konkret risk: SETUP.md §7.2-yə görə Agent app rejimi `blocking` dəstəkləmir, yalnız `streaming` — real app agent tipindədirsə adapterə SSE oxuyan yol lazımdır (~150 sətir, memarlığa təsirsiz).
+2. `metadata.usage`-da model adı gəlmirsə `cost_under` case-ləri `skipped` olur — xərc ölçüsü itər, amma səssizcə yox, hesabatda görünür.
+
+## Qeyd — commit tarixçəsi
+
+`3ce1849` commit-i geniş `git add` ilə harness-in yarımçıq fayllarını da öz içinə alıb (mənim səhvim). Fayllar tam, testlər yaşıldır; tarixçə geri qaytarılmadı, çünki heç nə itməyib.
