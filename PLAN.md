@@ -26,6 +26,17 @@
 3. **Şişirtmə yoxdur.** Bir şişirdilmiş iddia bütün hesabatın etibarını öldürür.
 4. **Hədəf layihə alçaldılmır.** Ton: "biz sınadıq, budur tapdığımız".
 5. **Nəyi ölçmədiyimiz də yazılır.** Məhdudiyyəti gizlətmək ən tez tutulan şeydir.
+6. **Nəyin üzərində qurduğumuz açıq yazılır.** Public yazıda və müştəri hesabatında Inspect AI-nin istifadəsi metodologiya bölməsində birbaşa göstərilir. Marketinq çərçivəsi bunu heç vaxt kölgələməməlidir — "öz sistemimiz" təəssüratı yaratmaq bir dəfə tutulanda bütün auditin etibarını öldürür.
+
+## Stack qərarı (təsdiqlənib)
+
+**Nüvə:** [Inspect AI](https://github.com/UKGovernmentBEIS/inspect_ai) (UK AISI, MIT) + öz `agentproof/` qatımız (adapter, grader registry, baseline/diff, hesabat).
+
+Səbəb: promptfoo 9 mart 2026-da OpenAI tərəfindən alınıb ([OpenAI](https://openai.com/index/openai-to-acquire-promptfoo/), [CNBC](https://www.cnbc.com/2026/03/09/open-ai-cybersecurity-promptfoo-ai-agents.html)) — müstəqil audit satarkən OpenAI-a məxsus alətlə OpenAI modelini yoxlamaq mövqe zəifliyidir. Braintrust/LangSmith self-host yalnız Enterprise müqavilə ilə; DeepEval default telemetriya göndərir. Inspect sadəcə Python kitabxanasıdır — müştəri datası kənara çıxmır.
+
+Rədd edilənlər: OpenAI Evals (2026-11-30 bağlanır), RAGAS (insan korrelyasiyası ~0.55 — pullu auditdə müdafiə olunmur).
+
+**R1 riski:** Inspect model evalları üçün dizayn olunub, HTTP arxasındakı agent üçün yox. Azaldıcı fakt: Inspect-in sənədli [Custom Agents](https://inspect.aisi.org.uk/agent-custom.html) mexanizmi var, yəni solver/agent qatından sarımaq ehtimalı ModelAPI-ni əymkdən yüksəkdir. 1-ci həftədə 5 case-lik spike ilə yoxlanır.
 
 ## Komanda
 
