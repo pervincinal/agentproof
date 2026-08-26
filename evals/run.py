@@ -69,6 +69,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--model", default=os.environ.get("AGENTPROOF_SUT_MODEL", ""),
                    help="hədəfin İÇİNDƏKİ model (yalnız hesabat üçün etiket)")
     p.add_argument("--log-dir", default=None)
+    p.add_argument(
+        "--tool-reset-url",
+        default=os.environ.get("AGENTPROOF_TOOL_RESET_URL", ""),
+        help=(
+            "hədəfin tool servisinin POST /admin/reset ünvanı. Verilməsə İZOLYASİYA "
+            "YOXDUR: case n-in yaratdığı RMA case n+1-ə sızır (PLAN.md). "
+            "Verilirsə case-lər ATOMİK olur, yəni qaçış seriallaşır."
+        ),
+    )
     p.add_argument("--judge-model", default=DEFAULT_JUDGE_MODEL,
                    help="LLM-as-judge modeli — SUT-dan güclü olmalıdır")
     p.add_argument("--judge-cache-dir", default=None,
@@ -130,7 +139,20 @@ def main(argv: list[str] | None = None) -> int:
         stage=args.stage,
         repeat=args.repeat,
         seed=args.seed,
+        reset_url=args.tool_reset_url or None,
     )
+
+    if args.tool_reset_url:
+        print(
+            f"İzolyasiya AKTİV: {args.tool_reset_url} — case-lər seriallaşır.",
+            file=sys.stderr,
+        )
+    else:
+        print(
+            "İzolyasiya YOXDUR (--tool-reset-url verilməyib) — stateful tool-lu "
+            "dataset-də nəticələr bir-birinə sıza bilər.",
+            file=sys.stderr,
+        )
 
     out_dir = Path(args.out) if args.out else Path("reports") / "runs"
     out_dir.mkdir(parents=True, exist_ok=True)

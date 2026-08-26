@@ -16,6 +16,7 @@ from inspect_ai.model import ChatMessageAssistant, ModelOutput
 
 from agentproof.adapters.base import create_adapter
 from agentproof.runner.bridge import push_response
+from agentproof.runner.isolation import ToolStateReset
 from agentproof.types import AgentRequest
 
 
@@ -25,6 +26,7 @@ def target_agent(
     adapter_config: dict[str, Any] | None = None,
     repeat: int = 1,
     seed: int | None = None,
+    reset_url: str | None = None,
 ) -> Agent:
     """Hədəf sistemi bir Inspect agent-i kimi sarır.
 
@@ -33,17 +35,21 @@ def target_agent(
         adapter_config: adapterə ötürülən konfiqurasiya (açar mühitdən gəlir)
         repeat: eyni case üçün neçə müstəqil cavab alınsın (consistency@k)
         seed: hədəfə ötürülən seed (dəstəkləyirsə)
+        reset_url: hədəfin tool servisinin `POST /admin/reset` ünvanı.
+            Verilirsə hər case ATOMİK olur (bax `runner/isolation.py`) —
+            case *n*-in yaratdığı RMA case *n+1*-ə sızmır. Verilmirsə
+            izolyasiya YOXDUR; stateful tool-lu dataset-də bu susqun
+            korlanma deməkdir.
     """
     impl = create_adapter(adapter, **(adapter_config or {}))
+    resetter = ToolStateReset(reset_url) if reset_url else None
 
-    async def execute(state: AgentState) -> AgentState:
-        messages = [
-            {"role": m.role, "content": m.text}
-            for m in state.messages
-            if getattr(m, "text", "")
-        ]
+    async def run_case(state: AgentState, messages: list[dict[str, str]]) -> ModelOutput | None:
         last: ModelOutput | None = None
         for attempt in range(max(repeat, 1)):
+            if resetter is not None:
+                # hər cəhd təmiz vəziyyətdən başlayır (pass^k determinizmi)
+                await resetter.reset()
             req = AgentRequest(
                 messages=messages,
                 session_id=f"{id(state):x}-{attempt}",
@@ -54,6 +60,19 @@ def target_agent(
             last = ModelOutput.from_content(
                 model=f"{impl.name}@{impl.version}", content=response.text
             )
+        return last
+
+    async def execute(state: AgentState) -> AgentState:
+        messages = [
+            {"role": m.role, "content": m.text}
+            for m in state.messages
+            if getattr(m, "text", "")
+        ]
+        if resetter is None:
+            last = await run_case(state, messages)
+        else:
+            async with resetter.case():
+                last = await run_case(state, messages)
         # sonuncu cavab söhbətə yazılır; grader-lər tam siyahını store-dan alır
         if last is not None:
             state.output = last

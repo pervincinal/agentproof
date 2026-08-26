@@ -92,3 +92,26 @@ Yazma əməliyyatı işləyir və qalıcıdır (`api/controllers/service_api/dat
 **Nəticə:** yazını API cavabı ilə yoxlayan çağırıcı əməliyyatın uğursuz olduğu qənaətinə gəlir. Yeganə etibarlı yoxlama nöqtəsi baza və ya UI-dır.
 
 **Təsir:** aşağı. Funksional pozuntu yoxdur, amma skriptlə qurulan setup-ı məhz bu cür detallar "qeyri-sabit" göstərir.
+
+## OPS-04 — Xərc hesabatı yanlışdır (keçid dövrü qiyməti)
+
+**Sistem:** Dify 1.17.0 + `langgenius/anthropic` 0.3.28
+
+Plugin `claude-sonnet-5` üçün `$3.00 / $15.00` sabit yazıb. Öz şərhi səbəbi izah edir:
+
+```yaml
+# *Introductory pricing of $2/$10 per million input/output tokens
+#  through August 31, 2026; $3/$15 standard pricing thereafter.
+pricing: {input: '3.00', output: '15.00'}
+```
+
+**2026-08-27 tarixinə qüvvədə olan rəsmi qiymət $2/$10-dur** (təsdiqlənib). Yəni Dify bu gün xərci **~50% şişirdilmiş** göstərir; 2026-09-01-dən etibarən onun rəqəmi düzgün olacaq.
+
+**Ölçmə:** pilotda Dify $0.43 hesabladı; faktiki $0.25-ə yaxındır.
+
+**Nəticə hesabat üçün:**
+1. Xərc rəqəmlərimiz `pricing/models.yaml`-dan hesablanır (düzgün), Dify-ın `total_price` sahəsindən YOX.
+2. Metodologiya bölməsində qaçışın tarixi və tətbiq olunan qiymət rejimi (`$2/$10 introductory` vs `$3/$15 standard`) AÇIQ yazılmalıdır — əks halda xərc rəqəmləri təkrarlana bilməz.
+3. Proqnoz: 450 sorğu → **~$8.8** (31 avqusta qədər) / **~$13.2** (sonra).
+
+**Ümumi dərs:** platformanın `total_price` sahəsinə güvənmək olmaz — qiymət cədvəlləri plugin içində sabit yazılır və model qiymətləri dəyişəndə gecikir. Bu, müştəri auditlərində də keçərlidir: xərc iddiası platformanın öz hesabından deyil, müstəqil cədvəldən gəlməlidir.

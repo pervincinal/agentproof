@@ -1,3 +1,9 @@
 -r requirements.txt
 pytest>=8.0
 pytest-asyncio>=0.23
+
+# Hədəfin mock tool servisi (`target/tools/service.py`) — izolyasiya testi onu
+# REAL portda qaldırır (`agentproof/tests/test_isolation.py`). Skip edilə bilməz:
+# izolyasiyanın susqun sınması ən bahalı uğursuzluqdur (PLAN.md "Runner tələbi").
+fastapi>=0.110
+uvicorn>=0.27

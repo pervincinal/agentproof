@@ -94,6 +94,7 @@ def build_task(
     stage: Stage = "all",
     repeat: int = 1,
     seed: int | None = None,
+    reset_url: str | None = None,
 ) -> tuple[Task, list[Case]]:
     cases = select_cases(dataset_path, filter_expr, stage)
     if not cases:
@@ -111,9 +112,15 @@ def build_task(
             adapter_config=adapter_config or {},
             repeat=repeat,
             seed=seed,
+            reset_url=reset_url,
         ),
         scorer=agentproof_scorer(),
         name="agentproof",
-        metadata={"dataset_hash": dataset_hash(cases), "stage": stage, "adapter": adapter},
+        metadata={
+            "dataset_hash": dataset_hash(cases),
+            "stage": stage,
+            "adapter": adapter,
+            "isolation": "admin_reset" if reset_url else "none",
+        },
     )
     return task, cases

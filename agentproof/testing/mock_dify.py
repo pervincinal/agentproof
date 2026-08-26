@@ -1,13 +1,22 @@
 """Dify Service API stub — API açarı olmadan ucdan-uca sınaq üçün.
 
-Təqlid edilən səth `target/SETUP.md §7`-dən götürülüb:
+Təqlid edilən səth `target/SETUP.md §7` + canlı axından götürülmüş SSE formatı:
 
   GET  /v1/info                      -> Bearer yoxdursa 401 (Dify xəta zərfi)
-  POST /v1/chat-messages             -> ChatCompletionResponse (blocking)
-  GET  /v1/messages                  -> agent_thoughts (tool call izləri)
+  POST /v1/chat-messages             -> **SSE axını** (`response_mode=streaming`)
+                                        `blocking` -> 400 `invalid_param`
+                                        (Agent Chat App does not support blocking mode)
+  GET  /v1/messages                  -> agent_thoughts (arxiv; adapter istifadə etmir)
 
 Bu **hədəfin özü deyil**, hədəfin MƏFTİLİ (wire format). Real Dify qalxanda
 `http_agent` adapteri dəyişmir — yalnız base_url və açar dəyişir.
+
+Event formatı canlı `agent-chat` qaçışından bir-bir köçürülüb:
+  - `agent_thought` eyni `id` ilə İKİ dəfə gəlir (əvvəl `tool`, sonra `observation`)
+  - `tool` bir neçə tool-u `;` ilə birləşdirir, `tool_input`/`observation` isə
+    tool adına görə açarlanır
+  - `usage`-da model adı YOXDUR, qiymətlər STRING-dir
+  - `retriever_resources[].score` STRING-dir
 
 Cavab məzmunu `scripted` lüğəti ilə idarə olunur: {query_substring: response_spec}.
 """
@@ -15,15 +24,21 @@ Cavab məzmunu `scripted` lüğəti ilə idarə olunur: {query_substring: respon
 from __future__ import annotations
 
 import json
-import re
 import threading
 import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Any
+from typing import Any, Iterator
 from urllib.parse import parse_qs, urlparse
 
 DEFAULT_API_KEY = "app-mock-000000000000000000000000"
+
+# Canlı sistemdə təsdiqlənmiş rədd cavabı (PLAN.md "DÜZƏLİŞ").
+BLOCKING_REJECTION = (
+    "invalid_param",
+    "Agent Chat App does not support blocking mode",
+    400,
+)
 
 
 def _dify_error(code: str, message: str, status: int) -> tuple[int, dict[str, Any]]:
@@ -65,6 +80,36 @@ class _Handler(BaseHTTPRequestHandler):
         )
         self._send(status, payload)
 
+    def _write_chunk(self, data: bytes) -> None:
+        self.wfile.write(f"{len(data):X}\r\n".encode("ascii"))
+        self.wfile.write(data)
+        self.wfile.write(b"\r\n")
+        self.wfile.flush()
+
+    def _stream(self, lines: Iterator[str], truncate: bool) -> None:
+        """`text/event-stream` chunked cavabı.
+
+        `truncate=True` olanda yekun 0-chunk GÖNDƏRİLMİR və bağlantı kəsilir —
+        adapterdə `stream_incomplete` yolunu sınamaq üçün.
+        """
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Transfer-Encoding", "chunked")
+        self.end_headers()
+        for line in lines:
+            self._write_chunk(line.encode("utf-8"))
+        if truncate:
+            self.close_connection = True
+            try:
+                self.wfile.flush()
+                self.connection.close()
+            except OSError:
+                pass
+            return
+        self.wfile.write(b"0\r\n\r\n")
+        self.wfile.flush()
+
     # ---- marşrutlar -------------------------------------------------
     def do_GET(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
@@ -93,8 +138,47 @@ class _Handler(BaseHTTPRequestHandler):
 
         length = int(self.headers.get("Content-Length", "0"))
         body = json.loads(self.rfile.read(length) or b"{}")
-        status, payload = self.script.chat(body)
-        self._send(status, payload)
+        outcome = self.script.chat(body)
+        if outcome.http_error is not None:
+            status, payload = outcome.http_error
+            self._send(status, payload)
+            return
+        self._stream(outcome.lines(), outcome.truncate)
+
+
+class _Server(ThreadingHTTPServer):
+    """`truncate` ssenarisində bağlantı qəsdən qırılır — stack trace çap etmirik."""
+
+    daemon_threads = True
+
+    def handle_error(self, request: Any, client_address: Any) -> None:
+        pass
+
+
+class _ChatOutcome:
+    def __init__(
+        self,
+        events: list[dict[str, Any]] | None = None,
+        http_error: tuple[int, dict[str, Any]] | None = None,
+        truncate: bool = False,
+        malformed: bool = False,
+    ) -> None:
+        self.events = events or []
+        self.http_error = http_error
+        self.truncate = truncate
+        self.malformed = malformed
+
+    def lines(self) -> Iterator[str]:
+        events = self.events
+        if self.truncate:
+            # axın `message_end`-ə çatmadan kəsilir
+            events = [e for e in events if e.get("event") != "message_end"]
+        for event in events:
+            yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+        if self.malformed:
+            yield "data: {bu JSON deyil\n\n"
+        if self.truncate:
+            yield 'data: {"event": "agent_mess'  # sətrin ortasında kəsilir
 
 
 class MockDifyServer:
@@ -102,12 +186,19 @@ class MockDifyServer:
 
     `scripted` formatı — açar sorğunun içində axtarılan alt sətir, dəyər:
         {
-          "answer": str,
+          "answer": str,                      # parçalara bölünüb axına verilir
           "retrieved": [{"chunk_id","document","content","score"}],
           "tool_calls": [{"name","arguments","result"}],
+          "parallel_tools": bool,             # hamısı BİR thought-da (`;` ilə)
           "usage": {"prompt_tokens","completion_tokens"},
           "delay_ms": int,
-          "error": ("code", "message", status)   # Dify xəta zərfi qaytarır
+          "side_effect": callable(body) -> dict | None,  # real yan təsir (tool servisi)
+          "error": ("code","message",status),  # HTTP səviyyəsində Dify xəta zərfi
+          "error_event": ("code","message",status),  # axın ORTASINDA `error` event-i
+          "no_message_end": bool,              # `message_end` göndərilmir
+          "truncate": bool,                    # axın yarımçıq kəsilir
+          "malformed": bool,                   # parse olunmayan `data:` sətri
+          "ping": bool,                        # `ping` event-ləri qarışdırılır
         }
     """
 
@@ -124,7 +215,7 @@ class MockDifyServer:
         self.api_key = api_key
         self._conversations: dict[str, list[dict[str, Any]]] = {}
         self.request_log: list[dict[str, Any]] = []
-        self._httpd = ThreadingHTTPServer((host, port), _Handler)
+        self._httpd = _Server((host, port), _Handler)
         self._httpd.script = self  # type: ignore[attr-defined]
         self._thread: threading.Thread | None = None
 
@@ -162,82 +253,171 @@ class MockDifyServer:
     def messages_for(self, conversation_id: str) -> list[dict[str, Any]]:
         return self._conversations.get(conversation_id, [])
 
-    def chat(self, body: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+    def chat(self, body: dict[str, Any]) -> _ChatOutcome:
         self.request_log.append(body)
         query = body.get("query", "")
         if not body.get("user"):
-            return _dify_error("invalid_param", "user is required", 400)
+            return _ChatOutcome(http_error=_dify_error("invalid_param", "user is required", 400))
+        if body.get("response_mode") != "streaming":
+            return _ChatOutcome(http_error=_dify_error(*BLOCKING_REJECTION))
 
-        spec = self._match(query)
+        spec = dict(self._match(query))
         if "error" in spec:
-            code, message, status = spec["error"]
-            return _dify_error(code, message, status)
+            return _ChatOutcome(http_error=_dify_error(*spec["error"]))
+
+        side_effect = spec.get("side_effect")
+        if callable(side_effect):
+            override = side_effect(body)
+            if isinstance(override, dict):
+                spec.update(override)
 
         if spec.get("delay_ms"):
             time.sleep(spec["delay_ms"] / 1000.0)
 
+        return _ChatOutcome(
+            events=self._events(query, body, spec),
+            truncate=bool(spec.get("truncate")),
+            malformed=bool(spec.get("malformed")),
+        )
+
+    # ---- event qurucusu ---------------------------------------------
+    def _events(
+        self, query: str, body: dict[str, Any], spec: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         conversation_id = body.get("conversation_id") or str(uuid.uuid4())
         message_id = str(uuid.uuid4())
-        usage_spec = spec.get("usage", {"prompt_tokens": 1800, "completion_tokens": 250})
-        retriever_resources = [
-            {
-                "position": i + 1,
-                "dataset_id": "ds-mock",
-                "dataset_name": "Aurora Goods KB",
-                "document_id": r.get("chunk_id", ""),
-                "document_name": r.get("document", ""),
-                "segment_id": r.get("chunk_id", ""),
-                "score": r.get("score", 0.0),
-                "content": r.get("content", ""),
-            }
-            for i, r in enumerate(spec.get("retrieved", []))
-        ]
-        agent_thoughts = [
-            {
-                "id": str(uuid.uuid4()),
-                "position": i + 1,
+        task_id = str(uuid.uuid4())
+        base = {
+            "conversation_id": conversation_id,
+            "message_id": message_id,
+            "task_id": task_id,
+            "created_at": int(time.time()),
+        }
+        events: list[dict[str, Any]] = []
+
+        tool_calls = list(spec.get("tool_calls", []))
+        groups = (
+            [tool_calls] if spec.get("parallel_tools") and tool_calls else [[t] for t in tool_calls]
+        )
+        for position, group in enumerate(groups, start=1):
+            thought_id = str(uuid.uuid4())
+            names = ";".join(t["name"] for t in group)
+            tool_input = json.dumps({t["name"]: t.get("arguments", {}) for t in group})
+            observation = json.dumps(
+                {t["name"]: json.dumps(t.get("result")) for t in group}
+            )
+            common = {
+                **base,
+                "event": "agent_thought",
+                "id": thought_id,
+                "position": position,
                 "thought": "",
-                "tool": tc["name"],
-                "tool_input": json.dumps({tc["name"]: tc.get("arguments", {})}),
-                "observation": json.dumps(tc.get("result")),
+                "message_files": [],
+                "tool_labels": {t["name"]: {"en_US": t["name"]} for t in group},
             }
-            for i, tc in enumerate(spec.get("tool_calls", []))
-        ]
+            # canlı davranış: əvvəl observation-suz, sonra observation ilə
+            events.append({**common, "tool": names, "tool_input": tool_input, "observation": ""})
+            events.append(
+                {**common, "tool": names, "tool_input": tool_input, "observation": observation}
+            )
+            if spec.get("ping"):
+                events.append({"event": "ping"})
 
         answer = spec.get("answer", "")
+        for piece in _split(answer):
+            events.append({**base, "event": "agent_message", "id": message_id, "answer": piece})
+
+        if spec.get("error_event"):
+            code, message, status = spec["error_event"]
+            events.append(
+                {
+                    "event": "error",
+                    "task_id": task_id,
+                    "message_id": message_id,
+                    "status": status,
+                    "code": code,
+                    "message": message,
+                }
+            )
+            return events
+
+        retriever_resources = _resources(spec.get("retrieved", []))
         self._conversations.setdefault(conversation_id, []).append(
             {
                 "id": message_id,
                 "conversation_id": conversation_id,
                 "query": query,
                 "answer": answer,
-                "agent_thoughts": agent_thoughts,
+                "agent_thoughts": [e for e in events if e.get("event") == "agent_thought"],
                 "retriever_resources": retriever_resources,
                 "created_at": int(time.time()),
             }
         )
 
-        return 200, {
-            "event": "message",
-            "task_id": str(uuid.uuid4()),
-            "id": message_id,
-            "message_id": message_id,
-            "conversation_id": conversation_id,
-            "mode": "chat",
-            "answer": answer,
-            "metadata": {
-                "usage": {
-                    "prompt_tokens": usage_spec.get("prompt_tokens", 0),
-                    "completion_tokens": usage_spec.get("completion_tokens", 0),
-                    "total_tokens": usage_spec.get("prompt_tokens", 0)
-                    + usage_spec.get("completion_tokens", 0),
-                    "currency": "USD",
-                    "latency": 0.42,
-                },
-                "retriever_resources": retriever_resources,
-            },
-            "created_at": int(time.time()),
+        if not spec.get("no_message_end"):
+            usage_spec = spec.get("usage", {"prompt_tokens": 1800, "completion_tokens": 250})
+            events.append(
+                {
+                    **base,
+                    "event": "message_end",
+                    "id": message_id,
+                    "files": [],
+                    "metadata": {
+                        "usage": _usage_payload(usage_spec),
+                        "retriever_resources": retriever_resources,
+                    },
+                }
+            )
+        return events
+
+
+def _split(answer: str, n: int = 3) -> list[str]:
+    """Cavabı bir neçə `agent_message` parçasına bölür (real axın parçalıdır)."""
+    if not answer:
+        return []
+    size = max(1, len(answer) // n + 1)
+    return [answer[i : i + size] for i in range(0, len(answer), size)]
+
+
+def _resources(retrieved: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            # canlı formatda `position` və `score` STRING-dir
+            "position": str(i + 1),
+            "dataset_id": "ds-mock",
+            "dataset_name": "Aurora Goods KB",
+            "document_id": r.get("chunk_id", ""),
+            "document_name": r.get("document", ""),
+            "data_source_type": "upload_file",
+            "segment_id": r.get("chunk_id", ""),
+            "retriever_from": "api",
+            "score": str(r.get("score", 0.0)),
+            "content": r.get("content", ""),
         }
+        for i, r in enumerate(retrieved)
+    ]
+
+
+def _usage_payload(usage_spec: dict[str, Any]) -> dict[str, Any]:
+    prompt = int(usage_spec.get("prompt_tokens", 0))
+    completion = int(usage_spec.get("completion_tokens", 0))
+    prompt_price = prompt * 3 / 1_000_000
+    completion_price = completion * 15 / 1_000_000
+    # ⚠️ model adı QƏSDƏN yoxdur — canlı Dify də vermir (PLAN.md risk #2)
+    return {
+        "prompt_tokens": prompt,
+        "prompt_unit_price": "3",
+        "prompt_price_unit": "0.000001",
+        "prompt_price": f"{prompt_price:.6f}",
+        "completion_tokens": completion,
+        "completion_unit_price": "15",
+        "completion_price_unit": "0.000001",
+        "completion_price": f"{completion_price:.6f}",
+        "total_tokens": prompt + completion,
+        "total_price": f"{prompt_price + completion_price:.6f}",
+        "currency": "USD",
+        "latency": 0.42,
+    }
 
 
 def aurora_fixture() -> dict[str, dict[str, Any]]:
@@ -293,6 +473,3 @@ def aurora_fixture() -> dict[str, dict[str, Any]]:
             "usage": {"prompt_tokens": 2400, "completion_tokens": 310},
         },
     }
-
-
-_WORD_RE = re.compile(r"\w+", re.UNICODE)

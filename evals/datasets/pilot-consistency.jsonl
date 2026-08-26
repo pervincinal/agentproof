@@ -1,0 +1,4 @@
+// Ayrıca fayl: `--repeat` QLOBALDIR, ona görə aqreqat grader öz qaçışını tələb edir.
+// DİQQƏT: consistency_at_k SABİTLİYİ ölçür, DÜZGÜNLÜYÜ yox — həmişə eyni SƏHV
+// cavab da bu grader-dən keçir. Düzgünlüyü pilot-04/05 ölçür.
+{"id":"pilot-c1-t07-consistency","input":"How long is the Aurora-brand warranty on the item in order ORD-10046? It was delivered back in September 2024.","grader":"consistency_at_k","tags":["trap","T-07","consistency","warranty"],"severity":"high","source":"pilot-05 ilə eyni sorğu — T-07 uğursuzluğunun təkrarlanan olub-olmadığı","expect":{"mode":"key_facts","key_facts":["24 month","18 month"],"min_agreement":1.0,"min_responses":2}}

@@ -71,7 +71,6 @@ def run_path_a(base_url: str, api_key: str, log_dir: str) -> dict[str, Any]:
         "agentproof/dify_http",
         base_url=base_url,
         api_key=api_key,
-        fetch_tool_traces=True,
     )
     # ⚠️ `message_limit` OLMADAN bu qaçış BİTMİR: `generate()` solver-i hədəfin
     # tool İZİNİ tool SORĞUSU kimi oxuyur və döngəyə düşür. Bax `docs/R1-SPIKE.md`.
@@ -97,7 +96,6 @@ def run_path_b(base_url: str, api_key: str, log_dir: str) -> dict[str, Any]:
             adapter_config={
                 "base_url": base_url,
                 "api_key": api_key,
-                "fetch_tool_traces": True,
             },
         ),
         scorer=agentproof_scorer(),
