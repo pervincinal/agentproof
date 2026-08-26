@@ -20,6 +20,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from inspect_ai import eval as inspect_eval  # noqa: E402
 
+from agentproof.graders import registry  # noqa: E402
+from agentproof.graders.calibration import load_report  # noqa: E402
+from agentproof.graders.judge import (  # noqa: E402
+    DEFAULT_JUDGE_MODEL,
+    AnthropicJudgeClient,
+    JudgeConfig,
+)
 from agentproof.report.baseline import GatePolicy, compare, gate  # noqa: E402
 from agentproof.report.normalize import normalize_log  # noqa: E402
 from agentproof.report.pr_comment import render, render_console  # noqa: E402
@@ -62,15 +69,58 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--model", default=os.environ.get("AGENTPROOF_SUT_MODEL", ""),
                    help="hədəfin İÇİNDƏKİ model (yalnız hesabat üçün etiket)")
     p.add_argument("--log-dir", default=None)
+    p.add_argument("--judge-model", default=DEFAULT_JUDGE_MODEL,
+                   help="LLM-as-judge modeli — SUT-dan güclü olmalıdır")
+    p.add_argument("--judge-cache-dir", default=None,
+                   help="judge cavab keşi (determinizm: eyni prompt → eyni verdikt)")
+    p.add_argument("--allow-uncalibrated-judge", action="store_true",
+                   help="kalibrasiya olmadan judge qaçır (nəticə müdafiə olunmur)")
     return p.parse_args(argv)
+
+
+def bind_judges(cases, args) -> list[str]:
+    """Judge grader-lərinə real klient bağlayır və kalibrasiyanı yoxlayır.
+
+    Kalibrasiya edilməmiş judge nəticəsi elmi zibildir — ona görə qaçış
+    default olaraq DAYANIR, susmur (grader-eng.md).
+    """
+    judged = sorted({c.grader for c in cases if registry.kind(c.grader) == "judge"})
+    if not judged:
+        return []
+
+    report = load_report()
+    if (report is None or not report.passed) and not args.allow_uncalibrated_judge:
+        detail = "kalibrasiya hesabatı yoxdur" if report is None else "; ".join(
+            report.blocking_reasons
+        )
+        raise SystemExit(
+            f"Judge grader-ləri ({', '.join(judged)}) kalibrasiyasızdır: {detail}\n"
+            "  Qaçır: python evals/calibration/run_calibration.py\n"
+            "  Bilərəkdən davam etmək üçün: --allow-uncalibrated-judge"
+        )
+
+    config = JudgeConfig(
+        model=args.judge_model,
+        cache_dir=args.judge_cache_dir,
+        sut_model=args.model or None,
+    )
+    config.validate()
+    client = AnthropicJudgeClient(model=config.model, temperature=config.temperature)
+    for name in judged:
+        registry.get(name).bind(client, config)  # type: ignore[union-attr]
+    return judged
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
 
-    if not select_cases(args.dataset, args.filter_expr, args.stage):
+    selected = select_cases(args.dataset, args.filter_expr, args.stage)
+    if not selected:
         print("Filtrə uyğun case yoxdur — qaçış dayandırıldı.", file=sys.stderr)
         return 2
+
+    for name in bind_judges(selected, args):
+        print(f"Judge bağlandı: {name} · model {args.judge_model}", file=sys.stderr)
 
     task, _cases = build_task(
         dataset_path=args.dataset,

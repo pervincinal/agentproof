@@ -250,3 +250,28 @@ def test_fingerprint_changes_with_answer_and_model():
     b = JudgeCache.fingerprint("m", "s", "cavab B")
     c = JudgeCache.fingerprint("m2", "s", "cavab A")
     assert len({a, b, c}) == 3
+
+
+def test_graders_import_does_not_pull_in_the_anthropic_sdk():
+    """SDK yalnız `AnthropicJudgeClient` içində, yalnız ilk çağırışda import olunur.
+
+    Nəticə: `graders/` paketi SDK quraşdırılmadan qalxır və bütün test dəsti
+    açarsız, şəbəkəsiz qaçır.
+    """
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    script = (
+        "import sys\n"
+        "from agentproof.graders import registry\n"
+        "assert 'anthropic' not in sys.modules, 'anthropic SDK import olundu'\n"
+        "assert 'requires_justification' in registry.names()\n"
+        "print('ok')\n"
+    )
+    root = Path(__file__).resolve().parents[3]
+    proc = subprocess.run(
+        [sys.executable, "-c", script], cwd=root, capture_output=True, text=True
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stdout.strip() == "ok"

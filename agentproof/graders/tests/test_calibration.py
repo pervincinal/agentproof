@@ -336,3 +336,136 @@ def test_scripted_client_returns_structured_decisions():
     client = ScriptedJudgeClient({"salam": JudgeDecision("wrong", "səbəb", 0.4)})
     raw = client.complete("s", "... salam ...", {})
     assert json.loads(raw.text)["verdict"] == "wrong"
+
+
+# --------------------------------------- hesabat səthi (pr_comment / console)
+def _record(totals: dict):
+    from agentproof.types import AgentResponse, CaseResult, GradeResult, RunRecord
+
+    return RunRecord(
+        run_id="r1", target="dify_http", target_version="1.17.0", model="claude-sonnet-5",
+        dataset_hash="abc", started_at="2026-08-27T00:00:00Z",
+        results=[
+            CaseResult(
+                case_id="ORD-10011",
+                response=AgentResponse(text="30 gün"),
+                grade=GradeResult(
+                    passed=False, score=0.0, grader="requires_justification",
+                    reason="idarəedici şərt göstərilmir",
+                ),
+            )
+        ],
+        totals=totals,
+    )
+
+
+def test_pr_comment_shouts_when_judge_is_uncalibrated(tmp_path):
+    from agentproof.report.pr_comment import render
+    from agentproof.types import RunDelta
+
+    record = _record({"judge": judge_status(["requires_justification"], tmp_path / "yox.json")})
+    md = render(RunDelta(), record)
+    assert "Judge kalibrasiyası" in md
+    assert "KALİBRASİYA EDİLMƏYİB" in md
+
+
+def test_pr_comment_and_console_always_carry_agreement_and_kappa(tmp_path):
+    from agentproof.report.pr_comment import render, render_console
+    from agentproof.types import RunDelta
+
+    path = save_report(calibrate(_perfect_client(), LABELS), tmp_path / "report.json")
+    record = _record({"judge": judge_status(["requires_justification"], path)})
+
+    md = render(RunDelta(), record)
+    assert "uyğunluq 100.0%" in md and "κ=1.00" in md
+    assert "requires_justification@v1" in md
+
+    console = render_console(record)
+    assert "judge   :" in console and "κ=" in console
+
+
+def test_report_has_no_judge_section_for_deterministic_only_runs(tmp_path):
+    from agentproof.report.pr_comment import render, render_console
+    from agentproof.types import RunDelta
+
+    record = _record({"judge": {"used": False}})
+    assert "Judge kalibrasiyası" not in render(RunDelta(), record)
+    assert "judge   :" not in render_console(record)
+
+
+def test_pr_comment_falls_back_when_totals_lack_the_judge_key(monkeypatch):
+    """Köhnə RunRecord-larda açar yoxdur — bölmə yenə də hesablanır, itmir."""
+    import agentproof.report.pr_comment as pc
+    from agentproof.types import RunDelta
+
+    monkeypatch.setattr(
+        pc, "judge_status",
+        lambda names, *a, **k: {"used": True, "calibrated": False,
+                                "warning": "KALİBRASİYA EDİLMƏYİB (fallback)",
+                                "graders": ["requires_justification"]},
+    )
+    assert "KALİBRASİYA EDİLMƏYİB (fallback)" in pc.render(RunDelta(), _record({}))
+
+
+def test_normalize_puts_judge_status_into_run_record_totals():
+    """`normalize.py` açarı avtomatik doldurur — ayrıca addım yoxdur."""
+    import inspect as _inspect
+
+    from agentproof.report import normalize
+
+    src = _inspect.getsource(normalize.normalize_log)
+    assert '"judge": judge_status(' in src
+
+
+# ------------------------------------------- qaçış qapısı (evals/run.py)
+def _run_module():
+    import importlib.util
+    from pathlib import Path
+
+    spec = importlib.util.spec_from_file_location(
+        "agentproof_run", Path(__file__).resolve().parents[3] / "evals" / "run.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _judge_case():
+    from agentproof.types import Case
+
+    return Case(id="c", input="s", grader="requires_justification",
+                expect={"answer_value": "30", "controlling_rule": "r"})
+
+
+def test_run_refuses_judge_stage_without_calibration(monkeypatch):
+    """Kalibrasiyasız judge qaçışı DAYANIR — susmur."""
+    module = _run_module()
+    monkeypatch.setattr(module, "load_report", lambda *a, **k: None)
+    args = module.parse_args(["--target", "mock"])
+    with pytest.raises(SystemExit, match="kalibrasiya"):
+        module.bind_judges([_judge_case()], args)
+
+
+def test_run_binds_judge_when_calibration_passes(monkeypatch):
+    module = _run_module()
+    report = calibrate(_perfect_client(), LABELS)
+    assert report.passed
+    monkeypatch.setattr(module, "load_report", lambda *a, **k: report)
+    args = module.parse_args(["--target", "mock", "--model", "claude-sonnet-5"])
+    assert module.bind_judges([_judge_case()], args) == ["requires_justification"]
+
+    from agentproof.graders import registry as reg
+
+    bound = reg.get("requires_justification")
+    assert bound.client is not None and bound.client.model == "claude-opus-5"
+    bound.client = None  # digər testlərə sızmasın
+
+
+def test_run_ignores_judge_wiring_for_deterministic_only_runs(monkeypatch):
+    from agentproof.types import Case
+
+    module = _run_module()
+    monkeypatch.setattr(module, "load_report", lambda *a, **k: None)
+    args = module.parse_args(["--target", "mock"])
+    cheap = Case(id="c", input="s", grader="contains_all", expect={"all": ["x"]})
+    assert module.bind_judges([cheap], args) == []

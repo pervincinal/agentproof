@@ -5,3 +5,8 @@ inspect_ai==0.3.260
 httpx>=0.27,<1.0
 jsonschema>=4.21,<5.0
 PyYAML>=6.0,<7.0
+
+# LLM-as-judge qatı (yalnız `--stage judge` və kalibrasiya üçün).
+# `agentproof/graders/judge.py` bunu YALNIZ `AnthropicJudgeClient` içində və
+# yalnız ilk çağırışda import edir — determinist mərhələ və bütün testlər onsuz qaçır.
+anthropic>=1.0,<2.0

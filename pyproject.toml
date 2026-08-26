@@ -8,6 +8,7 @@ dependencies = [
     "httpx>=0.27",
     "jsonschema>=4.21",
     "pyyaml>=6.0",
+    "anthropic>=1.0,<2.0",  # yalnız judge mərhələsi; lazy import
 ]
 
 [project.optional-dependencies]
