@@ -75,7 +75,7 @@ Flowise rədd səbəbi: image tag pin-lənməyib (`:latest`) və öz eval funksi
 2. **"30 gün" həm doğru, həm səhv cavabdır** — bayat standart pəncərə də 30, canlı Aurora Plus pəncərəsi də 30. Fərqi yalnız əsaslandırma göstərir → `grading: requires_justification`.
 3. **Saat sabitdir** — bütün tool cavabları `today: 2026-09-01`. Heç bir nəticə divar saatından asılı deyil (pass^k üçün vacib).
 
-**Açıq borc:** `target/tools/openapi.json` və mock tool servisi hələ yazılmayıb; `TOOLS.md` avtoritet spesifikasiyadır.
+**Bağlandı:** `target/tools/` — FastAPI mock servisi (5 tool, port 8099), Dify Custom Tool üçün `openapi.json`, 72 pytest (hamısı yaşıl) və import təlimatı olan README. `TOOLS.md` avtoritet spesifikasiya olaraq qalır. `check_return_eligibility`-nin verdikt verməməsi açıq testlə qorunur; sabit saat AST səviyyəsində yoxlanılır. Eval runner case-lər arasında `POST /admin/reset` çağırmalıdır.
 
 ## Quraşdırma qeydi (reproduksiya üçün)
 
@@ -108,3 +108,20 @@ Memarlıq qaydası da maşınla qorunur: `graders/` paketinin `inspect_ai` impor
 ## Qeyd — commit tarixçəsi
 
 `3ce1849` commit-i geniş `git add` ilə harness-in yarımçıq fayllarını da öz içinə alıb (mənim səhvim). Fayllar tam, testlər yaşıldır; tarixçə geri qaytarılmadı, çünki heç nə itməyib.
+
+## Mock tool servisi (təsdiqlənib)
+
+`target/tools/` — FastAPI, port 8099, 5 tool + 4 harness endpoint-i. Dify konteynerindən `host.docker.internal:8099` əlçatandır (HTTP 200 ilə yoxlandı).
+
+Qorunan invariantlar (testlə):
+- `check_return_eligibility` verdikt sahələrini QAYTARMIR — 64 sifarişin hər delivered sətri üzrə yoxlanılır
+- Sabit saat — AST səviyyəsində `datetime.now()` çağırışının olmadığı təsdiqlənir
+- `expected`/`purpose` blokları heç vaxt HTTP cavabına çıxmır
+
+Özüm yoxladım — ORD-10015 (T-01 baş tələsi): `today=2026-09-01`, `days_since_delivery=20`, qadağan olunmuş sahə yoxdur.
+
+### ⚠️ Runner tələbi — İZOLYASİYA
+
+**Hər case-dən sonra `POST /admin/reset` çağırılmalıdır.** Əks halda case *n*-də yaradılan RMA case *n+1*-də `RMA_ALREADY_EXISTS` verər və nəticələr bir-birinə sızar. Bu, orta qaçışda susqun korlanmaya gətirir.
+
+Bunu sənədə güvənmək olmaz — **test tələb olunur**: ardıcıl iki case eyni sifarişə `initiate_return` etsin, ikincisi də təmiz vəziyyət görsün.

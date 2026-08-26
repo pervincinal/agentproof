@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from agentproof.graders.calibration import judge_status
 from agentproof.report.baseline import GateResult
 from agentproof.types import RunDelta, RunRecord
 
@@ -24,6 +25,34 @@ def _case_list(record: RunRecord, case_ids: list[str], limit: int = 10) -> list[
     if len(case_ids) > limit:
         lines.append(f"- … və daha {len(case_ids) - limit} case")
     return lines
+
+
+def judge_block(record: RunRecord) -> list[str]:
+    """Judge kalibrasiya bölməsi — judge grader-i işlədilibsə MƏCBURİ görünür.
+
+    Bu bölmə `totals["judge"]`-dan gəlir və `normalize.py` onu avtomatik
+    doldurur. Kalibrasiya faylı yoxdursa, xəbərdarlıq göstərilir — susmaq
+    variantı yoxdur (FAILURE-TAXONOMY §10 Boşluq 7).
+    """
+    status = record.totals.get("judge")
+    if not isinstance(status, dict):
+        status = judge_status(r.grade.grader for r in record.results)
+    if not status.get("used"):
+        return []
+    graders = ", ".join(f"`{g}`" for g in status.get("graders", []))
+    if not status.get("calibrated"):
+        return ["### Judge kalibrasiyası", "", status["warning"], "", f"Judge grader-ləri: {graders}", ""]
+    out = [
+        "### Judge kalibrasiyası",
+        "",
+        status["summary"],
+        "",
+        f"Judge grader-ləri: {graders} · etiket dəsti `{status.get('labels_sha256', '')[:12]}`",
+        "",
+    ]
+    if status.get("blocking_reasons"):
+        out += [f"- ⚠️ {r}" for r in status["blocking_reasons"]] + [""]
+    return out
 
 
 def render(
@@ -78,6 +107,8 @@ def render(
             "",
         ]
 
+    out += judge_block(current)
+
     out += [
         "---",
         f"<sub>xərc ${totals.get('cost_usd', 0):.2f} · "
@@ -106,6 +137,13 @@ def render_console(record: RunRecord, delta: RunDelta | None = None) -> str:
             lines.append(f"    - {r.case_id} [{r.grade.grader}] {r.grade.reason}")
         if len(failed) > 15:
             lines.append(f"    … və daha {len(failed) - 15}")
+    judge = record.totals.get("judge")
+    if not isinstance(judge, dict):
+        judge = judge_status(r.grade.grader for r in record.results)
+    if judge.get("used"):
+        lines.append(
+            "  judge   : " + (judge["summary"] if judge.get("calibrated") else judge["warning"])
+        )
     if delta is not None:
         lines.append(f"  baseline: {headline(delta)}")
     return "\n".join(lines)

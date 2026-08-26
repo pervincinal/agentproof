@@ -11,6 +11,7 @@ from typing import Any
 
 from inspect_ai.log import EvalLog, read_eval_log
 
+from agentproof.graders.calibration import judge_status
 from agentproof.pricing.table import load_prices
 from agentproof.types import AgentResponse, CaseResult, GradeResult, RunRecord
 
@@ -78,6 +79,10 @@ def normalize_log(
         "p50_latency_ms": percentile(latencies, 50),
         "p95_latency_ms": percentile(latencies, 95),
         "price_table_as_of": prices.as_of,
+        # Judge kalibrasiyası hesabata AVTOMATIK düşür — ayrıca addım tələb
+        # etmədiyi üçün gizlədilə bilmir (grader-eng.md: kalibrasiya edilməmiş
+        # judge nəticəsi elmi zibildir).
+        "judge": judge_status(r.grade.grader for r in results),
     }
 
     task_meta = log.eval.metadata or {}
