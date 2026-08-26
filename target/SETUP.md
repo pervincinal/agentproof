@@ -96,8 +96,17 @@ Qalxan servislər (pin-lənmiş image-lər — `docker-compose.yaml`-dan təsdiq
 Vəziyyəti yoxla:
 ```bash
 docker compose ps
-curl -s http://localhost:8088/v1/          # {"welcome":"Dify OpenAPI","api_version":"v1",...}
+
+# Service API canlıdır və auth tələb edir (401 GÖZLƏNİLƏN nəticədir):
+curl -s http://localhost:8088/v1/info
+# {"code":"unauthorized","message":"Authorization header must be provided and start with 'Bearer'","status":401}
+
+# Console hazırdır:
+curl -s http://localhost:8088/console/api/setup
+# {"step":"not_started","setup_at":null}
 ```
+
+> ⚠️ `GET /v1/` **404 qaytarır** 1.17.0-da (mənbədəki `index.py`-a baxmayaraq). Health check üçün onu istifadə etmə — yuxarıdakı iki əmri işlət.
 
 İlk qalxma image pull ilə birlikdə **10-25 dəqiqə** çəkir (~10 GB).
 
@@ -346,5 +355,62 @@ docker compose down -v           # data daxil hər şeyi sil
 
 ## 11. Doğrulama statusu
 
-Bu bölmə real yoxlamanın nəticəsini əks etdirir — nə işlədiyi və nəyin yoxlanmadığı.
+Bu bölmə **real yoxlamanın** nəticəsidir. Yoxlama tarixi: 2026-08-26, macOS 24.6.0 (darwin/arm64), Docker 28.4.0.
+
+### ✅ Yoxlandı və işləyir
+
+| Yoxlama | Nəticə |
+|---|---|
+| `git clone --branch 1.17.0` | uğurlu |
+| `docker compose up -d` | **exit 0**, 15/15 servis qalxdı |
+| Image tag-ları | `dify-api:1.17.0`, `dify-web:1.17.0`, `plugin-daemon:0.6.10-local`, `sandbox:0.2.15`, `weaviate:1.27.0` — hamısı pin-li |
+| Postgres | `healthy` |
+| Weaviate | `/v1/.well-known/ready` → READY |
+| Plugin daemon | işə düşdü, cluster master oldu, `:5003`-də dinləyir |
+| API (gunicorn) | `:5001`-də dinləyir, konteyner daxili `/health` → 200 |
+| **Service API canlı və auth-gated** | `GET /v1/info` → `401 {"code":"unauthorized",...}` — düzgün Dify xəta zərfi |
+| **Console hazır** | `GET /console/api/setup` → `{"step":"not_started"}` |
+| Web UI | `GET /install` → HTTP 200 |
+
+Servislərin siyahısı (hamısı `Up`):
+```
+agent_backend  agent_ssrf_proxy  api  api_websocket  db_postgres
+local_sandbox  nginx  plugin_daemon  redis  sandbox
+ssrf_proxy  weaviate  web  worker  worker_beat
+```
+
+İlk qalxma (image pull daxil) ~20 dəqiqə çəkdi, ~10 GB endirildi.
+
+### ⚠️ YOXLANMADI — açıq şəkildə qeyd olunur
+
+Aşağıdakılar **mənim tərəfimdən icra edilmədi**. Onları "işləyir" kimi qəbul etmə:
+
+| Addım | Niyə yoxlanmadı |
+|---|---|
+| **§4 Admin hesabı yaratmaq** | Hesab yaratmaq / parol daxil etmək mənim icazə hüdudumdan kənardır. İnsan tərəfindən icra olunmalıdır. |
+| **§5 Model provider plugin quraşdırmaq** | §4-dən asılıdır; həm də `marketplace.dify.ai`-yə çıxış və `ANTHROPIC_API_KEY` tələb edir |
+| **§5 Embedding provider** | eyni səbəb |
+| **§6 API açarları almaq** | §4-dən asılıdır |
+| **§7 `POST /v1/chat-messages` real çağırışı** | API açarı və model provider tələb edir |
+| **§8 RAG axını (KB yarat → sənəd yüklə → retrieve)** | dataset API açarı və embedding provider tələb edir |
+| Ssenari və test case-lərin özləri | hələ yazılmayıb — dataset-eng-in işidir |
+
+**Yəni:** infrastruktur sıfırdan qalxdığı və Service API-nin canlı olduğu **təsdiqlənib**. Agent-in real cavab verməsi **təsdiqlənməyib** — bunun üçün insan §4-§6-nı icra etməlidir, sonra §7-dəki `curl` ilə smoke test edilməlidir.
+
+### Növbəti addım (insan üçün)
+
+1. `http://localhost:8088/install` aç, admin hesabı yarat
+2. Anthropic + embedding plugin-lərini quraşdır, açarları daxil et, **versiyaları §5-dəki boşluğa yaz**
+3. Agent app yarat, KB bağla, DSL-i `target/dify-app.yml`-ə export et
+4. §7-dəki `POST /v1/chat-messages` ilə smoke test et
+5. Nəticəni bu bölməyə əlavə et
+
+### Stack hazırda İŞLƏYİR
+
+Konteynerlər ayaqdadır. Dayandırmaq üçün:
+```bash
+cd ~/agentproof-stack/dify/docker
+docker compose down          # data qalır
+```
+Qeyd: hazırkı instansiya scratchpad qovluğundadır (müvəqqəti). Daimi iş üçün repo-nu kalıcı yerə klonla və §1-§3-ü təkrarla.
 

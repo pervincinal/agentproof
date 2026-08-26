@@ -41,3 +41,22 @@ Rədd edilənlər: OpenAI Evals (2026-11-30 bağlanır), RAGAS (insan korrelyasi
 ## Komanda
 
 `.claude/agents/` — 7 rol: scout, analyst, hunter, dataset-eng, grader-eng, harness-eng, writer.
+
+## Hədəf qərarı (təsdiqlənib)
+
+**Dify 1.17.0**, lokal, `~/agentproof-stack/dify` (compose `docker/`, port 8088).
+Lisenziya yoxlanılıb — hər iki repo-da benchmark dərcini qadağan edən bənd YOXDUR. Dify-ın modified Apache 2.0-ındakı iki əlavə məhdudiyyət (multi-tenant xidmət qadağası, logo qorunması) bizim ssenariyə aid deyil.
+
+Flowise rədd səbəbi: image tag pin-lənməyib (`:latest`) və öz eval funksiyası commercial-lisenziyalı `enterprise/` qovluğundadır — public hesabatda optika problemi. Flowise-in bir üstünlüyü qeyd olunub: app yaratma API-si var, Dify-da DSL bir dəfə UI-dan import olunmalıdır.
+
+## Metodologiya qərarları (təsdiqlənib)
+
+| Qərar | Seçim | Səbəb |
+|---|---|---|
+| SUT modeli | `claude-sonnet-5` | Xərc/keyfiyyət balansı |
+| Judge modeli | `claude-opus-5` | Judge SUT-dan güclü olmalıdır |
+| Embedding | Mainstream hosted | Zəif embedder seçsək, tapdığımız retrieval xətaları hədəfin dizayn problemi yox, BİZİM konfiqurasiya artifaktımız olar — hesabat müdafiəolunmaz qalar |
+| Seed sayı | 3 | Reliability tədqiqatı N=1 ilə olmaz |
+| Büdcə | ~$16 (limit $20) | 150 case × 3 seed |
+
+**Açıq metodoloji məhdudiyyət:** embedding modelini bir dənə seçdiyimiz üçün retrieval xətalarının nə qədərinin embedder seçimindən doğduğunu ayıra bilmirik. Bu, hesabatın "nəyi ölçmədik" bölməsində açıq yazılmalıdır.

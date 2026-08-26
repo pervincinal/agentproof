@@ -16,8 +16,8 @@
 | Son push | 2026-08-26 | 2026-08-13 |
 | Lisenziya | Modified Apache 2.0 | Apache 2.0 + Commercial (qismən) |
 | Compose image pin | **Bəli** (`langgenius/dify-api:1.17.0`) | Xeyr (`flowiseai/flowise:latest`) |
-| Sənədli RAG API | **Bəli** (tam CRUD) | Qismən (`/vector/upsert`) |
-| Ayrıca retrieval ölçmə endpoint-i | **Bəli** (`/datasets/{id}/retrieve`) | Yox |
+| RAG API-nin bütövlüyü | **Bəli** — tam CRUD, tək API-key səthində | Var, amma iki auth səthinə bölünüb |
+| Retrieval-ı ayrıca ölçmə | **Bəli**, public API-key səthində | Var, amma RBAC-gated admin səthində |
 | **Nəticə** | **SEÇİLDİ** | Rədd edildi |
 
 ---
@@ -99,7 +99,19 @@ GET/POST/DELETE  /v1/datasets/{id}/documents/{doc}/segments # chunk səviyyəsin
 - Düzgün chunk gətirildi, amma cavab yanlış → generation/faithfulness problemi
 - Düzgün chunk ümumiyyətlə gətirilmədi → retrieval problemi
 
-Bu ayırma reliability tədqiqatının bütün dəyəridir. Flowise-də ekvivalent public endpoint yoxdur — yalnız `POST /api/v1/vector/upsert` var, retrieval-ı ayrıca sorğulamaq üçün endpoint tapılmadı.
+Bu ayırma reliability tədqiqatının bütün dəyəridir.
+
+**Flowise-də ekvivalent VAR** — `POST /api/v1/document-store/vectorstore/query`. Fərq funksionallıqda deyil, **autentifikasiya səthindədir**: həmin endpoint `checkPermission('documentStores:view')` ilə qorunur, yəni RBAC icazəsi olan authenticated user sessiyası tələb edir (bu kod isə commercial-lisenziyalı `enterprise/` qovluğundadır). Flowise-də RAG həyat dövrü iki səthə bölünür:
+
+| Əməliyyat | Dify | Flowise |
+|---|---|---|
+| KB/store yarat | API key | RBAC-gated admin |
+| Sənəd yüklə | API key | API key (`/vector/upsert`) |
+| İndeksləmə statusu | API key | RBAC-gated admin |
+| Retrieval sorğusu | API key | RBAC-gated admin |
+| Agent-ə sorğu | API key | API key (`/prediction`) |
+
+Dify-da **bütün RAG həyat dövrü** tək, sənədli, API-key ilə autentifikasiya olunan Service API-dədir. Flowise-də setup skripti iki fərqli auth mexanizmi ilə işləməlidir. Bu, "bir skript sıfırdan hər şeyi qurur" hədəfi üçün real, amma orta səviyyəli üstünlükdür — həlledici deyil.
 
 ### 3.3. Prompt/tool konfiqurasiyasının əlçatanlığı
 
@@ -137,15 +149,15 @@ Bu texniki bloklayıcı deyil (biz onsuz da öz harness-imizi yazırıq), amma *
 
 `image: flowiseai/flowise:latest` — yuxarıda izah olundu.
 
-### 4.4. Retrieval-ı təkbaşına ölçmək üçün endpoint yoxdur
+### 4.4. RAG setup-ı iki auth səthinə bölünüb
 
-4.2-də göstərildiyi kimi, retrieval xətası ilə generation xətasını ayıra bilməmək bu tədqiqat üçün ciddi məhdudiyyətdir.
+3.2-də göstərildiyi kimi, Flowise-də store yaratmaq və retrieval sorğulamaq RBAC-gated admin səthindədir, sənəd yükləmək və prediction isə API-key səthində. Sıfırdan skriptlə qurulan reproduksiya üçün bu əlavə sürtünmədir. **Bu, 4.1 və 4.3-dən zəif arqumentdir** — Flowise-in retrieval-ı ayrıca ölçmək imkanı var, sadəcə əlçatanlığı daha çətindir.
 
 ### Flowise-in üstünlükləri (dürüstlük üçün)
 
-- **Stack xeyli yüngüldür**: tək konteyner + SQLite (Dify-da 16 servis). Qalxma vaxtı dəqiqələrlə ölçülür, saniyələrlə deyil, amma yenə də Dify-dan sürətlidir.
-- Chatflow-lar `POST /api/v1/chatflows` ilə **tam proqramatik** yaradıla bilir. Dify-da app yaratmaq üçün DSL-i bir dəfə UI-dan import etmək lazımdır (aşağıda "Bilinən məhdudiyyətlər"ə bax) — bu, Flowise-in Dify üzərində real üstünlüyüdür.
-- Marketplace asılılığı yoxdur.
+- **Stack xeyli yüngüldür**: tək konteyner + SQLite. Dify-da 15 uzunömürlü servis + 1 init konteyneri qalxır (ölçdüm: ~10 GB image, ilk qalxma ~20 dəqiqə). Flowise dəqiqələr ərzində qalxır.
+- **Agent-in özünü REST ilə yaratmaq mümkündür**: `POST /api/v1/chatflows` chatflow-u proqramatik yaradır. Dify-ın Service API-sində app yaratma endpoint-i **yoxdur** — DSL-i bir dəfə UI-dan import etmək lazımdır. (Qeyd: Flowise-in bu endpoint-i də `checkAnyPermission` ilə RBAC-gated-dir, yəni admin sessiyası tələb edir — amma endpoint heç olmasa mövcuddur.) **Bu, Flowise-in Dify üzərində real və mübahisəsiz üstünlüyüdür.**
+- Marketplace asılılığı yoxdur — model provider-lər built-in node-lardır, xarici registry-dən asılı deyil.
 
 Əgər gələcəkdə ikinci hədəf lazım olsa, Flowise məntiqli namizəddir — 4.1 və 4.2-ni hesabatda açıq qeyd etmək şərti ilə.
 
