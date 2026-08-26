@@ -1,0 +1,7 @@
+# Nüvə mühərriki — versiya PIN-lidir (STACK.md R2: log formatı major versiyada dəyişə bilər)
+inspect_ai==0.3.260
+
+# Adapter və grader asılılıqları
+httpx>=0.27,<1.0
+jsonschema>=4.21,<5.0
+PyYAML>=6.0,<7.0

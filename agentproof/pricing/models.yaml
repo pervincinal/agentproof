@@ -1,0 +1,19 @@
+# Token -> USD cədvəli. Inspect dollar vermir (STACK.md M5).
+# R3: qiymətlər köhnəlir -> `as_of` hesabatda açıq göstərilir.
+as_of: "2026-08-26"
+source: "target/SETUP.md §9 (Scout tərəfindən yığılıb)"
+currency: USD
+# $ / 1M token
+models:
+  claude-haiku-4-5:
+    input: 1.0
+    output: 5.0
+    cached_input: 0.1
+  claude-sonnet-5:
+    input: 2.0
+    output: 10.0
+    cached_input: 0.2
+  claude-opus-5:
+    input: 5.0
+    output: 25.0
+    cached_input: 0.5

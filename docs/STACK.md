@@ -341,7 +341,7 @@ python evals/run.py \
 
 | # | Risk | Ehtimal | Təsir | Azaldıcı tədbir |
 |---|---|---|---|---|
-| R1 | **Inspect model evalları üçün dizayn olunub, məhsul/agent evalları üçün yox.** Onun `Model` abstraksiyası provayder modelini gözləyir; bizim hədəfimiz HTTP arxasında RAG agent-idir | Orta | **Yüksək** — bütün qərarın dayaq nöqtəsi | Inspect rəsmi olaraq **xüsusi Model API extension**-u dəstəkləyir (öz Python paketində, entry point ilə). **1-ci həftədə spike: `http_agent` adapterini ModelAPI kimi qoşub 5 case qaçırmaq.** Spike uğursuz olarsa, geri çəkilmə planı: Inspect-in solver qatında birbaşa `AgentAdapter` çağırmaq (mühərrikin paralellik/log-u qalır, `Model` abstraksiyası atlanır) |
+| R1 | ~~**Inspect model evalları üçün dizayn olunub, məhsul/agent evalları üçün yox.**~~ **✅ BAĞLANDI (2026-08-27)** — spike aparıldı, bax [`R1-SPIKE.md`](R1-SPIKE.md) | — | — | Yol (b) seçildi: Inspect **Custom Agent** (solver qatı) — hədəf `Model` kimi yox, agent kimi sarılır, `eval(model=None)` ilə API açarı olmadan qaçır. Yol (a) (ModelAPI provayderi) funksional işlədi, amma **5 case üçün hədəfə 25 sorğu** göndərdi (`generate()` hədəfin tool İZİNİ tool SORĞUSU kimi oxuyur → döngə) və `message_limit` olmadan terminasiya etmədi — rədd. Reqressiya testi: `test_run_issues_exactly_one_target_call_per_case` |
 | R2 | Inspect log formatı major versiyada dəyişir | Aşağı | Orta | `report/normalize.py` yeganə toxunma nöqtəsidir; versiya `requirements.txt`-də pin olunur |
 | R3 | Dollar xərci öz cədvəlimizdən gəlir → qiymətlər köhnəlir | Yüksək | Aşağı | `pricing/models.yaml` tarixli; hesabatda "qiymət cədvəli tarixi" göstərilir |
 | R4 | UK AISI Inspect-i tərk edir | Çox aşağı | Orta | MIT + fork mümkün; həm də grader qatımız onsuz da müstəqildir |
@@ -352,7 +352,7 @@ python evals/run.py \
 
 ## 10. İlk həftənin ardıcıllığı
 
-1. **R1 spike-ı** (1 gün) — `http_agent` → Inspect ModelAPI, 5 case ucdan-uca. Bu keçmirsə, sənədin qalanı yenidən baxılır.
+1. ~~**R1 spike-ı** (1 gün)~~ — ✅ **bitdi**, `docs/R1-SPIKE.md`. Nəticə: ModelAPI yox, **Custom Agent** qatı. Sənədin qalanı qüvvədədir.
 2. `types.py` + `graders/base.py` + registry (0.5 gün) — bütün komandanın bağlı olduğu müqavilə. Dataset Engineer və Grader Engineer bunu gözləyir, ona görə birinci çıxır.
 3. `runner/` dörd faylı + `evals/run.py` skeleti (1 gün).
 4. `report/normalize.py` + `baseline.py` + `pr_comment.py` (1.5 gün).

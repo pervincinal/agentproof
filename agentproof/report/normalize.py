@@ -1,0 +1,97 @@
+"""Inspect `.eval` log -> `RunRecord` (STACK.md §8.5).
+
+Bizi Inspect-in log formatı dəyişikliklərindən qoruyan YEGANƏ nöqtə (R2).
+Token -> USD çevrilməsi burada `pricing/models.yaml` ilə edilir.
+"""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Any
+
+from inspect_ai.log import EvalLog, read_eval_log
+
+from agentproof.pricing.table import load_prices
+from agentproof.types import AgentResponse, CaseResult, GradeResult, RunRecord
+
+
+def percentile(values: list[float], p: float) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    idx = min(int(round((p / 100.0) * (len(ordered) - 1))), len(ordered) - 1)
+    return ordered[idx]
+
+
+def normalize_log(
+    log: EvalLog,
+    target: str,
+    target_version: str = "",
+    model: str = "",
+) -> RunRecord:
+    prices = load_prices()
+    results: list[CaseResult] = []
+
+    for sample in log.samples or []:
+        score = next(iter(sample.scores.values())) if sample.scores else None
+        meta: dict[str, Any] = (score.metadata or {}) if score else {}
+        responses = [AgentResponse.from_dict(r) for r in meta.get("responses", [])]
+        response = responses[-1] if responses else AgentResponse(text="")
+        skipped = bool(meta.get("skipped", False))
+        value = None if score is None else score.value
+        passed = value == 1.0 or value is True
+
+        cost = sum(c for c in (prices.cost_usd(r.usage) for r in responses) if c is not None)
+        results.append(
+            CaseResult(
+                case_id=str(sample.id),
+                response=response,
+                grade=GradeResult(
+                    passed=passed and not skipped,
+                    score=float(meta.get("raw_score", 1.0 if passed else 0.0)),
+                    grader=str(meta.get("grader", "")),
+                    reason=(score.explanation if score and score.explanation else
+                            ("" if passed or skipped else "səbəb loga yazılmayıb")),
+                    evidence=meta.get("evidence", {}) or {},
+                    skipped=skipped,
+                ),
+                cost_usd=cost if any(r.usage for r in responses) else None,
+                latency_ms=sum(r.latency_ms for r in responses),
+                attempt=len(responses) or 1,
+                tags=list(meta.get("tags", [])),
+                severity=str(meta.get("severity", "medium")),
+            )
+        )
+
+    graded = [r for r in results if not r.grade.skipped]
+    latencies = [float(r.latency_ms) for r in results if r.latency_ms > 0]
+    costs = [r.cost_usd for r in results if r.cost_usd is not None]
+
+    totals = {
+        "n_cases": len(results),
+        "n_graded": len(graded),
+        "n_passed": sum(1 for r in graded if r.grade.passed),
+        "n_failed": sum(1 for r in graded if not r.grade.passed),
+        "n_skipped": len(results) - len(graded),
+        "pass_rate": (sum(1 for r in graded if r.grade.passed) / len(graded)) if graded else 0.0,
+        "cost_usd": sum(costs),
+        "p50_latency_ms": percentile(latencies, 50),
+        "p95_latency_ms": percentile(latencies, 95),
+        "price_table_as_of": prices.as_of,
+    }
+
+    task_meta = log.eval.metadata or {}
+    return RunRecord(
+        run_id=log.eval.run_id,
+        target=target,
+        target_version=target_version,
+        model=model,
+        dataset_hash=str(task_meta.get("dataset_hash", "")),
+        started_at=log.eval.created or datetime.now(timezone.utc).isoformat(),
+        results=results,
+        totals=totals,
+    )
+
+
+def normalize_path(path: str, target: str, target_version: str = "", model: str = "") -> RunRecord:
+    return normalize_log(read_eval_log(path), target, target_version, model)

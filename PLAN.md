@@ -9,11 +9,12 @@
 
 | # | Mərhələ | Rol | Çıxış | Status |
 |---|---|---|---|---|
-| 1 | Hədəf seçimi + quraşdırma | scout | `target/SETUP.md`, `target/DECISION.md` | işləyir |
-| 1 | Uğursuzluq taksonomiyası | hunter | `docs/FAILURE-TAXONOMY.md` | işləyir |
-| 1 | Stack seçimi | harness-eng | `docs/STACK.md` | işləyir |
+| 1 | Hədəf seçimi + quraşdırma | scout | `target/SETUP.md`, `target/DECISION.md` | ✅ Dify 1.17.0 |
+| 1 | Uğursuzluq taksonomiyası | hunter | `docs/FAILURE-TAXONOMY.md` | ✅ 38 rejim |
+| 1 | Stack seçimi | harness-eng | `docs/STACK.md` | ✅ Inspect AI |
 | 2 | Sistem təhlili, hücum səthi | analyst | `docs/ARCHITECTURE.md` | gözləyir |
 | 2 | Sınma nöqtələrinin ovu | hunter | `FINDINGS.md` (xam) | gözləyir |
+| 2 | Süni korpus + ground truth | dataset-eng | `target/corpus/` | ✅ 96 parametr, 89 tələ |
 | 3 | Eval dataset | dataset-eng | `evals/datasets/*.jsonl` | gözləyir |
 | 3 | Qiymətləndiricilər | grader-eng | `evals/graders/` | gözləyir |
 | 4 | Qaçış mühərriki + CI | harness-eng | `evals/run.py`, `.github/workflows/` | gözləyir |
@@ -60,3 +61,21 @@ Flowise rədd səbəbi: image tag pin-lənməyib (`:latest`) və öz eval funksi
 | Büdcə | ~$16 (limit $20) | 150 case × 3 seed |
 
 **Açıq metodoloji məhdudiyyət:** embedding modelini bir dənə seçdiyimiz üçün retrieval xətalarının nə qədərinin embedder seçimindən doğduğunu ayıra bilmirik. Bu, hesabatın "nəyi ölçmədik" bölməsində açıq yazılmalıdır.
+
+
+## Korpus (təsdiqlənib)
+
+`target/corpus/` — 8 siyasət sənədi, 96 kanonik parametr, 89 tələ, 64 sifariş fixture.
+`verify_fixtures.py` → 1338 assertion, exit 0 (özüm qaçırdım).
+
+Üç dizayn qərarı hesabatın elmi dayağıdır:
+1. **Bayat bənd hər iki istiqamətdə** — T-01-də bayat sənəd cavabı çox səxavətli edir, T-07-də isə CARİ sənəd (çünki zəmanət müddəti çatdırılma tarixindəki versiya ilə bağlıdır). Yalnız bir istiqaməti ölçsək, "həmişə ən yeni rəqəmi seç" strategiyası keçər və biz onu bacarıq sanardıq.
+2. **"30 gün" həm doğru, həm səhv cavabdır** — bayat standart pəncərə də 30, canlı Aurora Plus pəncərəsi də 30. Fərqi yalnız əsaslandırma göstərir → `grading: requires_justification`.
+3. **Saat sabitdir** — bütün tool cavabları `today: 2026-09-01`. Heç bir nəticə divar saatından asılı deyil (pass^k üçün vacib).
+
+**Açıq borc:** `target/tools/openapi.json` və mock tool servisi hələ yazılmayıb; `TOOLS.md` avtoritet spesifikasiyadır.
+
+## Quraşdırma qeydi (reproduksiya üçün)
+
+`.env`-dəki `INIT_PASSWORD` silindi. Təyin olunduqda Dify `/install`-dan əvvəl ayrıca init doğrulaması tələb edir (`setup_system` → `NotInitValidateError`) və istifadəçi səssizcə `/install`-a qaytarılır. Lokal test instansiyasında bu qorumaya ehtiyac yoxdur. Ehtiyat nüsxə: `.env.bak`.
+Parol qaydası: `^(?=.*[a-zA-Z])(?=.*\d).{8,}$`.

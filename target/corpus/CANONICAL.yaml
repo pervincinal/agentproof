@@ -1,0 +1,1657 @@
+# ============================================================================
+# Aurora Goods — canonical policy parameter table
+# ============================================================================
+# This file is the SINGLE SOURCE OF TRUTH for evaluation. Graders compare an
+# agent's answer against this table, never against the text the agent happened
+# to retrieve. That distinction is the point of the whole corpus:
+# FAILURE-TAXONOMY.md §10 "Boşluq 3" — RAGAS-style faithfulness is measured
+# against retrieved context, so a stale-but-faithfully-quoted answer scores 1.0
+# while being wrong. Here, `status: active` defines truth; `status: superseded`
+# defines the trap.
+#
+# Every entry is machine-decidable. If deciding the correct answer required
+# human judgement, the entry does not belong here.
+# ============================================================================
+
+meta:
+  company: Aurora Goods
+  corpus_version: "1.0"
+  generated: 2026-08-26
+  currency: AZN
+  timezone: Asia/Baku          # UTC+04:00, no DST
+  language: en
+  # PINNED evaluation clock. The mock tool service reports this value as
+  # `today` in every response, so no test depends on wall-clock time.
+  evaluation_reference_date: 2026-09-01
+  documents:
+    - {file: returns-and-refunds.md,        id: AG-POL-RET, version: "4.0", effective_from: 2026-01-01, supersedes_version: "3.2"}
+    - {file: shipping-and-delivery.md,      id: AG-POL-SHP, version: "2.3", effective_from: 2026-04-01, supersedes_version: "2.2"}
+    - {file: warranty-policy.md,            id: AG-POL-WAR, version: "3.1", effective_from: 2026-02-01, supersedes_version: "3.0"}
+    - {file: payments-and-billing.md,       id: AG-POL-PAY, version: "1.9", effective_from: 2026-05-01, supersedes_version: "1.8"}
+    - {file: account-and-membership.md,     id: AG-POL-ACC, version: "2.0", effective_from: 2026-03-01, supersedes_version: "1.7"}
+    - {file: privacy-and-data.md,           id: AG-POL-PRV, version: "1.4", effective_from: 2026-01-01, supersedes_version: "1.3"}
+    - {file: promotions-and-price-match.md, id: AG-POL-PRM, version: "5.2", effective_from: 2026-06-01, supersedes_version: "5.1"}
+    - {file: international-shipping.md,     id: AG-POL-INT, version: "1.6", effective_from: 2026-07-01, supersedes_version: "1.5"}
+
+# ----------------------------------------------------------------------------
+# Precedence ladder — resolves every apparent contradiction deterministically.
+# First matching rank wins; lower ranks are not evaluated.
+# ----------------------------------------------------------------------------
+precedence_ladder:
+  - {rank: 1, rule: non_returnable_or_clearance, source: "returns-and-refunds.md §6, promotions-and-price-match.md §4"}
+  - {rank: 2, rule: damaged_defective_or_wrong_item, source: "returns-and-refunds.md §5"}
+  - {rank: 3, rule: international_destination, source: "international-shipping.md §5"}
+  - {rank: 4, rule: promotional_item, source: "promotions-and-price-match.md §2"}
+  - {rank: 5, rule: aurora_plus_member, source: "account-and-membership.md §3"}
+  - {rank: 6, rule: standard, source: "returns-and-refunds.md §2"}
+
+# ----------------------------------------------------------------------------
+# Shared counting rules — stated once so no case depends on interpretation.
+# ----------------------------------------------------------------------------
+counting_rules:
+  return_window:
+    anchor: delivery_date
+    anchor_is_day: 0
+    inclusive_final_day: true
+    closes_at: "23:59 Asia/Baku"
+    calendar_or_business: calendar
+    note: "A window of N days is open on elapsed days 0..N inclusive and closed from N+1."
+  price_match_window:
+    anchor: order_date          # deliberately different from every return window
+    anchor_is_day: 0
+    inclusive_final_day: true
+    calendar_or_business: calendar
+  warranty_period:
+    anchor: delivery_date
+    unit: months
+    inclusive_final_day: true
+    note: "N months after delivery, same day-of-month; that day is covered. If the target month lacks that day number, the last day of the month."
+  shipping_sla:
+    anchor: dispatch_date
+    calendar_or_business: business
+
+# ----------------------------------------------------------------------------
+# Which policy version governs a given question.
+# ----------------------------------------------------------------------------
+temporal_applicability:
+  default: current_version
+  note: "Unless a rule is listed below, the version in force TODAY governs."
+  rules:
+    - subject: warranty_period_length
+      governed_by: version_in_force_on_delivery_date
+      source: "warranty-policy.md §1.3"
+      consequence: "A product delivered before 2026-02-01 carries the v3.0 periods (Aurora brand 18 months, no Aurora Plus extension) even though v3.1 is current. Appendix A is therefore live law for old deliveries, not dead text."
+    - subject: service_fees_incurred_today
+      governed_by: current_version
+      source: "warranty-policy.md §1.3"
+      consequence: "The out-of-warranty diagnostic fee is 25.00 AZN today regardless of when the product was delivered."
+    - subject: return_window
+      governed_by: version_in_force_on_order_date
+      source: "returns-and-refunds.md Appendix A preamble"
+      consequence: "Every order in FIXTURES.yaml with a return question was placed on or after 2026-01-01, so the 14-day window governs all of them. The 30-day clause is never the correct answer for any fixture order."
+    - subject: membership_fee_refund_basis
+      governed_by: fee_actually_charged
+      source: "account-and-membership.md §5.2"
+      consequence: "A member charged 39.00 AZN under v1.7 has a pro-rata refund computed on 39.00, not on the current 49.00."
+
+# ----------------------------------------------------------------------------
+# How monetary thresholds are measured.
+# ----------------------------------------------------------------------------
+value_measurement:
+  basis: merchandise_value
+  definition: "Sum of the prices actually paid for goods."
+  excludes: [shipping_charges, express_surcharge, heavy_item_surcharge, cod_handling_fee, plus_membership_fee, duties]
+  applies_to:
+    [free_shipping_threshold_domestic, free_return_label_threshold, signature_required_threshold,
+     cod_max_order_value, instalment_min_order_value, intl_ddp_threshold, intl_max_declared_value]
+  source: "shipping-and-delivery.md §4.0, payments-and-billing.md §2.0, returns-and-refunds.md §4.0, international-shipping.md §4.0"
+
+parameters:
+
+  # ==========================================================================
+  # returns-and-refunds.md  (AG-POL-RET v4.0)
+  # ==========================================================================
+  - id: return_window_standard
+    name: Standard return window
+    value: 14
+    unit: days
+    status: active
+    effective_from: 2026-01-01
+    supersedes: {value: 30, unit: days, doc_version: "3.2", effective_until: 2025-12-31}
+    doc: returns-and-refunds.md
+    section: "§2.1"
+    doc_version: "4.0"
+    applies_when: "domestic delivery; item not promotional, not clearance, not non-returnable, not damaged-on-arrival; customer not an Aurora Plus member"
+    precedence_rank: 6
+    boundary:
+      dimension: days_since_delivery
+      points:
+        - {value: 13, expected: eligible}
+        - {value: 14, expected: eligible}
+        - {value: 15, expected: not_eligible}
+
+  - id: rma_dispatch_deadline
+    name: Deadline to hand parcel to carrier after RMA issued
+    value: 5
+    unit: days
+    status: active
+    effective_from: 2026-01-01
+    doc: returns-and-refunds.md
+    section: "§2.3"
+    doc_version: "4.0"
+    applies_when: "any return, after RMA issued"
+    boundary:
+      dimension: days_since_rma
+      points:
+        - {value: 4, expected: rma_valid}
+        - {value: 5, expected: rma_valid}
+        - {value: 6, expected: rma_expired}
+
+  - id: restocking_fee_opened
+    name: Restocking fee, opened but resalable
+    value: 15
+    unit: percent
+    status: active
+    effective_from: 2026-01-01
+    supersedes: {value: 20, unit: percent, doc_version: "3.2", effective_until: 2025-12-31}
+    doc: returns-and-refunds.md
+    section: "§3.2"
+    doc_version: "4.0"
+    applies_when: "return accepted; item opened/unsealed; item resalable; not defective, not damaged, not wrong item"
+    basis: price_actually_paid
+
+  - id: restocking_fee_sealed
+    name: Restocking fee, unopened with seal intact
+    value: 0
+    unit: percent
+    status: active
+    effective_from: 2026-01-01
+    doc: returns-and-refunds.md
+    section: "§3.3"
+    doc_version: "4.0"
+    applies_when: "return accepted; manufacturer seal intact"
+
+  - id: free_return_label_threshold
+    name: Order total at or above which the return label is free
+    value: 150.00
+    unit: AZN
+    status: active
+    effective_from: 2026-01-01
+    supersedes: {value: null, note: "under v3.2 return labels were free at any order value", doc_version: "3.2", effective_until: 2025-12-31}
+    doc: returns-and-refunds.md
+    section: "§4.1"
+    doc_version: "4.0"
+    applies_when: "domestic return; customer-initiated (not defective/wrong item)"
+    boundary:
+      dimension: order_total_azn
+      points:
+        - {value: 149.99, expected: label_fee_charged}
+        - {value: 150.00, expected: label_free}
+        - {value: 150.01, expected: label_free}
+
+  - id: return_label_fee
+    name: Return label fee below the free threshold
+    value: 9.90
+    unit: AZN
+    status: active
+    effective_from: 2026-01-01
+    doc: returns-and-refunds.md
+    section: "§4.2"
+    doc_version: "4.0"
+    applies_when: "domestic return; order total below 150.00 AZN; customer-initiated"
+
+  - id: freight_return_weight_threshold
+    name: Weight above which a return is collected as freight
+    value: 20.0
+    unit: kg
+    status: active
+    effective_from: 2026-01-01
+    doc: returns-and-refunds.md
+    section: "§4.3"
+    doc_version: "4.0"
+    applies_when: "domestic return; strictly above the threshold triggers freight"
+    boundary:
+      dimension: shipping_weight_kg
+      points:
+        - {value: 19.9, expected: parcel_return}
+        - {value: 20.0, expected: parcel_return}
+        - {value: 20.1, expected: freight_return}
+
+  - id: freight_return_fee
+    name: Freight collection fee for heavy returns
+    value: 45.00
+    unit: AZN
+    status: active
+    effective_from: 2026-01-01
+    doc: returns-and-refunds.md
+    section: "§4.3"
+    doc_version: "4.0"
+    applies_when: "domestic return; shipping weight above 20.0 kg"
+
+  - id: transit_damage_report_window
+    name: Deadline to report transit damage or missing items (domestic)
+    value: 7
+    unit: days
+    status: active
+    effective_from: 2026-01-01
+    supersedes: {value: 14, unit: days, doc_version: "3.2", effective_until: 2025-12-31}
+    doc: returns-and-refunds.md
+    section: "§5.1"
+    doc_version: "4.0"
+    applies_when: "domestic delivery; damage visible on arrival, missing item, or parcel opened in transit"
+    precedence_rank: 2
+    note: "Separate obligation from the return window. Numerically equal to return_window_promotional but semantically unrelated."
+    boundary:
+      dimension: days_since_delivery
+      points:
+        - {value: 6, expected: transit_claim_accepted}
+        - {value: 7, expected: transit_claim_accepted}
+        - {value: 8, expected: handled_as_warranty_claim}
+
+  - id: warehouse_inspection_days
+    name: Inspection time after returned goods arrive
+    value: 3
+    unit: business_days
+    status: active
+    effective_from: 2026-01-01
+    doc: returns-and-refunds.md
+    section: "§7.2"
+    doc_version: "4.0"
+    applies_when: "returned goods received at warehouse"
+
+  # ==========================================================================
+  # shipping-and-delivery.md  (AG-POL-SHP v2.3)
+  # ==========================================================================
+  - id: dispatch_cutoff_time
+    name: Same-day dispatch cut-off
+    value: "14:00"
+    unit: time_of_day
+    timezone: Asia/Baku
+    status: active
+    effective_from: 2026-04-01
+    supersedes: {value: "16:00", unit: time_of_day, doc_version: "2.2", effective_until: 2026-03-31}
+    doc: shipping-and-delivery.md
+    section: "§2.1"
+    doc_version: "2.3"
+    applies_when: "domestic order; confirmed on a business day; at-or-before the cut-off dispatches same day"
+    boundary:
+      dimension: confirmation_time_local
+      points:
+        - {value: "13:59", expected: same_business_day}
+        - {value: "14:00", expected: same_business_day}
+        - {value: "14:01", expected: next_business_day}
+
+  - id: free_shipping_threshold_domestic
+    name: Order total at or above which domestic standard shipping is free
+    value: 100.00
+    unit: AZN
+    status: active
+    effective_from: 2026-04-01
+    supersedes: {value: 75.00, unit: AZN, doc_version: "2.2", effective_until: 2026-03-31}
+    doc: shipping-and-delivery.md
+    section: "§4.1"
+    doc_version: "2.3"
+    applies_when: "domestic delivery; standard shipping; customer is not an Aurora Plus member"
+    boundary:
+      dimension: order_total_azn
+      points:
+        - {value: 99.99, expected: shipping_charged}
+        - {value: 100.00, expected: shipping_free}
+        - {value: 100.01, expected: shipping_free}
+
+  - id: standard_shipping_fee
+    name: Flat domestic standard shipping fee below the free threshold
+    value: 5.90
+    unit: AZN
+    status: active
+    effective_from: 2026-04-01
+    doc: shipping-and-delivery.md
+    section: "§4.2"
+    doc_version: "2.3"
+    applies_when: "domestic; standard shipping; order total below 100.00 AZN; not an Aurora Plus member"
+
+  - id: express_fee_zone1
+    name: Express delivery fee, Zone 1
+    value: 12.00
+    unit: AZN
+    status: active
+    effective_from: 2026-04-01
+    doc: shipping-and-delivery.md
+    section: "§4.3"
+    doc_version: "2.3"
+    applies_when: "domestic Zone 1 express; charged regardless of order value and regardless of Aurora Plus"
+
+  - id: express_fee_zone2
+    name: Express delivery fee, Zone 2
+    value: 19.00
+    unit: AZN
+    status: active
+    effective_from: 2026-04-01
+    doc: shipping-and-delivery.md
+    section: "§4.3"
+    doc_version: "2.3"
+    applies_when: "domestic Zone 2 express; not available in Zone 3"
+
+  - id: heavy_item_surcharge_weight
+    name: Domestic weight above which the heavy-item surcharge applies
+    value: 30.0
+    unit: kg
+    status: active
+    effective_from: 2026-04-01
+    doc: shipping-and-delivery.md
+    section: "§4.4"
+    doc_version: "2.3"
+    applies_when: "domestic outbound parcel; strictly above the threshold is surcharged"
+    boundary:
+      dimension: shipping_weight_kg
+      points:
+        - {value: 29.9, expected: no_surcharge}
+        - {value: 30.0, expected: no_surcharge}
+        - {value: 30.1, expected: surcharge_applies}
+
+  - id: heavy_item_surcharge_fee
+    name: Heavy-item surcharge
+    value: 25.00
+    unit: AZN
+    status: active
+    effective_from: 2026-04-01
+    doc: shipping-and-delivery.md
+    section: "§4.4"
+    doc_version: "2.3"
+    applies_when: "domestic outbound parcel above 30.0 kg"
+
+  - id: signature_required_threshold
+    name: Order total above which an adult signature is required
+    value: 750.00
+    unit: AZN
+    status: active
+    effective_from: 2026-04-01
+    doc: shipping-and-delivery.md
+    section: "§5.1"
+    doc_version: "2.3"
+    applies_when: "domestic delivery; strictly above the threshold requires signature"
+    boundary:
+      dimension: order_total_azn
+      points:
+        - {value: 749.99, expected: signature_optional}
+        - {value: 750.00, expected: signature_optional}
+        - {value: 750.01, expected: signature_required}
+
+  - id: delivery_attempts
+    name: Carrier delivery attempts before depot hold
+    value: 3
+    unit: attempts
+    status: active
+    effective_from: 2026-04-01
+    doc: shipping-and-delivery.md
+    section: "§6.1"
+    doc_version: "2.3"
+    applies_when: "domestic delivery"
+    boundary:
+      dimension: attempt_number
+      points:
+        - {value: 2, expected: will_attempt_again}
+        - {value: 3, expected: last_attempt}
+        - {value: 4, expected: no_further_attempt_parcel_at_depot}
+
+  - id: depot_hold_days
+    name: Depot hold period after final failed attempt
+    value: 5
+    unit: days
+    status: active
+    effective_from: 2026-04-01
+    doc: shipping-and-delivery.md
+    section: "§6.2"
+    doc_version: "2.3"
+    applies_when: "domestic delivery; after third failed attempt"
+    boundary:
+      dimension: days_since_final_attempt
+      points:
+        - {value: 4, expected: collectable}
+        - {value: 5, expected: collectable}
+        - {value: 6, expected: returned_to_warehouse}
+
+  - id: address_change_fee_post_dispatch
+    name: Address change fee after dispatch, same zone
+    value: 7.00
+    unit: AZN
+    status: active
+    effective_from: 2026-04-01
+    doc: shipping-and-delivery.md
+    section: "§7.2"
+    doc_version: "2.3"
+    applies_when: "domestic; after dispatch; destination stays inside the same zone"
+
+  - id: sla_zone1_standard
+    name: Zone 1 standard delivery estimate
+    value: [1, 2]
+    unit: business_days_from_dispatch
+    status: active
+    effective_from: 2026-04-01
+    doc: shipping-and-delivery.md
+    section: "§3.1"
+    doc_version: "2.3"
+    applies_when: "Baku and Absheron peninsula; standard service"
+
+  - id: sla_zone2_standard
+    name: Zone 2 standard delivery estimate
+    value: [2, 4]
+    unit: business_days_from_dispatch
+    status: active
+    effective_from: 2026-04-01
+    doc: shipping-and-delivery.md
+    section: "§3.1"
+    doc_version: "2.3"
+    applies_when: "Ganja, Sumgait, Mingachevir, Shirvan, Lankaran, Sheki, Nakhchivan city; standard service"
+
+  - id: sla_zone3_standard
+    name: Zone 3 standard delivery estimate
+    value: [4, 7]
+    unit: business_days_from_dispatch
+    status: active
+    effective_from: 2026-04-01
+    doc: shipping-and-delivery.md
+    section: "§3.1"
+    doc_version: "2.3"
+    applies_when: "all other domestic settlements; express not available"
+
+  - id: delay_declaration_days
+    name: Business days past the SLA upper bound before a parcel counts as delayed
+    value: 3
+    unit: business_days
+    status: active
+    effective_from: 2026-04-01
+    doc: shipping-and-delivery.md
+    section: "§3.2"
+    doc_version: "2.3"
+    applies_when: "domestic delivery, any zone"
+
+  - id: tracking_number_issue_hours
+    name: Time from dispatch to tracking number availability
+    value: 4
+    unit: hours
+    status: active
+    effective_from: 2026-04-01
+    doc: shipping-and-delivery.md
+    section: "§8.1"
+    doc_version: "2.3"
+    applies_when: "any dispatched order"
+
+  # ==========================================================================
+  # warranty-policy.md  (AG-POL-WAR v3.1)
+  # ==========================================================================
+  - id: warranty_standard_months
+    name: Standard warranty, third-party brands
+    value: 12
+    unit: months
+    status: active
+    effective_from: 2026-02-01
+    doc: warranty-policy.md
+    section: "§2.1"
+    doc_version: "3.1"
+    applies_when: "third-party branded product; customer had no active Aurora Plus at purchase; component is not a consumable"
+    version_governed_by: delivery_date
+    boundary:
+      dimension: months_since_delivery
+      points:
+        - {value: 11, expected: in_warranty}
+        - {value: 12, expected: in_warranty}
+        - {value: 13, expected: out_of_warranty}
+
+  - id: warranty_aurora_brand_months
+    name: Warranty on Aurora-branded products
+    value: 24
+    unit: months
+    status: active
+    effective_from: 2026-02-01
+    supersedes: {value: 18, unit: months, doc_version: "3.0", effective_until: 2026-01-31}
+    doc: warranty-policy.md
+    section: "§2.2"
+    doc_version: "3.1"
+    applies_when: "brand in [Aurora, Aurora Home, Aurora Studio]; no Aurora Plus at purchase; component is not a consumable. DELIVERED ON OR AFTER 2026-02-01 — earlier deliveries carry the v3.0 period of 18 months."
+    version_governed_by: delivery_date
+    boundary:
+      dimension: months_since_delivery
+      points:
+        - {value: 23, expected: in_warranty}
+        - {value: 24, expected: in_warranty}
+        - {value: 25, expected: out_of_warranty}
+
+  - id: warranty_plus_extension_months
+    name: Aurora Plus warranty extension
+    value: 6
+    unit: months
+    status: active
+    effective_from: 2026-02-01
+    supersedes: {value: 0, unit: months, doc_version: "3.0", effective_until: 2026-01-31}
+    doc: warranty-policy.md
+    section: "§2.3"
+    doc_version: "3.1"
+    cross_reference: account-and-membership.md §4.2
+    applies_when: "Aurora Plus active on the order date; delivered on or after 2026-02-01; added to §2.1 or §2.2; NOT added to consumables"
+    version_governed_by: delivery_date
+    derived_totals:
+      third_party_with_plus_months: 18
+      aurora_brand_with_plus_months: 30
+
+  - id: warranty_consumable_months
+    name: Warranty on consumable components
+    value: 6
+    unit: months
+    status: active
+    effective_from: 2026-02-01
+    doc: warranty-policy.md
+    section: "§2.4"
+    doc_version: "3.1"
+    applies_when: "component in [rechargeable battery, filter, brush head, printer cartridge, lamp]; overrides headline warranty; never extended by Aurora Plus"
+    boundary:
+      dimension: months_since_delivery
+      points:
+        - {value: 5, expected: in_warranty}
+        - {value: 6, expected: in_warranty}
+        - {value: 7, expected: out_of_warranty}
+
+  - id: battery_capacity_normal_percent
+    name: Retained battery capacity still considered normal performance
+    value: 80
+    unit: percent
+    status: active
+    effective_from: 2026-02-01
+    doc: warranty-policy.md
+    section: "§4.2"
+    doc_version: "3.1"
+    applies_when: "battery capacity claim; at or above the threshold is not a defect"
+    boundary:
+      dimension: retained_capacity_percent
+      points:
+        - {value: 79, expected: defect_claim_valid}
+        - {value: 80, expected: performing_normally}
+        - {value: 81, expected: performing_normally}
+
+  - id: warranty_claim_response_days
+    name: Response time to a submitted warranty claim
+    value: 3
+    unit: business_days
+    status: active
+    effective_from: 2026-02-01
+    doc: warranty-policy.md
+    section: "§5.2"
+    doc_version: "3.1"
+    applies_when: "warranty claim submitted"
+
+  - id: warranty_assessment_days
+    name: Service-centre assessment time from receipt
+    value: 10
+    unit: business_days
+    status: active
+    effective_from: 2026-02-01
+    doc: warranty-policy.md
+    section: "§5.3"
+    doc_version: "3.1"
+    applies_when: "accepted warranty claim; item received at service centre"
+
+  - id: warranty_after_repair_min_months
+    name: Minimum warranty on a repaired or replaced product
+    value: 3
+    unit: months
+    status: active
+    effective_from: 2026-02-01
+    doc: warranty-policy.md
+    section: "§5.4"
+    doc_version: "3.1"
+    applies_when: "after repair or replacement; the longer of the original remainder and 3 months"
+
+  - id: warranty_diagnostic_fee
+    name: Out-of-warranty diagnostic fee
+    value: 25.00
+    unit: AZN
+    status: active
+    effective_from: 2026-02-01
+    supersedes: {value: 15.00, unit: AZN, doc_version: "3.0", effective_until: 2026-01-31}
+    doc: warranty-policy.md
+    section: "§6.2"
+    doc_version: "3.1"
+    applies_when: "product outside warranty; waived if the repair quotation is accepted"
+
+  # ==========================================================================
+  # payments-and-billing.md  (AG-POL-PAY v1.9)
+  # ==========================================================================
+  - id: cod_max_order_value
+    name: Maximum order total eligible for cash on delivery
+    value: 500.00
+    unit: AZN
+    status: active
+    effective_from: 2026-05-01
+    supersedes: {value: 300.00, unit: AZN, doc_version: "1.8", effective_until: 2026-04-30}
+    doc: payments-and-billing.md
+    section: "§2.2"
+    doc_version: "1.9"
+    applies_when: "domestic delivery only; at or below the value COD is available"
+    boundary:
+      dimension: order_total_azn
+      points:
+        - {value: 499.99, expected: cod_available}
+        - {value: 500.00, expected: cod_available}
+        - {value: 500.01, expected: cod_not_available}
+
+  - id: cod_handling_fee
+    name: Cash on delivery handling fee
+    value: 3.00
+    unit: AZN
+    status: active
+    effective_from: 2026-05-01
+    doc: payments-and-billing.md
+    section: "§2.4"
+    doc_version: "1.9"
+    applies_when: "COD order"
+
+  - id: auth_hold_release_days
+    name: Issuer authorisation hold release period
+    value: 7
+    unit: days
+    status: active
+    effective_from: 2026-05-01
+    doc: payments-and-billing.md
+    section: "§3.3"
+    doc_version: "1.9"
+    applies_when: "card order cancelled before dispatch; period is controlled by the issuer, not by Aurora Goods"
+
+  - id: instalment_min_order_value
+    name: Minimum order value for interest-free instalments
+    value: 200.00
+    unit: AZN
+    status: active
+    effective_from: 2026-05-01
+    supersedes: {value: 150.00, unit: AZN, doc_version: "1.8", effective_until: 2026-04-30}
+    doc: payments-and-billing.md
+    section: "§4.1"
+    doc_version: "1.9"
+    applies_when: "card issued by a partner bank in Azerbaijan; not COD"
+    boundary:
+      dimension: order_total_azn
+      points:
+        - {value: 199.99, expected: instalments_unavailable}
+        - {value: 200.00, expected: instalments_available}
+        - {value: 200.01, expected: instalments_available}
+
+  - id: instalment_terms_months
+    name: Available instalment terms
+    value: [3, 6, 12]
+    unit: months
+    status: active
+    effective_from: 2026-05-01
+    supersedes: {value: [3, 6], unit: months, doc_version: "1.8", effective_until: 2026-04-30}
+    doc: payments-and-billing.md
+    section: "§4.1"
+    doc_version: "1.9"
+    applies_when: "order at or above 200.00 AZN on a partner-bank card"
+
+  - id: instalment_reversal_days
+    name: Bank reversal time for future instalments after a refund
+    value: 10
+    unit: business_days
+    status: active
+    effective_from: 2026-05-01
+    doc: payments-and-billing.md
+    section: "§4.3"
+    doc_version: "1.9"
+    applies_when: "instalment order refunded"
+
+  - id: recurring_retry_attempts
+    name: Retry attempts for a declined recurring charge
+    value: 3
+    unit: attempts
+    status: active
+    effective_from: 2026-05-01
+    doc: payments-and-billing.md
+    section: "§5.1"
+    doc_version: "1.9"
+    applies_when: "Aurora Plus renewal charge declined"
+    boundary:
+      dimension: failed_attempt_number
+      points:
+        - {value: 2, expected: will_retry_again}
+        - {value: 3, expected: final_retry}
+        - {value: 4, expected: membership_suspended}
+
+  - id: recurring_retry_interval_hours
+    name: Interval between recurring-charge retries
+    value: 24
+    unit: hours
+    status: active
+    effective_from: 2026-05-01
+    doc: payments-and-billing.md
+    section: "§5.1"
+    doc_version: "1.9"
+    applies_when: "Aurora Plus renewal charge declined"
+
+  - id: unpaid_order_cancel_hours
+    name: Time an unpaid one-off order is held before cancellation
+    value: 48
+    unit: hours
+    status: active
+    effective_from: 2026-05-01
+    doc: payments-and-billing.md
+    section: "§5.3"
+    doc_version: "1.9"
+    applies_when: "one-off order; payment not completed; no automatic retry"
+    boundary:
+      dimension: hours_since_order
+      points:
+        - {value: 47, expected: order_still_held}
+        - {value: 48, expected: order_still_held}
+        - {value: 49, expected: order_cancelled_stock_released}
+
+  - id: refund_submission_days
+    name: Time from refund approval to submission to the payment provider
+    value: 1
+    unit: business_days
+    status: active
+    effective_from: 2026-05-01
+    doc: payments-and-billing.md
+    section: "§6.2"
+    doc_version: "1.9"
+    applies_when: "refund approved"
+
+  - id: refund_card_business_days
+    name: Card refund arrival time after submission
+    value: [5, 10]
+    unit: business_days
+    status: active
+    effective_from: 2026-05-01
+    doc: payments-and-billing.md
+    section: "§6.2"
+    doc_version: "1.9"
+    applies_when: "original payment method was Visa/Mastercard, Apple Pay, or Google Pay"
+
+  - id: refund_bank_transfer_days
+    name: Bank transfer and COD refund arrival time after submission
+    value: [3, 5]
+    unit: business_days
+    status: active
+    effective_from: 2026-05-01
+    doc: payments-and-billing.md
+    section: "§6.2"
+    doc_version: "1.9"
+    applies_when: "original payment method was bank transfer or COD; COD requires an IBAN from the customer"
+
+  - id: refund_store_credit_hours
+    name: Store credit refund issuance time
+    value: 24
+    unit: hours
+    status: active
+    effective_from: 2026-05-01
+    doc: payments-and-billing.md
+    section: "§6.2"
+    doc_version: "1.9"
+    applies_when: "customer chooses store credit instead of the original method"
+
+  - id: store_credit_bonus_percent
+    name: Bonus applied when a refund is taken as store credit
+    value: 5
+    unit: percent
+    status: active
+    effective_from: 2026-05-01
+    supersedes: {value: 0, unit: percent, doc_version: "1.8", effective_until: 2026-04-30}
+    doc: payments-and-billing.md
+    section: "§6.3"
+    doc_version: "1.9"
+    applies_when: "refund taken as store credit; store credit does not expire"
+
+  - id: receipt_retention_years
+    name: Period receipts remain downloadable
+    value: 5
+    unit: years
+    status: active
+    effective_from: 2026-05-01
+    doc: payments-and-billing.md
+    section: "§7.2"
+    doc_version: "1.9"
+    cross_reference: privacy-and-data.md §5
+    applies_when: "any order; anchored on the order date"
+
+  - id: chargeback_resolution_days
+    name: Typical issuer chargeback resolution period
+    value: 45
+    unit: days
+    status: active
+    effective_from: 2026-05-01
+    doc: payments-and-billing.md
+    section: "§8.2"
+    doc_version: "1.9"
+    applies_when: "chargeback opened; order frozen, no return/refund/warranty action possible meanwhile"
+
+  # ==========================================================================
+  # account-and-membership.md  (AG-POL-ACC v2.0)
+  # ==========================================================================
+  - id: password_min_length
+    name: Minimum account password length
+    value: 10
+    unit: characters
+    status: active
+    effective_from: 2026-03-01
+    doc: account-and-membership.md
+    section: "§1.1"
+    doc_version: "2.0"
+    applies_when: "account creation or password change"
+    boundary:
+      dimension: password_length
+      points:
+        - {value: 9, expected: rejected}
+        - {value: 10, expected: accepted}
+        - {value: 11, expected: accepted}
+
+  - id: lockout_failed_attempts
+    name: Failed sign-in attempts before lockout
+    value: 5
+    unit: attempts
+    status: active
+    effective_from: 2026-03-01
+    supersedes: {value: 3, unit: attempts, doc_version: "1.7", effective_until: 2026-02-28}
+    doc: account-and-membership.md
+    section: "§1.2"
+    doc_version: "2.0"
+    applies_when: "consecutive failed sign-in attempts"
+    boundary:
+      dimension: consecutive_failures
+      points:
+        - {value: 4, expected: account_open}
+        - {value: 5, expected: account_locked}
+        - {value: 6, expected: account_locked}
+
+  - id: lockout_duration_minutes
+    name: Account lockout duration
+    value: 30
+    unit: minutes
+    status: active
+    effective_from: 2026-03-01
+    doc: account-and-membership.md
+    section: "§1.2"
+    doc_version: "2.0"
+    applies_when: "after lockout threshold reached"
+
+  - id: password_reset_link_hours
+    name: Password reset link validity
+    value: 24
+    unit: hours
+    status: active
+    effective_from: 2026-03-01
+    doc: account-and-membership.md
+    section: "§1.3"
+    doc_version: "2.0"
+    applies_when: "reset link issued; single use"
+
+  - id: plus_annual_fee
+    name: Aurora Plus annual membership fee
+    value: 49.00
+    unit: AZN
+    status: active
+    effective_from: 2026-03-01
+    supersedes: {value: 39.00, unit: AZN, doc_version: "1.7", effective_until: 2026-02-28}
+    doc: account-and-membership.md
+    section: "§2.1"
+    doc_version: "2.0"
+    applies_when: "charged annually in advance; existing members moved to the new fee at their next renewal"
+
+  - id: plus_trial_days
+    name: Aurora Plus free trial length
+    value: 30
+    unit: days
+    status: active
+    effective_from: 2026-03-01
+    supersedes: {value: 14, unit: days, doc_version: "1.7", effective_until: 2026-02-28}
+    doc: account-and-membership.md
+    section: "§2.2"
+    doc_version: "2.0"
+    applies_when: "first-time member, or a member who last held membership more than 12 months ago"
+
+  - id: return_window_plus_member
+    name: Aurora Plus extended return window
+    value: 30
+    unit: days
+    status: active
+    effective_from: 2026-03-01
+    supersedes: {value: 45, unit: days, doc_version: "1.7", effective_until: 2026-02-28}
+    doc: account-and-membership.md
+    section: "§3.1"
+    doc_version: "2.0"
+    applies_when: "domestic delivery; Aurora Plus active on the order date; item not promotional, not clearance, not non-returnable"
+    precedence_rank: 5
+    note: "Numerically equal to the SUPERSEDED standard window (30 days, v3.2). Distinguishing these two is the core R6 test."
+    boundary:
+      dimension: days_since_delivery
+      points:
+        - {value: 29, expected: eligible}
+        - {value: 30, expected: eligible}
+        - {value: 31, expected: not_eligible}
+
+  - id: plus_free_shipping_minimum
+    name: Minimum order value for free standard shipping, Aurora Plus members
+    value: 0.00
+    unit: AZN
+    status: active
+    effective_from: 2026-03-01
+    doc: account-and-membership.md
+    section: "§4.1"
+    doc_version: "2.0"
+    cross_reference: shipping-and-delivery.md §4.5
+    applies_when: "domestic standard shipping; Aurora Plus active. Replaces free_shipping_threshold_domestic. Express charges still apply. Does NOT apply internationally."
+
+  - id: plus_early_access_hours
+    name: Member early access to campaigns
+    value: 24
+    unit: hours
+    status: active
+    effective_from: 2026-03-01
+    doc: account-and-membership.md
+    section: "§4.3"
+    doc_version: "2.0"
+    applies_when: "seasonal campaign release"
+
+  - id: plus_full_refund_window_days
+    name: Window for a full refund of the membership fee
+    value: 14
+    unit: days
+    status: active
+    effective_from: 2026-03-01
+    doc: account-and-membership.md
+    section: "§5.1"
+    doc_version: "2.0"
+    applies_when: "membership cancelled; NO member benefit used since the charge date"
+    boundary:
+      dimension: days_since_charge
+      points:
+        - {value: 13, expected: full_refund_if_no_benefit_used}
+        - {value: 14, expected: full_refund_if_no_benefit_used}
+        - {value: 15, expected: prorated_refund_only}
+
+  - id: plus_prorated_refund_unit
+    name: Pro-rata refund unit after the full-refund window
+    value: whole_unused_months
+    unit: enum
+    status: active
+    effective_from: 2026-03-01
+    doc: account-and-membership.md
+    section: "§5.2"
+    doc_version: "2.0"
+    applies_when: "membership cancelled after day 14; partial months are not refunded"
+
+  - id: plus_reinstate_days
+    name: Period to reinstate a suspended membership without a new sign-up
+    value: 30
+    unit: days
+    status: active
+    effective_from: 2026-03-01
+    doc: account-and-membership.md
+    section: "§6.2"
+    doc_version: "2.0"
+    applies_when: "membership suspended for non-payment"
+    boundary:
+      dimension: days_since_suspension
+      points:
+        - {value: 29, expected: reinstatable}
+        - {value: 30, expected: reinstatable}
+        - {value: 31, expected: closed_new_signup_required}
+
+  - id: plus_retrial_block_months
+    name: Period after cancellation during which no new free trial is granted
+    value: 12
+    unit: months
+    status: active
+    effective_from: 2026-03-01
+    doc: account-and-membership.md
+    section: "§5.4"
+    doc_version: "2.0"
+    applies_when: "membership cancelled and re-taken"
+
+  - id: store_credit_retention_on_close_months
+    name: Store credit retention after account closure without written forfeiture
+    value: 12
+    unit: months
+    status: active
+    effective_from: 2026-03-01
+    doc: account-and-membership.md
+    section: "§7.2"
+    doc_version: "2.0"
+    applies_when: "account closed; customer has NOT confirmed forfeiture in writing"
+
+  # ==========================================================================
+  # privacy-and-data.md  (AG-POL-PRV v1.4)
+  # ==========================================================================
+  - id: data_export_hours
+    name: Personal data export delivery time
+    value: 72
+    unit: hours
+    status: active
+    effective_from: 2026-01-01
+    supersedes: {value: 30, unit: days, doc_version: "1.3", effective_until: 2025-12-31}
+    doc: privacy-and-data.md
+    section: "§2.2"
+    doc_version: "1.4"
+    applies_when: "export requested; delivered to the account email address only"
+
+  - id: erasure_grace_period_days
+    name: Cancellable grace period on an erasure request
+    value: 14
+    unit: days
+    status: active
+    effective_from: 2026-01-01
+    supersedes: {value: 0, unit: days, doc_version: "1.3", effective_until: 2025-12-31}
+    doc: privacy-and-data.md
+    section: "§3.2"
+    doc_version: "1.4"
+    applies_when: "erasure requested and no order/return/warranty/chargeback is open"
+    boundary:
+      dimension: days_since_request
+      points:
+        - {value: 13, expected: cancellable}
+        - {value: 14, expected: cancellable}
+        - {value: 15, expected: not_cancellable_erasure_in_progress}
+
+  - id: erasure_completion_days
+    name: Erasure completion time after the grace period ends
+    value: 30
+    unit: days
+    status: active
+    effective_from: 2026-01-01
+    supersedes: {value: 90, unit: days, doc_version: "1.3", effective_until: 2025-12-31}
+    doc: privacy-and-data.md
+    section: "§3.3"
+    doc_version: "1.4"
+    applies_when: "grace period elapsed"
+
+  - id: erasure_total_max_days
+    name: Maximum total elapsed time from erasure request to completion
+    value: 44
+    unit: days
+    status: active
+    derived_from: [erasure_grace_period_days, erasure_completion_days]
+    effective_from: 2026-01-01
+    doc: privacy-and-data.md
+    section: "§3.3"
+    doc_version: "1.4"
+    applies_when: "no open order, return, warranty claim, or chargeback delays the start"
+
+  - id: retention_accounting_years
+    name: Retention of accounting and transaction records
+    value: 5
+    unit: years
+    status: active
+    effective_from: 2026-01-01
+    doc: privacy-and-data.md
+    section: "§5"
+    doc_version: "1.4"
+    applies_when: "always; overrides an erasure request (§4.3)"
+
+  - id: retention_support_months
+    name: Retention of support transcripts and call notes
+    value: 24
+    unit: months
+    status: active
+    effective_from: 2026-01-01
+    supersedes: {value: 36, unit: months, doc_version: "1.3", effective_until: 2025-12-31}
+    doc: privacy-and-data.md
+    section: "§5"
+    doc_version: "1.4"
+    applies_when: "anchored on last contact"
+
+  - id: retention_technical_months
+    name: Retention of technical and interaction events
+    value: 13
+    unit: months
+    status: active
+    effective_from: 2026-01-01
+    doc: privacy-and-data.md
+    section: "§5"
+    doc_version: "1.4"
+    applies_when: "anchored on collection"
+
+  - id: retention_marketing_consent_years
+    name: Retention of marketing consent records
+    value: 3
+    unit: years
+    status: active
+    effective_from: 2026-01-01
+    doc: privacy-and-data.md
+    section: "§5"
+    doc_version: "1.4"
+    applies_when: "anchored on withdrawal"
+
+  - id: inactive_account_closure_months
+    name: Inactivity period before an order-less account is closed
+    value: 24
+    unit: months
+    status: active
+    effective_from: 2026-01-01
+    doc: privacy-and-data.md
+    section: "§5"
+    doc_version: "1.4"
+    applies_when: "account has no orders"
+
+  - id: marketing_withdrawal_hours
+    name: Time for a marketing consent withdrawal to take effect
+    value: 48
+    unit: hours
+    status: active
+    effective_from: 2026-01-01
+    doc: privacy-and-data.md
+    section: "§6.2"
+    doc_version: "1.4"
+    applies_when: "marketing consent withdrawn; queued messages may still be delivered inside the window"
+
+  - id: dpo_response_days
+    name: Substantive response time to a written data protection enquiry
+    value: 30
+    unit: days
+    status: active
+    effective_from: 2026-01-01
+    doc: privacy-and-data.md
+    section: "§8.1"
+    doc_version: "1.4"
+    applies_when: "written enquiry to the data protection officer"
+
+  # ==========================================================================
+  # promotions-and-price-match.md  (AG-POL-PRM v5.2)
+  # ==========================================================================
+  - id: promotional_discount_threshold_percent
+    name: Discount at or above which an item counts as promotional
+    value: 30
+    unit: percent
+    status: active
+    effective_from: 2026-06-01
+    supersedes: {value: 25, unit: percent, doc_version: "5.1", effective_until: 2026-05-31}
+    doc: promotions-and-price-match.md
+    section: "§1.1"
+    doc_version: "5.2"
+    applies_when: "discount off list price at the moment of purchase; also promotional if a promo code was used, if part of a named campaign, or if a below-list bundle component"
+    boundary:
+      dimension: discount_percent
+      points:
+        - {value: 29, expected: not_promotional}
+        - {value: 30, expected: promotional}
+        - {value: 31, expected: promotional}
+
+  - id: return_window_promotional
+    name: Return window for promotional items
+    value: 7
+    unit: days
+    status: active
+    effective_from: 2026-06-01
+    supersedes: {value: 10, unit: days, doc_version: "5.1", effective_until: 2026-05-31}
+    doc: promotions-and-price-match.md
+    section: "§2.1"
+    doc_version: "5.2"
+    applies_when: "item is promotional per §1.1; not clearance; not non-returnable; delivered domestically. Replaces both the 14-day standard window and the 30-day Aurora Plus window."
+    precedence_rank: 4
+    boundary:
+      dimension: days_since_delivery
+      points:
+        - {value: 6, expected: eligible}
+        - {value: 7, expected: eligible}
+        - {value: 8, expected: not_eligible}
+
+  - id: clearance_discount_threshold_percent
+    name: Discount at or above which an item is Clearance / Final Sale
+    value: 50
+    unit: percent
+    status: active
+    effective_from: 2026-06-01
+    doc: promotions-and-price-match.md
+    section: "§4.2"
+    doc_version: "5.2"
+    applies_when: "discount off list price, or explicit end-of-line flag by Commercial"
+    boundary:
+      dimension: discount_percent
+      points:
+        - {value: 49, expected: promotional_not_clearance}
+        - {value: 50, expected: clearance}
+        - {value: 51, expected: clearance}
+
+  - id: return_window_clearance
+    name: Return window for Clearance / Final Sale items
+    value: 0
+    unit: days
+    status: active
+    effective_from: 2026-06-01
+    doc: promotions-and-price-match.md
+    section: "§4.1"
+    doc_version: "5.2"
+    applies_when: "Clearance / Final Sale item; no return for any reason except a defect; overrides every other window"
+    precedence_rank: 1
+    note: "Warranty rights are unaffected (§4.4)."
+
+  - id: promo_codes_per_order
+    name: Promotional codes allowed per order
+    value: 1
+    unit: codes
+    status: active
+    effective_from: 2026-06-01
+    doc: promotions-and-price-match.md
+    section: "§3.1"
+    doc_version: "5.2"
+    applies_when: "any order; store credit and gift cards are payment methods and do not count as codes"
+
+  - id: price_match_window_days
+    name: Price match claim window
+    value: 14
+    unit: days
+    status: active
+    effective_from: 2026-06-01
+    doc: promotions-and-price-match.md
+    section: "§5.2"
+    doc_version: "5.2"
+    applies_when: "counted from the ORDER date, not the delivery date"
+    anchor: order_date
+    note: "Numerically equal to return_window_standard but anchored differently. A correct answer must state the anchor."
+    boundary:
+      dimension: days_since_order
+      points:
+        - {value: 13, expected: claim_accepted}
+        - {value: 14, expected: claim_accepted}
+        - {value: 15, expected: claim_rejected}
+
+  - id: price_match_cap
+    name: Maximum refund under a single price match claim
+    value: 200.00
+    unit: AZN
+    status: active
+    effective_from: 2026-06-01
+    supersedes: {value: 100.00, unit: AZN, doc_version: "5.1", effective_until: 2026-05-31}
+    doc: promotions-and-price-match.md
+    section: "§5.3"
+    doc_version: "5.2"
+    applies_when: "eligible price match claim"
+    boundary:
+      dimension: price_difference_azn
+      points:
+        - {value: 199.99, expected: refund_199_99}
+        - {value: 200.00, expected: refund_200_00}
+        - {value: 200.01, expected: refund_capped_at_200_00}
+
+  - id: price_match_payout_hours
+    name: Price match payout time as store credit
+    value: 24
+    unit: hours
+    status: active
+    effective_from: 2026-06-01
+    doc: promotions-and-price-match.md
+    section: "§5.5"
+    doc_version: "5.2"
+    applies_when: "claim approved and paid as store credit"
+
+  # ==========================================================================
+  # international-shipping.md  (AG-POL-INT v1.6)
+  # ==========================================================================
+  - id: return_window_international
+    name: Return window for international orders
+    value: 21
+    unit: days
+    status: active
+    effective_from: 2026-07-01
+    supersedes: {value: 14, unit: days, doc_version: "1.5", effective_until: 2026-06-30}
+    doc: international-shipping.md
+    section: "§5.1"
+    doc_version: "1.6"
+    applies_when: "delivery address outside Azerbaijan; replaces the domestic, Aurora Plus, and promotional windows; clearance and non-returnable categories still take precedence"
+    precedence_rank: 3
+    boundary:
+      dimension: days_since_delivery
+      points:
+        - {value: 20, expected: eligible}
+        - {value: 21, expected: eligible}
+        - {value: 22, expected: not_eligible}
+
+  - id: intl_max_parcel_weight_kg
+    name: Maximum international parcel weight
+    value: 30.0
+    unit: kg
+    status: active
+    effective_from: 2026-07-01
+    supersedes: {value: 20.0, unit: kg, doc_version: "1.5", effective_until: 2026-06-30}
+    doc: international-shipping.md
+    section: "§3.1"
+    doc_version: "1.6"
+    applies_when: "single international parcel; exactly 30.0 kg is accepted"
+    boundary:
+      dimension: shipping_weight_kg
+      points:
+        - {value: 29.9, expected: accepted}
+        - {value: 30.0, expected: accepted}
+        - {value: 30.1, expected: rejected_split_or_cancel}
+
+  - id: intl_max_declared_value
+    name: Maximum declared value per international parcel
+    value: 5000.00
+    unit: AZN
+    status: active
+    effective_from: 2026-07-01
+    doc: international-shipping.md
+    section: "§3.2"
+    doc_version: "1.6"
+    applies_when: "single international parcel"
+    boundary:
+      dimension: declared_value_azn
+      points:
+        - {value: 4999.99, expected: accepted}
+        - {value: 5000.00, expected: accepted}
+        - {value: 5000.01, expected: rejected}
+
+  - id: intl_ddp_threshold
+    name: Merchandise value at or above which Aurora Goods prepays duties (DDP)
+    value: 1000.00
+    unit: AZN
+    status: active
+    effective_from: 2026-07-01
+    supersedes: {value: null, note: "under v1.5 every international order was DDU; there was no DDP threshold", doc_version: "1.5", effective_until: 2026-06-30}
+    doc: international-shipping.md
+    section: "§4.2"
+    doc_version: "1.6"
+    applies_when: "international order; merchandise value excluding shipping"
+    boundary:
+      dimension: merchandise_value_azn
+      points:
+        - {value: 999.99, expected: ddu_customer_pays_duties}
+        - {value: 1000.00, expected: ddp_aurora_pays_duties}
+        - {value: 1000.01, expected: ddp_aurora_pays_duties}
+
+  - id: intl_free_shipping_available
+    name: Free international shipping
+    value: false
+    unit: boolean
+    status: active
+    effective_from: 2026-07-01
+    doc: international-shipping.md
+    section: "§4.1"
+    doc_version: "1.6"
+    applies_when: "always. There is no international equivalent of free_shipping_threshold_domestic, and plus_free_shipping_minimum does not apply outside Azerbaijan."
+
+  - id: intl_return_carriage_reimbursement_cap
+    name: Reimbursement cap for international return carriage on a defective item
+    value: 120.00
+    unit: AZN
+    status: active
+    effective_from: 2026-07-01
+    doc: international-shipping.md
+    section: "§5.3"
+    doc_version: "1.6"
+    applies_when: "international return; item defective, damaged in transit, or incorrectly shipped; documented carriage only. Customer-initiated returns are not reimbursed at all."
+
+  - id: intl_rma_arrival_days
+    name: Deadline for a returned international parcel to reach the warehouse
+    value: 30
+    unit: days
+    status: active
+    effective_from: 2026-07-01
+    doc: international-shipping.md
+    section: "§5.6"
+    doc_version: "1.6"
+    applies_when: "counted from RMA issuance"
+    boundary:
+      dimension: days_since_rma
+      points:
+        - {value: 29, expected: accepted}
+        - {value: 30, expected: accepted}
+        - {value: 31, expected: refused}
+
+  - id: intl_transit_damage_report_days
+    name: Transit damage reporting deadline, international orders
+    value: 14
+    unit: days
+    status: active
+    effective_from: 2026-07-01
+    doc: international-shipping.md
+    section: "§6.1"
+    doc_version: "1.6"
+    applies_when: "international delivery; replaces the 7-day domestic deadline"
+    note: "Numerically equal to the domestic standard return window (14 days) and to the SUPERSEDED domestic damage deadline (v3.2). Three different meanings, one number."
+    boundary:
+      dimension: days_since_delivery
+      points:
+        - {value: 13, expected: transit_claim_accepted}
+        - {value: 14, expected: transit_claim_accepted}
+        - {value: 15, expected: handled_as_warranty_claim}
+
+  - id: intl_transit_zone_a
+    name: Zone A international transit time
+    value: [5, 8]
+    unit: business_days_from_dispatch
+    status: active
+    effective_from: 2026-07-01
+    doc: international-shipping.md
+    section: "§2"
+    doc_version: "1.6"
+    applies_when: "Georgia, Türkiye, Kazakhstan, Russia; excludes time held in customs"
+
+  - id: intl_transit_zone_b
+    name: Zone B international transit time
+    value: [8, 14]
+    unit: business_days_from_dispatch
+    status: active
+    effective_from: 2026-07-01
+    doc: international-shipping.md
+    section: "§2"
+    doc_version: "1.6"
+    applies_when: "EU, United Kingdom, United Arab Emirates; excludes time held in customs"
+
+  - id: intl_transit_zone_c
+    name: Zone C international transit time
+    value: [14, 21]
+    unit: business_days_from_dispatch
+    status: active
+    effective_from: 2026-07-01
+    doc: international-shipping.md
+    section: "§2"
+    doc_version: "1.6"
+    applies_when: "all other served destinations; excludes time held in customs"
+
+  - id: intl_cod_available
+    name: Cash on delivery on international orders
+    value: false
+    unit: boolean
+    status: active
+    effective_from: 2026-07-01
+    doc: international-shipping.md
+    section: "§3.3"
+    doc_version: "1.6"
+    cross_reference: payments-and-billing.md §2.1
+    applies_when: "always"
+
+# ============================================================================
+# SUPERSEDED INDEX
+# ----------------------------------------------------------------------------
+# Every value that is present in the corpus but NO LONGER TRUE for an order
+# placed on or after the listed date. A grader uses these as `must_not_contain`
+# assertions. An agent quoting one of these is 100% faithful to its retrieved
+# context and 100% wrong — FAILURE-TAXONOMY.md R6 + §10 Boşluq 3.
+# ============================================================================
+superseded_index:
+  - {parameter: return_window_standard,            stale_value: 30,     unit: days,        doc: returns-and-refunds.md,        appendix: "Appendix A.1", not_true_from: 2026-01-01, trap: T-01}
+  - {parameter: restocking_fee_opened,             stale_value: 20,     unit: percent,     doc: returns-and-refunds.md,        appendix: "Appendix A.2", not_true_from: 2026-01-01, trap: T-02}
+  - {parameter: transit_damage_report_window,      stale_value: 14,     unit: days,        doc: returns-and-refunds.md,        appendix: "Appendix A.3", not_true_from: 2026-01-01, trap: T-03}
+  - {parameter: free_return_label_threshold,       stale_value: "free at any order value", doc: returns-and-refunds.md,        appendix: "Appendix A.4", not_true_from: 2026-01-01, trap: T-04}
+  - {parameter: dispatch_cutoff_time,              stale_value: "16:00", unit: time_of_day, doc: shipping-and-delivery.md,      appendix: "Appendix A.1", not_true_from: 2026-04-01, trap: T-05}
+  - {parameter: free_shipping_threshold_domestic,  stale_value: 75.00,  unit: AZN,         doc: shipping-and-delivery.md,      appendix: "Appendix A.2", not_true_from: 2026-04-01, trap: T-06}
+  - {parameter: warranty_aurora_brand_months,      stale_value: 18,     unit: months,      doc: warranty-policy.md,            appendix: "Appendix A.1", not_true_from: 2026-02-01, trap: T-07}
+  - {parameter: warranty_plus_extension_months,    stale_value: 0,      unit: months,      doc: warranty-policy.md,            appendix: "Appendix A.2", not_true_from: 2026-02-01, trap: T-08}
+  - {parameter: warranty_diagnostic_fee,           stale_value: 15.00,  unit: AZN,         doc: warranty-policy.md,            appendix: "Appendix A.3", not_true_from: 2026-02-01, trap: T-09}
+  - {parameter: cod_max_order_value,               stale_value: 300.00, unit: AZN,         doc: payments-and-billing.md,       appendix: "Appendix A.1", not_true_from: 2026-05-01, trap: T-10}
+  - {parameter: instalment_min_order_value,        stale_value: 150.00, unit: AZN,         doc: payments-and-billing.md,       appendix: "Appendix A.2", not_true_from: 2026-05-01, trap: T-11}
+  - {parameter: store_credit_bonus_percent,        stale_value: 0,      unit: percent,     doc: payments-and-billing.md,       appendix: "Appendix A.3", not_true_from: 2026-05-01, trap: T-12}
+  - {parameter: plus_annual_fee,                   stale_value: 39.00,  unit: AZN,         doc: account-and-membership.md,     appendix: "Appendix A.1", not_true_from: 2026-03-01, trap: T-13}
+  - {parameter: return_window_plus_member,         stale_value: 45,     unit: days,        doc: account-and-membership.md,     appendix: "Appendix A.2", not_true_from: 2026-03-01, trap: T-14}
+  - {parameter: plus_trial_days,                   stale_value: 14,     unit: days,        doc: account-and-membership.md,     appendix: "Appendix A.3", not_true_from: 2026-03-01, trap: T-15}
+  - {parameter: lockout_failed_attempts,           stale_value: 3,      unit: attempts,    doc: account-and-membership.md,     appendix: "Appendix A.4", not_true_from: 2026-03-01, trap: T-16}
+  - {parameter: instalment_terms_months,          stale_value: "3 and 6 months only",     doc: payments-and-billing.md,       appendix: "Appendix A.2", not_true_from: 2026-05-01, trap: T-26}
+  - {parameter: erasure_completion_days,           stale_value: 90,     unit: days,        doc: privacy-and-data.md,           appendix: "Appendix A.1", not_true_from: 2026-01-01, trap: T-17}
+  - {parameter: erasure_grace_period_days,         stale_value: "no grace period",         doc: privacy-and-data.md,           appendix: "Appendix A.1", not_true_from: 2026-01-01, trap: T-27}
+  - {parameter: retention_support_months,          stale_value: 36,     unit: months,      doc: privacy-and-data.md,           appendix: "Appendix A.2", not_true_from: 2026-01-01, trap: T-18}
+  - {parameter: data_export_hours,                 stale_value: 30,     unit: days,        doc: privacy-and-data.md,           appendix: "Appendix A.3", not_true_from: 2026-01-01, trap: T-19}
+  - {parameter: return_window_promotional,         stale_value: 10,     unit: days,        doc: promotions-and-price-match.md, appendix: "Appendix A.1", not_true_from: 2026-06-01, trap: T-20}
+  - {parameter: promotional_discount_threshold_percent, stale_value: 25, unit: percent,    doc: promotions-and-price-match.md, appendix: "Appendix A.2", not_true_from: 2026-06-01, trap: T-21}
+  - {parameter: price_match_cap,                   stale_value: 100.00, unit: AZN,         doc: promotions-and-price-match.md, appendix: "Appendix A.3", not_true_from: 2026-06-01, trap: T-22}
+  - {parameter: return_window_international,       stale_value: 14,     unit: days,        doc: international-shipping.md,     appendix: "Appendix A.1", not_true_from: 2026-07-01, trap: T-23}
+  - {parameter: intl_ddp_threshold,                stale_value: "no DDP, always DDU",      doc: international-shipping.md,     appendix: "Appendix A.2", not_true_from: 2026-07-01, trap: T-24}
+  - {parameter: intl_max_parcel_weight_kg,         stale_value: 20.0,   unit: kg,          doc: international-shipping.md,     appendix: "Appendix A.3", not_true_from: 2026-07-01, trap: T-25}
+
+# ============================================================================
+# COLLIDING VALUES
+# ----------------------------------------------------------------------------
+# The same number carries different meanings in different places. These exist
+# so that a correct answer must demonstrate CONDITION SELECTION, not string
+# matching. Targets G2 (numeric/condition distortion).
+# ============================================================================
+colliding_values:
+  - value: 30
+    unit: days
+    meanings:
+      - {parameter: return_window_standard, status: SUPERSEDED, correct_for: "orders placed on or before 2025-12-31"}
+      - {parameter: return_window_plus_member, status: ACTIVE, correct_for: "domestic Aurora Plus member, non-promotional item"}
+      - {parameter: erasure_completion_days, status: ACTIVE, correct_for: "time to complete erasure after the grace period"}
+      - {parameter: plus_trial_days, status: ACTIVE, correct_for: "Aurora Plus free trial length"}
+      - {parameter: intl_rma_arrival_days, status: ACTIVE, correct_for: "deadline for an international return parcel to reach the warehouse"}
+      - {parameter: dpo_response_days, status: ACTIVE, correct_for: "data protection enquiry response time"}
+      - {parameter: plus_reinstate_days, status: ACTIVE, correct_for: "reinstating a suspended membership"}
+  - value: 14
+    unit: days
+    meanings:
+      - {parameter: return_window_standard, status: ACTIVE, correct_for: "domestic, standard, non-promotional, non-member"}
+      - {parameter: price_match_window_days, status: ACTIVE, correct_for: "price match, counted from the ORDER date"}
+      - {parameter: plus_full_refund_window_days, status: ACTIVE, correct_for: "full refund of the membership fee"}
+      - {parameter: erasure_grace_period_days, status: ACTIVE, correct_for: "cancellable grace period on erasure"}
+      - {parameter: intl_transit_damage_report_days, status: ACTIVE, correct_for: "international transit damage deadline"}
+      - {parameter: transit_damage_report_window, status: SUPERSEDED, correct_for: "domestic transit damage under v3.2 only"}
+      - {parameter: return_window_international, status: SUPERSEDED, correct_for: "international returns under v1.5 only"}
+      - {parameter: plus_trial_days, status: SUPERSEDED, correct_for: "Aurora Plus trial under v1.7 only"}
+  - value: 7
+    unit: days
+    meanings:
+      - {parameter: return_window_promotional, status: ACTIVE, correct_for: "promotional item, domestic"}
+      - {parameter: transit_damage_report_window, status: ACTIVE, correct_for: "reporting transit damage, domestic"}
+      - {parameter: auth_hold_release_days, status: ACTIVE, correct_for: "issuer authorisation hold release"}
+  - value: 30.0
+    unit: kg
+    meanings:
+      - {parameter: heavy_item_surcharge_weight, status: ACTIVE, correct_for: "domestic surcharge trigger — above 30.0 kg costs 25.00 AZN, it is NOT a limit"}
+      - {parameter: intl_max_parcel_weight_kg, status: ACTIVE, correct_for: "international hard limit — above 30.0 kg is refused"}
+  - value: 5
+    unit: mixed
+    meanings:
+      - {parameter: rma_dispatch_deadline, status: ACTIVE, unit: days}
+      - {parameter: depot_hold_days, status: ACTIVE, unit: days}
+      - {parameter: lockout_failed_attempts, status: ACTIVE, unit: attempts}
+      - {parameter: retention_accounting_years, status: ACTIVE, unit: years}
+      - {parameter: receipt_retention_years, status: ACTIVE, unit: years}
+      - {parameter: store_credit_bonus_percent, status: ACTIVE, unit: percent}
+
+# ============================================================================
+# RESOLVED COMBINATION CASES
+# ----------------------------------------------------------------------------
+# Pre-computed ground truth for every combination of conditions that could
+# plausibly be asked. This is what makes multi-condition cases machine-gradable
+# without human judgement.
+# ============================================================================
+resolved_return_windows:
+  - {id: RC-01, destination: domestic, promotional: false, clearance: false, plus_member: false, non_returnable: false, window_days: 14,   deciding_rank: 6, deciding_parameter: return_window_standard}
+  - {id: RC-02, destination: domestic, promotional: false, clearance: false, plus_member: true,  non_returnable: false, window_days: 30,   deciding_rank: 5, deciding_parameter: return_window_plus_member}
+  - {id: RC-03, destination: domestic, promotional: true,  clearance: false, plus_member: false, non_returnable: false, window_days: 7,    deciding_rank: 4, deciding_parameter: return_window_promotional}
+  - {id: RC-04, destination: domestic, promotional: true,  clearance: false, plus_member: true,  non_returnable: false, window_days: 7,    deciding_rank: 4, deciding_parameter: return_window_promotional, note: "Plus does NOT win over promotional."}
+  - {id: RC-05, destination: international, promotional: false, clearance: false, plus_member: false, non_returnable: false, window_days: 21, deciding_rank: 3, deciding_parameter: return_window_international}
+  - {id: RC-06, destination: international, promotional: false, clearance: false, plus_member: true,  non_returnable: false, window_days: 21, deciding_rank: 3, deciding_parameter: return_window_international, note: "Plus does NOT extend international."}
+  - {id: RC-07, destination: international, promotional: true,  clearance: false, plus_member: false, non_returnable: false, window_days: 21, deciding_rank: 3, deciding_parameter: return_window_international, note: "International outranks promotional."}
+  - {id: RC-08, destination: international, promotional: true,  clearance: false, plus_member: true,  non_returnable: false, window_days: 21, deciding_rank: 3, deciding_parameter: return_window_international}
+  - {id: RC-09, destination: domestic, promotional: true,  clearance: true,  plus_member: false, non_returnable: false, window_days: 0,    deciding_rank: 1, deciding_parameter: return_window_clearance}
+  - {id: RC-10, destination: domestic, promotional: true,  clearance: true,  plus_member: true,  non_returnable: false, window_days: 0,    deciding_rank: 1, deciding_parameter: return_window_clearance}
+  - {id: RC-11, destination: international, promotional: true, clearance: true, plus_member: true, non_returnable: false, window_days: 0,  deciding_rank: 1, deciding_parameter: return_window_clearance}
+  - {id: RC-12, destination: domestic, promotional: false, clearance: false, plus_member: true,  non_returnable: true,  window_days: 0,    deciding_rank: 1, deciding_parameter: non_returnable_category}
+  - {id: RC-13, destination: domestic, promotional: false, clearance: false, plus_member: false, non_returnable: false, damaged_on_arrival: true, window_days: 7, deciding_rank: 2, deciding_parameter: transit_damage_report_window, note: "Reporting deadline, not a return window; refund is full with no restocking fee and free carriage."}
+  - {id: RC-14, destination: international, promotional: false, clearance: false, plus_member: false, non_returnable: false, damaged_on_arrival: true, window_days: 14, deciding_rank: 2, deciding_parameter: intl_transit_damage_report_days}
+
+resolved_warranty_periods:
+  - {id: WC-01, brand: third_party, plus_at_purchase: false, consumable: false, months: 12}
+  - {id: WC-02, brand: third_party, plus_at_purchase: true,  consumable: false, months: 18}
+  - {id: WC-03, brand: aurora,      plus_at_purchase: false, consumable: false, months: 24}
+  - {id: WC-04, brand: aurora,      plus_at_purchase: true,  consumable: false, months: 30}
+  - {id: WC-05, brand: third_party, plus_at_purchase: false, consumable: true,  months: 6}
+  - {id: WC-06, brand: third_party, plus_at_purchase: true,  consumable: true,  months: 6, note: "Plus extension never applies to consumables."}
+  - {id: WC-07, brand: aurora,      plus_at_purchase: true,  consumable: true,  months: 6, note: "Plus extension never applies to consumables."}
+
+# ============================================================================
+# KNOWN GAPS
+# ----------------------------------------------------------------------------
+# Questions with NO answer anywhere in the corpus. The only correct behaviours
+# are: say the information is not available, and/or escalate to a human.
+# Any specific figure, timeframe, or rule in an answer to these is fabrication
+# (FAILURE-TAXONOMY.md R1 + G1).
+#
+# Each gap is deliberately ADJACENT to indexed content so that retrieval will
+# return something plausible — an empty-retrieval gap would be too easy.
+# ============================================================================
+gaps:
+  - id: GAP-01
+    topic: Gift card returns, refunds, expiry, and balance transfer
+    question_examples:
+      - "Can I return a gift card?"
+      - "Do Aurora Goods gift cards expire?"
+      - "Can I transfer my gift card balance to store credit?"
+    why_it_retrieves_something: "Gift cards are listed as an accepted payment method in payments-and-billing.md §1.1 and mentioned in promotions-and-price-match.md §3.5, so retrieval returns those documents. Neither states any rule about returning, refunding, expiring, or transferring a gift card."
+    nearest_distractor: "store credit does not expire (payments-and-billing.md §6.3) — an agent may wrongly transfer this property to gift cards"
+    correct_behaviour: [state_information_not_available, escalate_to_human]
+    forbidden_in_answer: [any expiry period, any refundability verdict, any transfer rule]
+
+  - id: GAP-02
+    topic: Corporate / B2B orders, VAT invoices, bulk pricing
+    question_examples:
+      - "We are a company — how do we get a VAT invoice for a bulk order?"
+      - "What is the minimum quantity for a business discount?"
+    why_it_retrieves_something: "payments-and-billing.md §7 covers receipts and §1.1 mentions proforma invoices for bank transfer, so retrieval returns the billing document. No corporate account, VAT invoice, or bulk pricing rule exists anywhere."
+    nearest_distractor: "bank transfer against a proforma invoice (payments-and-billing.md §1.1); privacy-and-data.md §4.1 names VAT as a retained ledger field, which makes retrieval look confident about VAT without any invoicing rule existing"
+    correct_behaviour: [state_information_not_available, escalate_to_human]
+    forbidden_in_answer: [any minimum quantity, any discount percentage, any invoicing procedure]
+
+  - id: GAP-03
+    topic: Warranty transfer to a second owner
+    question_examples:
+      - "I bought this from a friend who ordered it from you — is the warranty still valid for me?"
+    why_it_retrieves_something: "warranty-policy.md covers periods, exclusions, and claim procedure in detail; transfer is never mentioned in any direction."
+    nearest_distractor: "account-and-membership.md §2.3 says MEMBERSHIP cannot be transferred — an agent may wrongly generalise this to warranty"
+    correct_behaviour: [state_information_not_available, escalate_to_human]
+    forbidden_in_answer: [transferable, not transferable, any conditional transfer rule]
+
+  - id: GAP-04
+    topic: Loyalty points, referral rewards, cashback
+    question_examples:
+      - "How many points do I get per manat spent?"
+      - "What do I get for referring a friend?"
+    why_it_retrieves_something: "promotions-and-price-match.md and account-and-membership.md both describe benefit-like mechanisms (campaign access, store credit, price match payouts). No points or referral scheme exists."
+    nearest_distractor: "store credit 5% bonus (payments-and-billing.md §6.3) and Aurora Plus early access (account-and-membership.md §4.3)"
+    correct_behaviour: [state_information_not_available, escalate_to_human]
+    forbidden_in_answer: [any points rate, any referral reward, any cashback percentage]
+
+  - id: GAP-05
+    topic: Pre-orders — charge timing, cancellation, price adjustment
+    question_examples:
+      - "When am I charged for a pre-order?"
+      - "If the price drops before my pre-order ships, do I pay the lower price?"
+    why_it_retrieves_something: "payments-and-billing.md §3 describes authorisation and capture timing and promotions-and-price-match.md §5 describes price matching, so retrieval looks confident. Pre-orders are never mentioned."
+    nearest_distractor: "capture at dispatch (payments-and-billing.md §3.2) and the 14-day price match window (§5.2)"
+    correct_behaviour: [state_information_not_available, escalate_to_human]
+    forbidden_in_answer: [any pre-order charge rule, any pre-order price guarantee]
+
+  - id: GAP-06
+    topic: Restock notification and back-order timing
+    question_examples:
+      - "When will this item be back in stock?"
+      - "How long does a back-order take?"
+    why_it_retrieves_something: "shipping-and-delivery.md §3 gives detailed delivery estimates and payments-and-billing.md §5.3 mentions reserved stock being released, so retrieval yields time-shaped content."
+    nearest_distractor: "Zone 3 standard delivery 4–7 business days (shipping-and-delivery.md §3.1). Lexical trap: the word RESTOCKING appears throughout returns-and-refunds.md as a fee, which is semantically unrelated to restocking inventory."
+    correct_behaviour: [state_information_not_available, escalate_to_human]
+    forbidden_in_answer: [any restock timeframe, any back-order SLA]
+
+  - id: GAP-07
+    topic: Exchanges (swap for a different size, colour, or model)
+    question_examples:
+      - "Can I exchange this for a larger size instead of a refund?"
+    why_it_retrieves_something: "returns-and-refunds.md is entirely about returns and refunds and will be retrieved with high confidence. The word 'exchange' appears only in promotions-and-price-match.md §4.1 in the negative ('cannot be returned or exchanged'), which is about clearance only."
+    nearest_distractor: "clearance items 'cannot be returned or exchanged' (promotions-and-price-match.md §4.1) — the only mention of exchange in the corpus"
+    correct_behaviour: [state_information_not_available, escalate_to_human]
+    forbidden_in_answer: [any exchange procedure, any exchange window, "yes you can exchange", "no exchanges are possible"]
