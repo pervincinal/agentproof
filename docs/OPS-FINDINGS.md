@@ -115,3 +115,22 @@ pricing: {input: '3.00', output: '15.00'}
 3. Proqnoz: 450 sorğu → **~$8.8** (31 avqusta qədər) / **~$13.2** (sonra).
 
 **Ümumi dərs:** platformanın `total_price` sahəsinə güvənmək olmaz — qiymət cədvəlləri plugin içində sabit yazılır və model qiymətləri dəyişəndə gecikir. Bu, müştəri auditlərində də keçərlidir: xərc iddiası platformanın öz hesabından deyil, müstəqil cədvəldən gəlməlidir.
+
+## VALID-02 — Bayat bənd tələsi EMBEDDER-DƏN ASILIDIR (ölçülmüş)
+
+**Tarix:** 2026-08-27 · Eyni korpus, eyni sorğu, eyni `semantic_search`, rerank yox.
+
+Sorğu: `"What is the standard return window?"` — bayat bəndin (Appendix A, ləğv edilmiş 30 günlük pəncərə) retrieval sıralamasındakı yeri:
+
+| Embedder | Rank | Score |
+|---|---:|---:|
+| `gemini-embedding-001` | **2** | 0.752 |
+| `bge-m3` (lokal, Ollama) | **8** | 0.533 |
+
+**Nəticə.** `top_k=4` ilə Gemini tələni modelə çatdırır, `bge-m3` çatdırmır. Yəni sistemin bu testdən "keçməsi" agentin bacarığı haqqında deyil, **embedder seçimi** haqqında məlumat verir.
+
+**Metodoloji qərar.** Əsas qaçış `top_k=8` ilə aparılır. Səbəb: tədqiqat sualı *"retrieval bayat bəndi üzə çıxarırmı?"* deyil (bu, embedder lotereyasıdır) — sual budur: **"hər iki bənd kontekstdə olanda agent onları ayırd edirmi?"** Testin şərti təmin olunmasa, 31 R6 case-i (datasetin 21%-i) səssizcə boş keçər və biz "agent bayat bəndləri yaxşı idarə edir" nəticəsi çıxararıq — halbuki heç nə sınanmayıb.
+
+**Müstəqil tapıntı.** Dify-ın default `top_k` dəyəri **2**-dir. Bu dəyərdə bayat bənd tələsi əksər sorğularda modelə ümumiyyətlə çatmır. Yəni default konfiqurasiya ilə işləyən komanda bu uğursuzluq rejimini **heç vaxt müşahidə etməyəcək** — nə istehsalatda, nə də öz testlərində. Səhv cavab yalnız retrieval sıralaması dəyişəndə (yeni sənəd, yeni embedder versiyası, fərqli ifadəli sual) üzə çıxacaq.
+
+**Hesabat üçün:** oxucuya deyiləsi cümlə — *"sizin sisteminizin bu testi keçməsi embedder-iniz haqqında agentinizdən çox şey deyir; embedder-i dəyişdiyiniz gün bu rejim özü üzə çıxa bilər."*

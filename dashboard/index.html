@@ -1,0 +1,86 @@
+<!doctype html><html lang="az"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AgentProof</title>
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--line:#252c36;--fg:#e6edf3;--dim:#8b949e;
+--ok:#3fb950;--warn:#d29922;--bad:#f85149;--acc:#58a6ff;--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px}
+header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+h1{font-size:19px;margin:0;letter-spacing:-.01em}
+.sub{color:var(--dim);font-size:13px}
+.live{margin-left:auto;font-size:12px;color:var(--dim);font-family:var(--mono)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:6px;
+animation:p 1.6s ease-in-out infinite}
+.dot.off{background:var(--dim);animation:none}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.25}}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.k{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.v{font-size:26px;font-weight:600;font-family:var(--mono);margin-top:4px;letter-spacing:-.02em}
+.v small{font-size:13px;color:var(--dim);font-weight:400}
+section{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:16px}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin:0 0 12px}
+.bar{height:8px;background:#21262d;border-radius:99px;overflow:hidden;margin:10px 0 6px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--ok));border-radius:99px;
+transition:width .6s ease}
+.meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--dim)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.ph{font-family:var(--mono);color:var(--dim);width:28px}
+.st{white-space:nowrap;font-size:12px}
+.done{color:var(--ok)} .wait{color:var(--dim)} .work{color:var(--warn)}
+.sha{font-family:var(--mono);color:var(--acc);font-size:12px}
+.when{color:var(--dim);font-size:12px;white-space:nowrap}
+.overflow{overflow-x:auto}
+footer{color:var(--dim);font-size:12px;text-align:center;margin-top:22px}
+</style></head><body><div class="wrap">
+<header>
+  <h1>AgentProof</h1>
+  <span class="sub">Dify 1.17.0 · claude-sonnet-5 · Aurora Goods korpusu</span>
+  <span class="live"><span class="dot" id="dot"></span><span id="livetxt">bağlanır…</span></span>
+</header>
+<div class="grid" id="stats"></div>
+<section>
+  <h2>Tam qaçış</h2>
+  <div class="bar"><i id="pbar" style="width:0%"></i></div>
+  <div class="meta"><span id="pleft">—</span><span id="pright">—</span></div>
+</section>
+<section><h2>Mərhələlər</h2><div class="overflow"><table id="phases"></table></div></section>
+<section><h2>Son commit-lər</h2><div class="overflow"><table id="commits"></table></div></section>
+<footer>hər 3 saniyədə yenilənir</footer>
+</div>
+<script>
+const $=i=>document.getElementById(i);
+function stat(k,v,s){return `<div class="card"><div class="k">${k}</div>
+<div class="v">${v}${s?` <small>${s}</small>`:''}</div></div>`}
+function cls(t){t=(t||'').toLowerCase();
+ if(t.includes('✅'))return'done'; if(t.includes('işləyir'))return'work'; return'wait'}
+async function tick(){
+ try{
+  const d=await(await fetch('/api/status',{cache:'no-store'})).json();
+  const r=d.run,c=d.counts;
+  const pct=r.total?Math.round(r.done/r.total*100):0;
+  $('stats').innerHTML=
+    stat('Qaçış',r.total?`${r.done}`:'—',r.total?`/ ${r.total}`:'')+
+    stat('Keçmə dərəcəsi',r.accuracy!=null?(r.accuracy*100).toFixed(0)+'%':'—')+
+    stat('Test',c.tests||'—','yaşıl')+
+    stat('Dataset',c.cases||'—','case')+
+    stat('Tapıntı',c.ops_findings||'0','sistem')+
+    stat('Grader qüsuru',c.grader_audit||'0','audit');
+  $('pbar').style.width=pct+'%';
+  $('pleft').textContent=r.total?`${r.done} / ${r.total} case · ${pct}%`:'qaçış başlamayıb';
+  $('pright').textContent=`HTTP retry: ${r.retries}`+(r.accuracy!=null?` · accuracy ${r.accuracy.toFixed(2)}`:'');
+  const on=r.active;
+  $('dot').className='dot'+(on?'':' off');
+  $('livetxt').textContent=on?'qaçış aktiv':(r.finished?'qaçış bitdi':'gözləmədə');
+  $('phases').innerHTML=d.phases.map(p=>`<tr><td class="ph">${p.phase}</td><td>${p.name}</td>
+   <td class="st ${cls(p.status)}">${p.status}</td></tr>`).join('')||'<tr><td>—</td></tr>';
+  $('commits').innerHTML=d.commits.map(x=>`<tr><td class="sha">${x.sha}</td><td>${x.msg}</td>
+   <td class="when">${x.when}</td></tr>`).join('');
+ }catch(e){$('dot').className='dot off';$('livetxt').textContent='bağlantı yoxdur'}
+}
+tick();setInterval(tick,3000);
+</script></body></html>
