@@ -1,0 +1,297 @@
+# AgentProof — iki mərhələli eval CI (AP-011, STACK.md §8.6 "6 dəqiqə qaydası")
+#
+# NİYƏ İKİ MƏRHƏLƏ
+# ---------------
+# Tam eval qaçışı CANLI hədəf tələb edir: Dify + Ollama (embedder) + mock tool
+# servisi. Bunların hamısı lokal maşında qalxır və GitHub-un buludda qaçan
+# runner-indən ƏLÇATMAZDIR. Ona görə boru xətti bilərəkdən ikiyə bölünüb:
+#
+#   1) `checks`  — HƏR PR-da qaçır. API AÇARI TƏLƏB ETMİR, secret oxumur, ona
+#                  görə fork-dan gələn PR-da da tam işləyir. Hədəf: < 4 dəqiqə.
+#   2) `live`    — YALNIZ əl ilə (`workflow_dispatch`). Real hədəfə qarşı qaçır,
+#                  secret-ləri yalnız bu job görür və SELF-HOSTED runner tələb
+#                  edir (aşağıya bax). Bu job GitHub-hosted runner-də İŞLƏMİR
+#                  və işləyirmiş kimi göstərilmir.
+#
+# SELF-HOSTED RUNNER TƏLƏBİ (dürüstlük qeydi)
+# -------------------------------------------
+# `live` job-u `runs-on: [self-hosted, agentproof]` ilə işarələnib. Bu etiketli
+# runner qurulmayıbsa job NAVBƏDƏ İLİŞİR (fail olmur — GitHub-un davranışı belədir).
+# Yəni: repoda bu fayl var deyə "eval CI-da qaçır" demək olmaz. Nə lazımdır:
+#   * Dify docker stack-i qalxmış olsun     (`~/agentproof-stack/dify/docker`)
+#   * Ollama embedder işləsin               (`bge-m3`)
+#   * mock tool servisi qalxsın             (`target/tools/service.py`)
+#   * həmin maşında GitHub self-hosted runner `agentproof` etiketi ilə qeydiyyatdan keçsin
+# Bunlar yoxdursa, tam qaçış lokal olaraq `python evals/run.py …` ilə edilir və
+# artefaktlar əl ilə əlavə olunur.
+#
+# SECRET SIZMASI
+# --------------
+# * Heç bir addım açarı `echo` etmir və `set -x` işlətmir.
+# * `ANTHROPIC_API_KEY` / `DIFY_API_KEY` YALNIZ `live` job-un onları həqiqətən
+#   işlədən addımlarına ötürülür — workflow səviyyəsində `env:` yoxdur.
+# * `evals/run.py` açarları CLI arqumenti kimi qəbul etmir (mühitdən oxuyur),
+#   ona görə əmr sətri prosess siyahısına və loga düşmür.
+# * `pull_request_target` İŞLƏNMİR: fork-dan gələn kod secret-li kontekstdə
+#   qaçırılmır.
+
+name: evals
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dataset:
+        description: "Dataset jsonl"
+        default: "evals/datasets/full.jsonl"
+      stage:
+        description: "Mərhələ (cheap = determinist, judge = LLM-judge, all)"
+        default: "cheap"
+        type: choice
+        options: [cheap, judge, all]
+      repeat:
+        description: "Case başına müstəqil cavab sayı (reproduksiya qapısı üçün ≥3)"
+        default: "3"
+      filter:
+        description: "Alt dəst, məs. tag=policy,severity=high (boş = hamısı)"
+        default: ""
+      target_version:
+        description: "Hədəf app versiyası (hesabatda qeyd olunur)"
+        default: ""
+      dify_app_id:
+        description: "Dify app id — `usage.model` avtoritet mənbədən yoxlanır"
+        default: ""
+      max_connections:
+        description: "Paralellik həddi"
+        default: "8"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evals-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ==========================================================================
+  # 1 · HƏR PR — açarsız, şəbəkəsiz, determinist
+  # ==========================================================================
+  checks:
+    name: "1 · ucuz yoxlamalar (açarsız)"
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15   # 6 dəqiqə qaydası HƏDƏFDİR; bu, ilişmiş job üçün tavandır
+    permissions:
+      contents: read
+      pull-requests: write   # fork PR-da GitHub bunu avtomatik `read`-ə endirir
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Asılılıqlar
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      # -- memarlıq qaydası ------------------------------------------------
+      # STACK.md §6: `graders/` və `types.py` `inspect_ai` import ETMİR.
+      # Ayrıca addımdır ki, pozulanda qırmızının SƏBƏBİ job siyahısında görünsün,
+      # 700 testin içində itməsin.
+      - name: Memarlıq qaydası (graders/ inspect_ai import etmir)
+        run: python -m pytest agentproof/tests/test_architecture_rule.py -q
+
+      - name: Unit və inteqrasiya testləri
+        run: python -m pytest
+
+      # -- dataset generatorla sinxrondur ----------------------------------
+      # `full.jsonl` əl ilə redaktə olunubsa və ya `CANONICAL.yaml` dəyişibsə,
+      # generator başqa fayl istehsal edir. Bu addım fərqi PR-da tutur.
+      - name: Dataset generatorla sinxrondur (build_full.py --check)
+        run: python evals/datasets/build_full.py --check
+
+      # -- kalibrasiya qapısı ----------------------------------------------
+      # Şəbəkəsiz: repoya commit edilmiş `evals/calibration/report.json`
+      # oxunur və HƏDDLƏR tətbiq olunur (uyğunluq ≥ 85%, κ ≥ 0.70).
+      # Judge case-i olan dataset üçün kalibrasiya hesabatının OLMAMASI da
+      # bloklayır — susmaq variantı yoxdur.
+      - name: Judge kalibrasiya qapısı (uyğunluq ≥ 85%, κ ≥ 0.70)
+        run: python evals/ci_gates.py calibration --dataset evals/datasets/full.jsonl
+
+      # -- ucdan-uca duman testi -------------------------------------------
+      # `mock` adapteri şəbəkəyə çıxmır: dataset -> Inspect task -> grader ->
+      # RunRecord zənciri bütöv qaçır və API açarı tələb etmir.
+      - name: Ucdan-uca duman testi (mock adapteri, açarsız)
+        run: |
+          python evals/run.py \
+            --target mock \
+            --dataset evals/datasets/full.jsonl \
+            --stage cheap \
+            --skip-model-check \
+            --out reports/ci-smoke
+
+      # Boru xətti "qaçdı və 0 qaytardı" ilə "doğru ölçdü" eyni şey deyil.
+      - name: Duman testinin artefaktı bütövdürmü
+        run: python evals/ci_gates.py artifact reports/ci-smoke
+
+      # -- baseline: YOXDURSA SƏSSİZ KEÇMİR --------------------------------
+      # `evals/baselines/` hazırda boşdur (AP-013). Reqressiya qapısı baseline
+      # olmadan işləyə bilmir; bu addım həmin faktı job xülasəsinə YAZIR ki,
+      # yaşıl CI "reqressiya yoxdur" kimi oxunmasın.
+      - name: Baseline vəziyyəti (reqressiya qapısı qoşulubmu)
+        run: python evals/ci_gates.py baseline evals/baselines
+
+      # -- hesabat ---------------------------------------------------------
+      - name: Markdown xülasə (judge bölməsi məcburidir)
+        run: |
+          python evals/ci_summary.py reports/ci-smoke \
+            --title "AgentProof · ucuz mərhələ (mock hədəf)" \
+            --out reports/ci-smoke/pr-comment.md > /dev/null
+          cat reports/ci-smoke/pr-comment.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: HTML hesabat
+        run: |
+          python -m agentproof.report.html reports/ci-smoke \
+            --dataset evals/datasets/full.jsonl \
+            --title "AgentProof · CI duman testi"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agentproof-ci-smoke
+          path: |
+            reports/ci-smoke/*.json
+            reports/ci-smoke/*.md
+            reports/ci-smoke/index.html
+          retention-days: 14
+
+      # Fork-dan gələn PR-da `GITHUB_TOKEN` yalnız oxuya bilir — şərh yazıla
+      # bilməz. Bu, sındırıcı hal deyil: eyni mətn onsuz da job xülasəsindədir.
+      - name: PR şərhi (yalnız eyni repodan gələn PR)
+        if: >
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('reports/ci-smoke/pr-comment.md', 'utf8');
+            const marker = '<!-- agentproof-eval -->';
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const list = await github.rest.issues.listComments({ owner, repo, issue_number });
+            const mine = list.data.find(c => c.body && c.body.includes(marker));
+            const payload = marker + '\n' + body;
+            if (mine) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: mine.id, body: payload });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body: payload });
+            }
+
+  # ==========================================================================
+  # 2 · ƏL İLƏ — real hədəfə qarşı, self-hosted runner tələb edir
+  # ==========================================================================
+  live:
+    name: "2 · real hədəf (əl ilə, self-hosted)"
+    if: github.event_name == 'workflow_dispatch'
+    # GitHub-hosted runner lokal Dify/Ollama/tool servisinə çata bilmir.
+    # Bu etiketli runner yoxdursa job NÖVBƏDƏ QALIR — yaşıl da olmur, qırmızı da.
+    runs-on: [self-hosted, agentproof]
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Asılılıqlar
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      # Lövbər xəritəsi bilik bazası yenidən indeksləndikdə köhnəlir: dataset-in
+      # `gold_chunks`-ları başqa segmentlərə düşür və retrieval grader-ləri
+      # SƏSSİZCƏ yanlış ölçür. Ona görə bu, qaçışdan ƏVVƏL bloklayıcı addımdır.
+      # (Xəritənin oflayn bütövlüyü `pytest`-də yoxlanır; burada CANLI KB ilə
+      # tutuşdurma gedir və ona görə self-hosted runner lazımdır.)
+      - name: Lövbər xəritəsi canlı KB ilə uyğundurmu
+        run: python target/corpus/anchors.py verify
+
+      - name: Judge kalibrasiyası (yalnız judge mərhələsi üçün)
+        if: inputs.stage == 'judge' || inputs.stage == 'all'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python evals/calibration/run_calibration.py \
+            --fail-under-threshold \
+            --cache-dir .cache/judge
+
+      # STDOUT baseline yoludur (yoxdursa boş) — insan mətni stderr-ə və
+      # job xülasəsinə gedir. Baseline olmadan qaçış davam edir, amma
+      # "REQRESSİYA YOXLANILMADI" xəbərdarlığı xülasədə görünür.
+      - name: Baseline vəziyyəti
+        id: baseline
+        run: echo "path=$(python evals/ci_gates.py baseline evals/baselines)" >> "$GITHUB_OUTPUT"
+
+      - name: Eval qaçışı
+        env:
+          # Secret-lər YALNIZ bu addımın mühitindədir; CLI-a ötürülmür,
+          # `evals/run.py` onları mühitdən oxuyur (adapter_config_from_env).
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DIFY_API_KEY: ${{ secrets.DIFY_API_KEY }}
+          DIFY_BASE_URL: ${{ vars.DIFY_BASE_URL || 'http://localhost/v1' }}
+          AGENTPROOF_TOOL_RESET_URL: ${{ vars.AGENTPROOF_TOOL_RESET_URL }}
+          AGENTPROOF_LANES: ${{ vars.AGENTPROOF_LANES }}
+        run: |
+          python evals/run.py \
+            --target dify_http \
+            --dataset "${{ inputs.dataset }}" \
+            --stage "${{ inputs.stage }}" \
+            --repeat "${{ inputs.repeat }}" \
+            --max-connections "${{ inputs.max_connections }}" \
+            --target-version "${{ inputs.target_version }}" \
+            --dify-app-id "${{ inputs.dify_app_id }}" \
+            ${{ inputs.filter != '' && format('--filter {0}', inputs.filter) || '' }} \
+            ${{ steps.baseline.outputs.path != '' && format('--baseline {0} --fail-on-regression', steps.baseline.outputs.path) || '' }} \
+            --out reports/ci-live
+
+      # Reproduksiya qapısı: `--repeat` cəhdlərini AYRICA qiymətləndirir.
+      # Flaky nisbəti həddi aşarsa qırmızı — ölçmənin ÖZÜ etibarsızdır.
+      - name: Reproduksiya qapısı (flaky həddi)
+        if: always()
+        run: python evals/reproduce.py reports/ci-live --fail-on-flaky
+
+      - name: Markdown xülasə
+        if: always()
+        run: |
+          python evals/ci_summary.py reports/ci-live \
+            --title "AgentProof · real hədəf (${{ inputs.stage }}, repeat ${{ inputs.repeat }})" \
+            ${{ steps.baseline.outputs.path != '' && format('--baseline {0}', steps.baseline.outputs.path) || '' }} \
+            --out reports/ci-live/pr-comment.md > /dev/null
+          cat reports/ci-live/pr-comment.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: HTML hesabat
+        if: always()
+        run: |
+          python -m agentproof.report.html reports/ci-live \
+            --dataset "${{ inputs.dataset }}" \
+            --history reports/ci-live-history \
+            ${{ steps.baseline.outputs.path != '' && format('--baseline {0}', steps.baseline.outputs.path) || '' }} \
+            --title "AgentProof audit hesabatı"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agentproof-live-${{ github.run_id }}
+          path: |
+            reports/ci-live/*.json
+            reports/ci-live/*.md
+            reports/ci-live/*.txt
+            reports/ci-live/index.html
+          retention-days: 90

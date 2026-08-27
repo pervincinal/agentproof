@@ -448,8 +448,20 @@ qarışdırmaq — grader səhvini hədəfin səhvi kimi göstərmək — uydurm
   üçlük üçün etibarlıdır:
   **Dify 1.17.0** (lokal Docker, 16 servis) · SUT **`claude-sonnet-5`**
   (`thinking: false`, `effort: high`, `max_tokens: 4096`) · embedder
-  **`bge-m3`** (lokal, Ollama) **[təsdiqlənməyib — `reports/smoke-bge`
-  vaxtından çıxarılıb; `RunRecord` embedder sahəsi saxlamır, aşağıda LIM-E06]**.
+  **`bge-m3`** (lokal, Ollama) **[canlı sistemdə uyğun gəlir, RETROAKTİV
+  təsdiq YOXDUR — aşağıda]**.
+- **Embedder iddiasının statusu (2026-08-28).** AP-019-un canlı oxuması app-ın
+  HAZIRDA bağlı olduğu dataset-i göstərir: `Aurora Goods Policies v2`
+  (`1623dd7e…`) · embedder **`bge-m3`** (`langgenius/ollama/ollama`) ·
+  `semantic_search` · **`top_k = 8`**, rerank yox. Bu, həm yuxarıdakı `bge-m3`
+  iddiası, həm də VALID-03-ün ölçdüyü `top_k = 8` ilə **uyğun gəlir**.
+  Amma bu, hesabatın qaçışlarının həmin konfiqurasiya ilə getdiyinin SÜBUTU
+  deyil: mövcud artefaktlar `schema_version: 1`-dir, embedder sahəsi
+  saxlamırlar (LIM-E06). Yəni uyğunluq **indiki** vəziyyətə aiddir, keçmişə
+  yox. Bundan sonrakı hər qaçış cavabı öz içində daşıyır.
+  ⚠️ Diqqət: `AGENTPROOF_DATASET_ID` mühit dəyişəni hələ **köhnə** dataset-i
+  (`e1471e22…`, `gemini-embedding-001`, `top_k: 4`) göstərir — env-ə görə
+  hesabat yazan hər kəs YANLIŞ konfiqurasiya qeyd edər.
 - **İstiqamət.** Başqa platformaya (Flowise, LangGraph, öz yığım), başqa modelə
   və ya başqa embedder-ə **köçürülməsi sübut edilməyib**. Hesabatın hər
   tapıntısı bu konfiqurasiya ilə birlikdə sitat gətirilməlidir.
@@ -467,20 +479,39 @@ qarışdırmaq — grader səhvini hədəfin səhvi kimi göstərmək — uydurm
   deyə bilmərik.
 - **Mənbə.** `PLAN.md` §Metodologiya qərarları · `docs/FAILURE-TAXONOMY.md` §11.
 
-### LIM-E06 · `RunRecord` retrieval konfiqurasiyasını qeyd etmir — **↔ reproduksiya riski**
+### LIM-E06 · `RunRecord` retrieval konfiqurasiyasını qeyd etmir — **↔ HƏLL OLUNDU (AP-019)**
 
-- **Nə ölçülmədi.** Qaçış artefaktı **embedder adını və `top_k` dəyərini
-  saxlamır**. `RunRecord` sahələri: `run_id`, `target`, `target_version`,
-  `model`, `dataset_hash`, `started_at`, `results`, `totals`. Retrieval
-  konfiqurasiyası yoxdur.
+- **Nə ölçülmürdü.** Qaçış artefaktı **embedder adını və `top_k` dəyərini
+  saxlamırdı**. `RunRecord` sahələri yalnız bunlar idi: `run_id`, `target`,
+  `target_version`, `model`, `dataset_hash`, `started_at`, `results`, `totals`.
 - **Niyə əhəmiyyətlidir.** LIM-E01 və LIM-E02-nin hər ikisi məhz bu iki
-  parametrdən asılıdır. Reproduksiya xarici sənədə güvənir — və o sənədlər
-  hazırda **bir-biri ilə ziddiyyətlidir** (DSL `top_k: 4` ↔ VALID-02 `top_k=8`).
-- **İstiqamət.** Nəticəni əyməz, amma **yenidən yoxlanmasını** çətinləşdirir.
-  Auditdə bu, tapıntının özü qədər vacibdir.
-- **Azaltma.** `RunRecord`-a retrieval konfiqurasiya bloku əlavə etmək
-  (`embedder`, `top_k`, `search_method`, `rerank`).
-- **Mənbə.** `agentproof/types.py:329-353` · `reports/smoke-bge/*.json`.
+  parametrdən asılıdır. Reproduksiya xarici sənədə güvənirdi — və o sənədlər
+  **bir-biri ilə ziddiyyətli idi** (DSL `top_k: 4` ↔ VALID-02 `top_k=8`).
+  Ziddiyyəti həll etmək üçün canlı sistemə sorğu atmaq lazım gəldi (VALID-03);
+  artefaktın özündən sübut çıxarmaq **mümkün deyildi**.
+- **Tətbiq edilən həll (2026-08-28).** `RunRecord`-a dörd sahə əlavə olundu —
+  `embedding_model`, `embedding_provider`, `effective_top_k`,
+  `reranking_enabled` (`schema_version: 2`). Dəyərlər **CANLI sistemdən**
+  oxunur, sənəddən yox: `agentproof/runner/retrieval_config.py` əvvəlcə app-ın
+  HAZIRDA bağlı olduğu dataset id-sini tapır
+  (`apps.app_model_config_id → app_model_configs.dataset_configs`), sonra
+  `GET /v1/datasets/{id}` ilə konfiqurasiyanı çəkir.
+- **Qalan boşluq — səssiz default YOXDUR, amma "naməlum" var.** Oxuna
+  bilməyəndə sahələr açıq `unknown` / `null` qalır və hesabatda xəbərdarlıq
+  görünür. İki hal xüsusi vacibdir: (1) `datasets.retrieval_model` sütunu
+  NULL olanda API yenə `top_k: 4` göstərir, halbuki agent yolu **2** bənd
+  çəkir (OPS-03/OPS-05) — bu halda `effective_top_k` bilərəkdən `null`
+  yazılır; (2) `AGENTPROOF_DATASET_ID` mühit dəyişəni **bayat ola bilər** —
+  canlı sistemdə məhz belə idi, ona görə app-ın öz bağlı dataset-i üstün
+  tutulur və fərq xəbərdarlıq kimi qeyd olunur.
+- **Köhnə artefaktlar.** `schema_version: 1` qaçışları (bu hesabatın bütün
+  mövcud nəticələri daxil) oxunmağa davam edir, amma həmin sahələr `unknown`
+  qalır — yəni **bu hesabatın rəqəmləri hələ də kənar sənədlə sitat
+  gətirilməlidir**; öz-özünü təsvir edən artefakt yalnız bundan sonrakı
+  qaçışlarda var.
+- **Mənbə.** `agentproof/types.py` (`RunRecord`) ·
+  `agentproof/runner/retrieval_config.py` ·
+  `agentproof/tests/test_retrieval_config.py` · `docs/OPS-FINDINGS.md` VALID-03.
 
 ### LIM-E07 · `thinking: false` — **↑ ŞİŞİRDİR** (agent zəiflədilib)
 

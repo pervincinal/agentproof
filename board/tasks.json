@@ -1,5 +1,5 @@
 {
- "seq": 21,
+ "seq": 22,
  "tasks": [
   {
    "id": "AP-001",
@@ -47,7 +47,7 @@
    "desc": "Hazırda canlı qaçış gedir: evals/run.py --target dify_http --dataset evals/datasets/full.jsonl --stage cheap --repeat 3 --seed 1 --out reports/full-run-02 (PID 49566, 18:44-dən). reports/full-run-01 yarımçıq qaldı, full-run-02 log-unda hələ header.json yoxdur, yəni RunRecord yazılmayıb. Hesabatdakı HƏR rəqəm bu qaçışdan gəlir; qaçış bitmədən heç bir tapıntı iddiası edilə bilməz. Doğrulama PLAN.md Açıq risklər #2 (metadata.usage-da model adı gəlmirsə cost_under case-ləri skipped olur) və VALID-02 top_k=8 qərarı ilə bağlıdır.",
    "role": "harness-eng",
    "prio": "P0",
-   "status": "review",
+   "status": "done",
    "assignee": null,
    "dod": "reports/full-run-02/<run_id>.json (RunRecord) mövcuddur və: (1) 150 case × 3 təkrar tam icra olunub; (2) skipped case sayı sıfır DEYİLSƏ, hər skip səbəbi kateqoriyalaşdırılıb və sənədə yazılıb (səssiz keçmə yoxdur); (3) qaçışın faktiki top_k dəyəri 8 olduğu dataset konfiqindən təsdiqlənib (VALID-02); (4) xərc rəqəmi pricing/models.yaml-dan hesablanıb, Dify total_price-dan yox (OPS-04); (5) izolyasiya işləyib — RMA_ALREADY_EXISTS xətası ilə sınan case yoxdur.",
    "links": [
@@ -58,7 +58,7 @@
     "docs/OPS-FINDINGS.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:56:57",
+   "updated": "2026-08-28T00:00:00",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -77,6 +77,12 @@
      "actor": "main",
      "action": "in_progress→review",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:00:00",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "yoxlanildi ve tesdiqlendi"
     }
    ],
    "comments": [
@@ -93,7 +99,7 @@
    "desc": "docs/JUDGE-CALIBRATION.md §4 qapısı hələ ÖLÇÜLMƏYİB. evals/calibration/report.json indi dry-run null modelin nəticəsidir: agreement 0.30, kappa 0.00, judge_model dry-run/constant. Səbəb: ANTHROPIC_API_KEY shell mühitində yoxdur (env-də yoxlanıldı, sıfır). PLAN.md Keyfiyyət qaydası #2: kalibrasiya olunmamış LLM-judge nəticəsi dərc olunmur. Bu tapşırıq bloklanıb — API açarı və ya ant auth login profili tələb olunur (açarı özüm istəmirəm, mühitə verilməlidir).",
    "role": "grader-eng",
    "prio": "P0",
-   "status": "review",
+   "status": "done",
    "assignee": "grader-eng",
    "dod": "evals/calibration/report.json 30 etiketli nümunə üzərində REAL judge modeli (claude-opus-5) ilə yenidən yazılıb; judge_model sahəsi artıq dry-run deyil; agreement ≥ 0.85 VƏ kappa ≥ 0.70; confusion matrix və sinif üzrə recall hesabatdadır; style_flip_rate ölçülüb; labels_sha256 dəyişməyib (qayda §4.3 — uyğunluq aşağıdırsa RUBRİKA düzəlir, dataset yox). Qapı keçilmirsə: rubrika v2 yazılıb və səbəb sənədləşdirilib.",
    "links": [
@@ -104,7 +110,7 @@
     "docs/JUDGE-CALIBRATION.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:30:51",
+   "updated": "2026-08-28T00:00:00",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -135,6 +141,12 @@
      "actor": "grader-eng",
      "action": "in_progress→review",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:00:00",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "yoxlanildi ve tesdiqlendi"
     }
    ],
    "comments": [
@@ -151,7 +163,7 @@
    "desc": "evals/datasets/COVERAGE.md §3 və §8: 150 case-dən 3-ü (30 gün toqquşması — bayat standart pəncərə ↔ canlı Aurora Plus pəncərəsi) determinist grader ilə prinsipcə ayırd edilə bilmir və judge rubrikasına yönləndirilib. Bu 3 case indiyə qədər HEÇ ÖLÇÜLMƏYİB — cari tam qaçış --stage cheap ilə gedir. Onlarsız R6 (bayat bənd) bloku natamamdır və hesabatda 147/150 rəqəmi izahsız qalır. Asılılıq: kalibrasiya qapısı keçməmiş judge nəticəsi dərc edilə bilməz.",
    "role": "grader-eng",
    "prio": "P0",
-   "status": "review",
+   "status": "done",
    "assignee": "grader-eng",
    "dod": "reports/-də --stage judge qaçışı var; 3 case üçün verdict (justified / unjustified / wrong), reason və confidence RunRecord-a düşüb; judge cache faylları hesabat artefaktı kimi saxlanılıb; nəticə kalibrasiya rəqəmi (agreement + kappa) ilə birlikdə eyni sənəddə göstərilib.",
    "links": [
@@ -161,7 +173,7 @@
     "docs/JUDGE-CALIBRATION.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T20:01:03",
+   "updated": "2026-08-28T00:00:00",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -204,6 +216,12 @@
      "actor": "grader-eng",
      "action": "in_progress→review",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:00:00",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "yoxlanildi ve tesdiqlendi"
     }
    ],
    "comments": [
@@ -313,7 +331,7 @@
    "desc": "PLAN.md Keyfiyyət qaydası #1: reproduksiya olunmayan tapıntı hesabata düşmür; bir dəfə baş verib təkrarlanmayan hal ayrıca flaky kimi qeyd olunur. Tam qaçış --repeat 3 ilə gedir, yəni hər case üçün 3 nəticə var, amma bu qaydanı tətbiq edən heç bir alət yoxdur — indi hər tapıntı əl ilə yoxlanmalı olacaq. Alət indi yazıla bilər: reports/full-run-01 log-u nümunə giriş kimi mövcuddur, sonra full-run-02-yə tətbiq olunar.",
    "role": "hunter",
    "prio": "P0",
-   "status": "review",
+   "status": "done",
    "assignee": "harness-eng",
    "dod": "Skript və ya report/ modulu hər case üçün 3 təkrarın nəticəsini toplayır və case-ləri üç səbətə bölür: hər 3-də sındı (stabil tapıntı), 1-2-də sındı (flaky), heç birində sınmadı. Çıxış maşınoxunan (JSON) + insan üçün cədvəldir; flaky case-lər ayrıca siyahıdadır. FINDINGS.md yazılarkən yalnız stabil səbətdən tapıntı götürüləcəyi DoD kimi qeyd olunub. Ən azı 1 test skriptin sayma məntiqini qoruyur.",
    "links": [
@@ -322,7 +340,7 @@
     "PLAN.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:24:07",
+   "updated": "2026-08-28T00:00:00",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -353,6 +371,12 @@
      "actor": "harness-eng",
      "action": "in_progress→review",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:00:00",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "yoxlanildi ve tesdiqlendi"
     }
    ],
    "comments": [
@@ -369,7 +393,7 @@
    "desc": "PLAN.md Keyfiyyət qaydası #5: nəyi ölçmədiyimiz də yazılır; məhdudiyyəti gizlətmək ən tez tutulan şeydir. Məhdudiyyətlər hazırda 5 sənədə səpələnib: COVERAGE.md §9 (9 bənd — 13 örtülməmiş bayat tələ, 21 həddin kəsilmə nöqtəsi, 3-yollu əhatə yoxdur, çoxnövbəli deqradasiya əyrisi yoxdur, R4/R7/G4, tələ sıxlığı real deyil), GRADER-AUDIT.md A-06 və A-07 (qalıq risklər) + canlı qaçış olmadan yoxlanmış 16 pattern, JUDGE-CALIBRATION.md §4.4 (mövqe və dil yanlılığı ölçülmədi), PLAN.md (tək embedder seçimi retrieval xətalarını ayırd etməyə imkan vermir), OPS-FINDINGS VALID-02 (nəticə embedder-dən asılıdır). Bunlar bir yerə yığılmasa, yazıda mütləq biri unudulacaq.",
    "role": "analyst",
    "prio": "P1",
-   "status": "review",
+   "status": "done",
    "assignee": "writer",
    "dod": "Tək sənəd (docs/LIMITATIONS.md və ya FINDINGS.md-nin bir bölməsi) hər məhdudiyyəti mənbə sənədə istinadla sadalayır; hər bənd üçün bir cümlə ilə yazılıb ki, oxucu bunu necə səhv oxuya bilər. Ən azı bu 15 bənd əhatə olunub: COVERAGE §9-un 9 bəndi, A-06, A-07, kalibrasiyanın 2 ölçülməmiş yanlılığı, tək embedder, VALID-02 embedder asılılığı. Hesabatın hansı iddiasının hansı məhdudiyyətə bağlandığı göstərilib.",
    "links": [
@@ -380,7 +404,7 @@
     "PLAN.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:27:28",
+   "updated": "2026-08-28T00:00:00",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -411,6 +435,12 @@
      "actor": "writer",
      "action": "in_progress→review",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:00:00",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "yoxlanildi ve tesdiqlendi"
     }
    ],
    "comments": [
@@ -427,7 +457,7 @@
    "desc": "PLAN.md mərhələ cədvəlində həm hunter (Mərhələ 2, xam), həm writer (Mərhələ 5) sətri gözləyir statusundadır və fayl mövcud deyil. Bu, müştəri hesabatının nüvəsidir. İki mənbədən yığılır: (1) eval qaçışının sınmış case-ləri — yalnız reproduksiya qapısından keçənlər; (2) docs/OPS-FINDINGS.md-dəki quraşdırma tapıntıları: OPS-01 (indeksləmə paralelliyi sabit kodlanıb), OPS-02 (SSRF proxy custom tool-ları bloklayır, yoxlama metodu yanıldıcıdır), OPS-03 (agent tətbiqində top_k səssizcə iqnor edilir, faktiki default 2), OPS-04 xərc (plugin qiyməti 50% şişirdir), OPS-04 (kiçik) PATCH/GET retrieval_model qaytarmır, VALID-01 (bayat bənd retrieval-da 0.038 bal geridə — tələ canlıdır), VALID-02 (tələ embedder-dən asılıdır: rank 2 vs 8). Qeyd: OPS-FINDINGS.md-də İKİ ayrı bənd OPS-04 nömrəsini daşıyır — nömrələmə düzəldilməlidir.",
    "role": "writer",
    "prio": "P1",
-   "status": "review",
+   "status": "done",
    "assignee": "writer",
    "dod": "FINDINGS.md mövcuddur və: (1) hər eval tapıntısı üçün case id, reproduksiya statusu (3/3), gözlənilən vs faktiki cavab, təsir və uğursuzluq rejimi (FAILURE-TAXONOMY id-si) var; (2) yuxarıdakı 7 OPS/VALID bəndinin hər biri ayrıca bölmə kimi daxildir və OPS-04 təkrar nömrəsi həll olunub; (3) heç bir tapıntı reproduksiya qapısından keçmədən daxil edilməyib, flaky-lər ayrıca siyahıdadır; (4) A-07 triage nəticəsi tətbiq olunub — grader artefaktı tapıntı kimi göstərilməyib; (5) məhdudiyyət reyestrinə istinad var.",
    "links": [
@@ -437,7 +467,7 @@
     "PLAN.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T23:05:45",
+   "updated": "2026-08-28T00:00:00",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -522,6 +552,12 @@
      "actor": "writer",
      "action": "in_progress→review",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:00:00",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "yoxlanildi ve tesdiqlendi"
     }
    ],
    "comments": [
@@ -568,7 +604,7 @@
    "desc": "PLAN.md Mərhələ 5 gözləyir; fayl yoxdur. Layihənin ƏSAS məhsuludur: public tədqiqat həm də $3–6k-lıq audit xidmətinin satış materialıdır. PLAN.md Keyfiyyət qaydaları yazının şərtidir: şişirtmə yoxdur (#3), hədəf layihə alçaldılmır — ton biz sınadıq, budur tapdığımız (#4), nəyi ölçmədiyimiz yazılır (#5), Inspect AI-nin nüvə kimi işlədilməsi metodologiya bölməsində AÇIQ göstərilir (#6 — marketinq çərçivəsi bunu kölgələməməlidir). Metodologiya bölməsinə mütləq düşənlər: SUT claude-sonnet-5 / judge claude-opus-5, 3 seed, top_k=8 qərarı və səbəbi (VALID-02), qaçış tarixi + tətbiq olunan qiymət rejimi ($2/$10 introductory vs $3/$15 standard — OPS-04, əks halda xərc rəqəmləri təkrarlana bilməz).",
    "role": "writer",
    "prio": "P1",
-   "status": "review",
+   "status": "done",
    "assignee": "writer",
    "dod": "docs/writeup.md hazırdır və: metodologiya bölməsində Inspect AI açıq adlanır; SUT/judge modelləri, seed sayı, top_k=8 və qiymət rejimi + qaçış tarixi yazılıb; judge kalibrasiya faizi və kappa mətndə göstərilib; nəyi ölçmədik bölməsi məhdudiyyət reyestrindən gəlir; hər ədədi iddia FINDINGS.md-dəki konkret case-ə və ya ölçməyə bağlanır; ekstrapolyasiya iddiası yoxdur (COVERAGE §9.9 — rəqəmlər nisbi, mütləq deyil).",
    "links": [
@@ -578,7 +614,7 @@
     "evals/datasets/COVERAGE.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T23:36:34",
+   "updated": "2026-08-28T00:00:01",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -615,6 +651,12 @@
      "actor": "writer",
      "action": "in_progress→review",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:00:01",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "yoxlanildi ve tesdiqlendi"
     }
    ],
    "comments": [
@@ -636,8 +678,8 @@
    "desc": "PLAN.md Mərhələ 4 gözləyir; .github qovluğu ümumiyyətlə yoxdur. docs/STACK.md §8.6 və §-planı bunu tələb edir: --stage cheap hər PR-da (hədəf < 4 dəq, 6 dəqiqə qaydası), --stage judge ayrıca job kimi yalnız evals/** və ya hədəf konfiqi dəyişəndə, ya da nightly. Kalibrasiya qapısı da CI-da bloklamalıdır (uyğunluq < 85% → qırmızı). Təkrar istifadə üçün infrastrukturdur: hər müştəri auditində eyni boru xətti işlədiləcək.",
    "role": "harness-eng",
    "prio": "P2",
-   "status": "todo",
-   "assignee": null,
+   "status": "in_progress",
+   "assignee": "harness-eng",
    "dod": "Workflow mövcuddur və: (1) pytest + cheap mərhələ hər PR-da qaçır; (2) judge mərhələsi ayrıca job-dur və yalnız göstərilən şərtlərdə işə düşür; (3) kalibrasiya qapısı --fail-under-threshold ilə bloklayır; (4) PR şərhi report/pr_comment.py ilə yazılır və judge kalibrasiya bölməsi məcburidir; (5) anchors.py verify addımı var (xəritə köhnəlibsə qırmızı); (6) ən azı bir dəfə real qaçışda yaşıl olduğu göstərilib.",
    "links": [
     "docs/STACK.md",
@@ -646,12 +688,24 @@
     "target/corpus/anchors.py"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:12:08",
+   "updated": "2026-08-28T00:05:29",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:05:29",
+     "actor": "harness-eng",
+     "action": "assigned",
+     "detail": "harness-eng"
+    },
+    {
+     "at": "2026-08-28T00:05:29",
+     "actor": "harness-eng",
+     "action": "todo→in_progress",
      "detail": ""
     }
    ],
@@ -663,8 +717,8 @@
    "desc": "PLAN.md Mərhələ 4 gözləyir; agentproof/report/ altında baseline.py, normalize.py, pr_comment.py var, html.py YOXDUR. docs/STACK.md §8.5: html.py render(RunRecord, RunDelta) -> reports/index.html. STACK §-planında sonuncu sıradadır (JSON olmadan mənasızdır) — JSON artıq hazırdır. Müştəri təhvilinin görünən hissəsidir.",
    "role": "harness-eng",
    "prio": "P2",
-   "status": "todo",
-   "assignee": null,
+   "status": "in_progress",
+   "assignee": "harness-eng",
    "dod": "reports/index.html RunRecord (+ varsa RunDelta) girişindən generasiya olunur; səhifədə: ümumi keçmə faizi, uğursuzluq rejimi üzrə bölgü, skipped case-lər səbəbi ilə, judge kalibrasiya bölməsi (kalibrasiya yoxdursa böyük hərflərlə xəbərdarlıq — JUDGE-CALIBRATION §6), hər sınmış case üçün cavab mətni və grader səbəbi. Xarici CDN asılılığı yoxdur (müştəri datası kənara çıxmır). Ən azı 1 test render-in boş RunRecord-da da xəta vermədiyini yoxlayır.",
    "links": [
     "docs/STACK.md",
@@ -672,12 +726,24 @@
     "agentproof/report/baseline.py"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:12:08",
+   "updated": "2026-08-28T00:05:29",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:05:29",
+     "actor": "harness-eng",
+     "action": "assigned",
+     "detail": "harness-eng"
+    },
+    {
+     "at": "2026-08-28T00:05:29",
+     "actor": "harness-eng",
+     "action": "todo→in_progress",
      "detail": ""
     }
    ],
@@ -728,8 +794,8 @@
    "desc": "PLAN.md Mərhələ 2 analyst sətri gözləyir statusundadır və fayl mövcud deyil. Materialın böyük hissəsi artıq toplanıb, amma səpələnib: OPS-FINDINGS.md-dəki üç kod yolu təhlili (indexing_runner.py:667, ssrf_proxy.py:258 + squid şablonu, dataset_retriever_tool.py:53-55 → dataset_retrieval.py:1312-1331 top_k kölgələnməsi), PLAN.md-dəki agent-chat blocking məhdudiyyəti (app_generator.py:94), target/corpus/TOOLS.md-dəki hücum səthi qeydləri (free-text sahələr — order_notes, damage_report.customer_text — dolayı injection daşıyıcısıdır). Public yazının metodologiya bölməsi bu sənədə söykənəcək.",
    "role": "analyst",
    "prio": "P2",
-   "status": "todo",
-   "assignee": null,
+   "status": "in_progress",
+   "assignee": "analyst",
    "dod": "docs/ARCHITECTURE.md mövcuddur və: hədəfin sorğu yolu (Service API → agent app → dataset retriever → custom tool → SSRF proxy) diaqram və ya nömrəli axınla təsvir olunub; hər addımda müşahidə olunmuş konfiqurasiya kölgələnmələri kod istinadı ilə göstərilib; hücum səthi siyahısı (istifadəçi mətni, order_notes, damage_report, retrieval konteksti) sadalanıb və hansı uğursuzluq rejiminə (FAILURE-TAXONOMY id) bağlandığı yazılıb.",
    "links": [
     "docs/OPS-FINDINGS.md",
@@ -738,12 +804,24 @@
     "docs/FAILURE-TAXONOMY.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:12:08",
+   "updated": "2026-08-28T00:02:31",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:02:31",
+     "actor": "analyst",
+     "action": "assigned",
+     "detail": "analyst"
+    },
+    {
+     "at": "2026-08-28T00:02:31",
+     "actor": "analyst",
+     "action": "todo→in_progress",
      "detail": ""
     }
    ],
@@ -755,8 +833,8 @@
    "desc": "evals/datasets/COVERAGE.md §3 və §9.1 açıq elan edir: 27 bayat cütdən yalnız 14-ünün ayrıca case-i var (T-01, T-02, T-03, T-05, T-06, T-07, T-08, T-09, T-13, T-14, T-15, T-20, T-22, T-25); qalan 13-ü (T-04, T-10, T-11, T-12, T-16…T-19, T-21, T-23, T-24, T-26, T-27) birbaşa örtülməyib. Nəticə: stale-answer rate 14 tələ üzərində hesablanır, 27 üzərində yox — yəni hesabatın ən önəmli rəqəmlərindən biri natamam bazadan gəlir. DİQQƏT: dataset dəyişikliyi cari qaçışın müqayisə olunmasını pozur, ona görə tam qaçış və baseline snapshot-undan SONRA edilməlidir.",
    "role": "dataset-eng",
    "prio": "P2",
-   "status": "backlog",
-   "assignee": null,
+   "status": "in_progress",
+   "assignee": "dataset-eng",
    "dod": "build_full.py 13 tələnin hər biri üçün case üretir (əl ilə full.jsonl redaktəsi yoxdur); test_dataset_full.py-a bütün 27 tələnin örtüldüyünü yoxlayan test əlavə olunub; COVERAGE.md §3 cədvəli və §9.1 yenilənib; büdcə təsiri (əlavə case × 3 təkrar) hesablanıb və qeyd olunub.",
    "links": [
     "evals/datasets/build_full.py",
@@ -765,7 +843,7 @@
     "agentproof/tests/test_dataset_full.py"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:12:29",
+   "updated": "2026-08-28T00:22:32",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -777,6 +855,18 @@
      "at": "2026-08-27T19:12:29",
      "actor": "po",
      "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:22:32",
+     "actor": "dataset-eng",
+     "action": "assigned",
+     "detail": "dataset-eng"
+    },
+    {
+     "at": "2026-08-28T00:22:32",
+     "actor": "dataset-eng",
+     "action": "backlog→in_progress",
      "detail": ""
     }
    ],
@@ -794,8 +884,8 @@
    "desc": "docs/GRADER-AUDIT.md A-06 qalıq risk kimi AÇIQ qalıb: ContainsNone normalize() + in işlədir, yəni alt-sətir axtarışıdır — 30 day iynəsi nəzəri olaraq 130 days içində də tapılar. Praktik risk indi sıfıra yaxındır (CANONICAL.yaml-da üç rəqəmli gün/ay dəyəri yoxdur) və audit bunu şüurlu güzəşt kimi sənədləşdirib. 39 case-in grader-i dəyişəcəyi üçün özü yeni səhv mənbəyidir — ona görə yalnız baseline sabitləndikdən sonra görülməlidir. Yalançı yaşıl deyil, dəqiqlik güzəştidir.",
    "role": "grader-eng",
    "prio": "P3",
-   "status": "backlog",
-   "assignee": null,
+   "status": "review",
+   "assignee": "dataset-eng",
    "dod": "ContainsNone rəqəmli iynələr üçün müstəqil token axtarışına keçir (A-08-də olduğu kimi canonical.py üzərindən); 39 case-in nəticəsi dəyişiklikdən əvvəl/sonra müqayisə olunub və fərq sıfırdırsa bu açıq yazılıb, sıfır deyilsə hər fərq izah olunub; GRADER-AUDIT.md A-06 bölməsi bağlandı kimi yenilənib; reqressiya testi əlavə edilib.",
    "links": [
     "docs/GRADER-AUDIT.md",
@@ -803,7 +893,7 @@
     "agentproof/graders/canonical.py"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:12:29",
+   "updated": "2026-08-28T00:22:27",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -816,6 +906,30 @@
      "actor": "po",
      "action": "comment",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:03:25",
+     "actor": "dataset-eng",
+     "action": "assigned",
+     "detail": "dataset-eng"
+    },
+    {
+     "at": "2026-08-28T00:03:25",
+     "actor": "dataset-eng",
+     "action": "backlog→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:22:27",
+     "actor": "dataset-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:22:27",
+     "actor": "dataset-eng",
+     "action": "in_progress→review",
+     "detail": ""
     }
    ],
    "comments": [
@@ -823,6 +937,11 @@
      "at": "2026-08-27T19:12:29",
      "actor": "po",
      "text": "Asılılıq: AP-013 — 39 case-in grader-i dəyişir, baseline əvvəlcə sabitlənməlidir."
+    },
+    {
+     "at": "2026-08-28T00:22:27",
+     "actor": "dataset-eng",
+     "text": "A-06 BAĞLANDI — grader səviyyəsində, A-08 ilə eyni formada. canonical.py-a phrase_spec() + contains_phrase() əlavə olundu (mövcud _cue_pattern maşını təkrar işlədildi, yeni regex dili yaradılmadı); ContainsNone artıq (?<!\\w)…(?!\\w) sərhədləri ilə axtarır. Morfoloji əhatə itmədi, GÖRÜNƏN oldu: köhnə siyahılar kökləri ALT-SƏTİR olduğuna görə təsadüfən tuturdu, indi belə iynələr '*' prefiks markeri ilə bitir (30 gün*, 30 дн*, 24 мес*, never expire*). '*' yalnız həqiqətən şəkilçi alan sözdə — kg/кг/%/pct tam söz qaldı, yəni 120 kg və 120% artıq tutulmur. BASELINE MÜQAYİSƏSİ: reports/full-run-02 real cavabları üzərində 34 contains_none case × 3 cəhd = 102 qiymətləndirmə, passed DƏYİŞƏN = 0. (Audit '39 case' yazmışdı; A-09/A-13/A-15 beşini regex_match-ə köçürdüyü üçün indi 34-dür.) Aralıq bir fərq tapıldı və dataset xətası çıxdı: 'never expire' iynəsi *-suz qalanda 'never expires' formasını buraxırdı — * əlavə edildi, fərq sıfıra düşdü. Reqressiya: 12 sərhəd cütü + AZ/RU morfologiya + sol-sərhəd testləri + dataset formasının yoxlanması. pytest 628 → 695 yaşıl; build_full.py --check sinxron. YENİ QÜSUR: A-23 (contains_none mövzu tanımır — g1-gap01-də 'store credit never expires' düzgün qonşu faktı bayat sanılır) GRADER-AUDIT.md-yə AÇIQ kimi yazıldı; düzəlişi tapıntı statusunu dəyişdiyi üçün triage işidir, bu P3 gigiyena tapşırığında edilmədi."
     }
    ]
   },
@@ -870,8 +989,8 @@
    "desc": "PLAN.md cədvəli köhnəlib və yanlış təəssürat yaradır: Mərhələ 3 eval dataset gözləyir yazılıb, halbuki full.jsonl 150 case ilə hazırdır və COVERAGE.md ilə əsaslandırılıb; Mərhələ 4 judge qatı gözləyir yazılıb, halbuki judge.py + calibration.py qurulub və yalnız REAL kalibrasiya qaçışı çatmır. Öz sənədimizin statusu yanlışdırsa, auditdə ilk tutulan şey odur.",
    "role": "analyst",
    "prio": "P3",
-   "status": "todo",
-   "assignee": null,
+   "status": "in_progress",
+   "assignee": "analyst",
    "dod": "PLAN.md cədvəlindəki hər sətir repo faktı ilə yoxlanıb və üç dəqiq statusdan birini daşıyır: bitdi (artefakt yolu ilə), qismən (nəyin çatışdığı bir cümlə ilə), gözləyir. Judge sətri qurulub, kalibrasiya qaçırılmayıb kimi dəqiqləşdirilib. Dəyişiklik commit olunub.",
    "links": [
     "PLAN.md",
@@ -879,12 +998,24 @@
     "docs/JUDGE-CALIBRATION.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:12:08",
+   "updated": "2026-08-28T00:02:31",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:02:31",
+     "actor": "analyst",
+     "action": "assigned",
+     "detail": "analyst"
+    },
+    {
+     "at": "2026-08-28T00:02:31",
+     "actor": "analyst",
+     "action": "todo→in_progress",
      "detail": ""
     }
    ],
@@ -896,8 +1027,8 @@
    "desc": "docs/LIMITATIONS.md LIM-E06: RunRecord (agentproof/types.py) embedder adini ve faktiki top_k-ni SAXLAMIR. Yeni hesabatdaki en vacib iki konfiqurasiya parametri qacis artefaktindan deyil, xarici (ve ziddiyyetli) senedden oxunur. VALID-03 gosterdi ki, DSL 4 yazir, faktiki deyer 8-dir. Bele ziddiyyet yeniden bas vererse, hansi reqemin hansi konfiqurasiyaya aid oldugunu SUBUT etmek mumkun olmayacaq.",
    "role": "harness-eng",
    "prio": "P0",
-   "status": "todo",
-   "assignee": null,
+   "status": "review",
+   "assignee": "harness-eng",
    "dod": "RunRecord-da embedding_model, embedding_provider ve effective_top_k sahelori var; deyerler CANLI sistemden oxunur (dataset API-den), senedden yox; kohne RunRecord-lar oxunanda sahe yoxdursa acih 'namelum' qaytarilir, sessizce default verilmir; test: sahelerin yazildigini ve kohne formatin sinmadigini yoxlayan iki test",
    "links": [
     "agentproof/types.py",
@@ -905,16 +1036,57 @@
     "docs/LIMITATIONS.md"
    ],
    "created": "2026-08-27T19:29:23",
-   "updated": "2026-08-27T19:29:23",
+   "updated": "2026-08-28T00:20:23",
    "history": [
     {
      "at": "2026-08-27T19:29:23",
      "actor": "main",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:01:31",
+     "actor": "harness-eng",
+     "action": "assigned",
+     "detail": "harness-eng"
+    },
+    {
+     "at": "2026-08-28T00:01:31",
+     "actor": "harness-eng",
+     "action": "todo→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:19:30",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:19:45",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:20:23",
+     "actor": "harness-eng",
+     "action": "in_progress→review",
+     "detail": ""
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-08-28T00:19:30",
+     "actor": "harness-eng",
+     "text": "Hazirdir. RunRecord-a 4 sahe: embedding_model, embedding_provider, effective_top_k, reranking_enabled (schema_version 1 -> 2). Deyerler CANLI oxunur — yeni modul agentproof/runner/retrieval_config.py: (1) app-in HAZIRDA bagli oldugu dataset id-si bazadan (apps.app_model_config_id -> app_model_configs.dataset_configs), (2) GET /v1/datasets/{id} ile embedder + retrieval_model_dict. Env (AGENTPROOF_DATASET_ID) yalniz ehtiyatdir ve xeberdarliqla isarelenir.\n\nTAPINTI (canli oxumanin ILK neticesi): env BAYATDIR. AGENTPROOF_DATASET_ID = e1471e22 (Aurora Goods Policies, gemini-embedding-001, top_k 4), app ise 1623dd7e-e (Aurora Goods Policies v2, bge-m3 / ollama, top_k 8) baglidir. Yeni yolla qacan run.py: 'Retrieval oxundu: bge-m3 (langgenius/ollama/ollama) top_k 8 dataset 1623dd7e [app-config]' + BAYAT DATASET ID xeberdarligi. Bu, VALID-03-un olcdüyu top_k=8 ile ve LIM-E04-un bge-m3 iddiasi ile uygun gelir. Env-e guvenen implementasiya eyni sehvi tekrarlayardi.\n\nTELE: GET /v1/datasets/{id}  sahesini qaytarmir (OPS-05), yalniz  — o ise sutun NULL olanda DEFAULT rəqəmi (4) gosterir, halbuki agent yolu 2 bend cekir (OPS-03). Ona gore modul sutunu ayrica yoxlayir: sutun NULL -> status 'partial', effective_top_k = null + xeberdarliq (yanlis reqem yazilmir); sutun oxunmursa -> reqem saxlanilir amma 'TESDIQLENMEMIS' kimi isarelenir.\n\nSessiz default yoxdur: oxunmayan her deyer acih 'unknown'/null qalir, sebeb totals['retrieval_check']-de, xeberdarliq hem konsolda (retrieval: setri), hem PR serhinde ayrica blokda gorunur (report/pr_comment.py: retrieval_line/retrieval_block).\n\nTestler: agentproof/tests/test_retrieval_config.py — 15 test. Ehate: sahelerin artefakta yazilmasi + JSON roundtrip; menbenin dataset API oldugu; app-in dataset-i bayat env-i ustelemesi; UUID injection qorunmasi; API/acar/id oxunmayanda 'unknown'; NULL sutunda reqem yazilmamasi; baza oxunmayanda 'tesdiqlenmemis'; schema_version 1 artefaktin sinmamasi (hem sintetik, hem diskdeki HEQIQI reports/*/*.json); hesabatda xeberdarligin gorunmesi.\n\nevals/run.py: --dataset-id / --dataset-api-key / --skip-retrieval-check elave olundu; movcud davranis deyismedi (mock qacis yoxlanildi). graders/ inspect_ai import etmir, memarliq testi yasil. pytest: 695 passed."
+    },
+    {
+     "at": "2026-08-28T00:19:45",
+     "actor": "harness-eng",
+     "text": "Duzelis (evvelki serhde iki soz itdi): TELE = GET /v1/datasets/{id} cavabinda \"retrieval_model\" sahesi UMUMIYYETLE yoxdur (OPS-05), yalniz \"retrieval_model_dict\" var — o ise sutun NULL olanda Dify-in DEFAULT reqemini (4) gosterir, halbuki agent yolu hemin halda 2 bend cekir (OPS-03). Ona gore modul \"datasets.retrieval_model\" sutununu ayrica yoxlayir."
+    }
+   ]
   },
   {
    "id": "AP-020",
@@ -922,8 +1094,8 @@
    "desc": "VALID-03: faktiki top_k=8 (canli sistemden olculdu), DSL ve IMPORT.md ise 4 yazir. Bunlar reproduksiya telimatidir — tedqiqati tekrarlayan adam ferqli konfiqurasiya qurar ve neticeler uygun gelmez.",
    "role": "harness-eng",
    "prio": "P1",
-   "status": "todo",
-   "assignee": null,
+   "status": "review",
+   "assignee": "harness-eng",
    "dod": "target/app/aurora-support-agent.yml ve target/app/IMPORT.md faktiki deyeri (8) gosterir; ELAVE OLARAQ senedde acih yazilir ki, agent app-inda dataset-in retrieval_model-u hokm edir, app konfiqi yox — cunki bu, telesi olan davranisdir",
    "links": [
     "target/app/aurora-support-agent.yml",
@@ -931,16 +1103,46 @@
     "docs/OPS-FINDINGS.md"
    ],
    "created": "2026-08-27T19:29:23",
-   "updated": "2026-08-27T19:29:23",
+   "updated": "2026-08-28T00:20:23",
    "history": [
     {
      "at": "2026-08-27T19:29:23",
      "actor": "main",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:01:31",
+     "actor": "harness-eng",
+     "action": "assigned",
+     "detail": "harness-eng"
+    },
+    {
+     "at": "2026-08-28T00:01:31",
+     "actor": "harness-eng",
+     "action": "todo→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:20:18",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:20:23",
+     "actor": "harness-eng",
+     "action": "in_progress→review",
+     "detail": ""
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-08-28T00:20:18",
+     "actor": "harness-eng",
+     "text": "Hazirdir. target/app/aurora-support-agent.yml: dataset_configs.top_k 4 -> 8, ustunde genislendirilmis serh — agent app-inda BU BLOK top_k-ni HELL ETMIR, dataset-in oz retrieval_model-u hokm edir (get_dataset_tools() strategiyani SINGLE-a mecbur edir, to_dataset_retriever_tool() top_k / search_method / rerank-i dataset setrinden oxuyur, dataset_retrieval.py:1312-1331; sutun NULL olanda sessiz lokal default 2). Serhde acih yazilib ki, buradaki reqem SENEDDIR, konfiqurasiya deyil — tek-basina deyismek HEC NEYE tesir etmir; retrieval-i deyismek ucun IMPORT.md §1-deki PATCH lazimdir. Niye 8 oldugu VALID-03-e istinadla izah olunub (4 reqemi VALID-01-den gelirdi, o ise retrieval-i POST /v1/datasets/{id}/retrieve ile TEK olcmusdu, agent yolu ile yox).\n\ntarget/app/IMPORT.md §1: basliqda yeni bloк \"Evvelce bunu oxu: top_k-ni DSL YOX, DATASET hell edir\" — 3 addimli mexanizm izahi, \"hec bir addimda xeberdarliq yoxdur\" qeydi, ve praktiki neticelerin siyahisi. Elave tele qeyd olundu: GET /v1/datasets/{id} cavabindaki retrieval_model_dict.top_k de sutun NULL olanda default (4) gosterir — sutunun heqiqeten sabitlendiyini yalniz baza deyir. PATCH gövdesi top_k 4 -> 8, baza yoxlamasinin gozlenilen ciхisi 4 -> 8, yekun setir VALID-02/VALID-03-e istinad edir. Sonda qeyd: senede yox, artefakta bax — RunRecord.effective_top_k / embedding_model canli oxunur (AP-019), fereqlenirse ARTEFAKT dogrudur. Troubleshooting cedveline \"DSL-de top_k deyisdim, hec ne deyismedi\" setri elave olundu.\n\ndocs/LIMITATIONS.md: LIM-E06 HELL OLUNDU kimi yenilendi (tetbiq edilen hell + qalan boslugu: kohne schema_version 1 artefaktlarda saheler hele de unknown, yeni bu hesabatin reqemleri hele de kenar senedle sitat getirilmelidir). LIM-E04-deki \"[tesdiqlenmeyib]\" isaresi deqiqlesdirildi: canli oxuma app-in bge-m3 / top_k 8 dataset-ine bagli oldugunu gosterir (bge-m3 iddiasi ve VALID-03 ile uygun), amma bu INDIKI veziyyete aiddir — retroaktiv subut yoxdur.\n\nDataset id-lere TOXUNMADIM: DSL hele e1471e22 (gemini) gosterir, app ise 1623dd7e (bge-m3) baglidir. Bu, esas hesabatin §2.1 iddiasina toxunan ayri qerardir — report/senedi aparan agentin (ARCHITECTURE/FINDINGS) baxmasi lazimdir, AP-020-nin ehatesinde deyil.\n\npytest: 695 passed. YAML sintaksisi yoxlanildi."
+    }
+   ]
   },
   {
    "id": "AP-021",
@@ -948,7 +1150,7 @@
    "desc": "Tam qacisda 29 stable-fail var, demek olar hamisi regex_match. Bezi patternler subheli derecede bosdur ('warrant', 'lock', 'cancell?ed'). A-01 (rus dusen sait) dersi: agentin tam duzgun cavabi grader tutmadigi ucun 'ugursuzluq' kimi gorunmusdu. Oxumadan tapinti elan etmek hesabatin etibarini oldurur.",
    "role": "hunter",
    "prio": "P0",
-   "status": "review",
+   "status": "done",
    "assignee": "hunter",
    "dod": "Her 29 case ucun: cavab metni oxunub; tesnifat REAL-FAILURE / GRADER-GAP / AMBIGUOUS; her tesnifat ucun esaslandirma + cavabdan sitat; GRADER-GAP olanlar docs/GRADER-AUDIT.md-e yazilib ve duzeldilib; duzelisden sonra hemin case-ler yeniden qacirilib; yekun REAL-FAILURE siyahisi FINDINGS.md ucun hazirdir",
    "links": [
@@ -957,7 +1159,7 @@
     "evals/datasets/full.jsonl"
    ],
    "created": "2026-08-27T19:56:57",
-   "updated": "2026-08-27T21:42:14",
+   "updated": "2026-08-28T00:00:01",
    "history": [
     {
      "at": "2026-08-27T19:56:57",
@@ -988,6 +1190,12 @@
      "actor": "hunter",
      "action": "in_progress→review",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:00:01",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "yoxlanildi ve tesdiqlendi"
     }
    ],
    "comments": [
@@ -997,6 +1205,32 @@
      "text": "Bolgu: 5 REAL-FAILURE, 14 GRADER-GAP, 10 AMBIGUOUS. 14 grader duzelisi (A-09..A-22), 3 yeniden qacis (ap021-recheck1-3). 8 saxta ugursuzluq aradan qalxdi, 3 YALANCI YASIL uze cixdi. pytest 628."
     }
    ]
+  },
+  {
+   "id": "AP-022",
+   "title": "anchors.py verify-i qacisdan evvel mecburi et",
+   "desc": "A-19 kok sebebi: anchor xeritesi dataset-e baglidir, dataset deyisende avtomatik yenilenmir ve retrieval case-leri sessizce sinir ('retrieval isleimir' saxta tapintisi). Xerite artiq duzeldildi, amma mexanizm qalir.",
+   "role": "harness-eng",
+   "prio": "P1",
+   "status": "todo",
+   "assignee": null,
+   "dod": "evals/run.py qacisdan evvel anchor-map-in cari dataset-e uygunlugunu yoxlayir; uygun deyilse ACIQ xeta ile dayanir (sessiz davam etmir); test: uygunsuz xerite ile qacis dayanir",
+   "links": [
+    "target/corpus/anchors.py",
+    "evals/run.py",
+    "docs/GRADER-AUDIT.md"
+   ],
+   "created": "2026-08-28T00:24:16",
+   "updated": "2026-08-28T00:24:16",
+   "history": [
+    {
+     "at": "2026-08-28T00:24:16",
+     "actor": "main",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
   }
  ]
 }

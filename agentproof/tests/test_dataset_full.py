@@ -25,6 +25,7 @@ import pytest
 import yaml
 
 from agentproof.graders import registry
+from agentproof.graders.canonical import contains_phrase, phrase_spec
 from agentproof.runner.task import load_cases
 from agentproof.types import AgentResponse, Case, ToolCall, Usage
 
@@ -250,6 +251,56 @@ def test_regex_patterns_compile(cases: list[Case]) -> None:
             except re.error as exc:
                 bad.append(f"{case.id}: {exc}")
     assert not bad, bad
+
+
+def test_contains_none_needles_are_well_formed(cases: list[Case]) -> None:
+    """`contains_none` iynələri A-06 müqaviləsinə uyğun olmalıdır.
+
+    * boş iynə (`""` / `"*"`) HƏR cavabı tutardı — dataset xətasıdır;
+    * `*` yalnız SONDA dayana bilər (prefiks markeridir, joker deyil);
+    * hər iynə öz mətnində tapılmalıdır — `"14 gün*"` kimi iynə səhv yazılıbsa
+      (məs. `"14gün*"`) heç vaxt tutmaz və case səssiz YAŞIL qalar.
+    """
+    bad = []
+    for case in cases:
+        for needle in case.expect.get("none", []):
+            n = str(needle)
+            if phrase_spec(n) is None:
+                bad.append(f"{case.id}: boş iynə {n!r}")
+                continue
+            if "*" in n[:-1]:
+                bad.append(f"{case.id}: `*` yalnız sonda ola bilər: {n!r}")
+                continue
+            if not contains_phrase(n.rstrip("*"), n):
+                bad.append(f"{case.id}: iynə öz mətnini tutmur: {n!r}")
+    assert not bad, bad
+
+
+def test_stale_needle_lists_cover_native_morphology(cases: list[Case]) -> None:
+    """Söz sərhədi (A-06) AZ/RU şəkilçi əhatəsini AZALTMAMALIDIR.
+
+    Bayat dəyərin nativ formaları (`30 gündür`, `30 дней`, `24 aylıq`,
+    `24 месяцев`) hələ də tutulmalıdır — yəni müvafiq iynələr `*` ilə
+    bitməlidir. Bu test dataset-in ÖZÜNÜ yoxlayır, generatoru yox.
+    """
+    probes = {
+        "r6a-t01-standard-window-value": ["the standard window is 30 days",
+                                          "a 30-day window"],
+        "l1-az-standard-window": ["standart müddət 30 gündür", "30 təqvim günüdür"],
+        "l1-ru-standard-window": ["срок — 30 дней", "30-дневное окно", "в течение 30 суток"],
+        "l1-az-ord10046-warranty": ["zəmanət 24 aylıq idi"],
+        "l1-ru-ord10046-warranty": ["гарантия была 24 месяца", "24 месяцев"],
+        "l1-az-restocking-fee": ["20 faizdir"],
+        "l1-ru-restocking-fee": ["удержат 20 процентов"],
+    }
+    by_id = {c.id: c for c in cases}
+    missed = []
+    for cid, texts in probes.items():
+        needles = [str(n) for n in by_id[cid].expect["none"]]
+        for t in texts:
+            if not any(contains_phrase(t, n) for n in needles):
+                missed.append(f"{cid}: bayat forma tutulmadı: {t!r}")
+    assert not missed, missed
 
 
 def test_no_case_asserts_two_things(cases: list[Case]) -> None:

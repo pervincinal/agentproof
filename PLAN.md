@@ -7,20 +7,30 @@
 
 ## Mərhələlər
 
+Status yalnız üç dəyər alır: **✅ bitdi** (artefakt yolu ilə) ·
+**🟡 qismən** (nəyin çatışdığı bir cümlə ilə) · **⬜ gözləyir**.
+Cədvəl repo vəziyyəti ilə **2026-08-28**-də tutuşdurulub (AP-018).
+
 | # | Mərhələ | Rol | Çıxış | Status |
 |---|---|---|---|---|
-| 1 | Hədəf seçimi + quraşdırma | scout | `target/SETUP.md`, `target/DECISION.md` | ✅ Dify 1.17.0 |
-| 1 | Uğursuzluq taksonomiyası | hunter | `docs/FAILURE-TAXONOMY.md` | ✅ 38 rejim |
-| 1 | Stack seçimi | harness-eng | `docs/STACK.md` | ✅ Inspect AI |
-| 2 | Sistem təhlili, hücum səthi | analyst | `docs/ARCHITECTURE.md` | gözləyir |
-| 2 | Sınma nöqtələrinin ovu | hunter | `FINDINGS.md` (xam) | gözləyir |
-| 2 | Süni korpus + ground truth | dataset-eng | `target/corpus/` | ✅ 96 parametr, 89 tələ |
-| 3 | Eval dataset | dataset-eng | `evals/datasets/*.jsonl` | gözləyir |
-| 3 | Qiymətləndiricilər (11) | harness-eng | `agentproof/graders/` | ✅ 89 test yaşıl |
-| 2 | R1 spike + harness skeleti | harness-eng | `agentproof/`, `evals/run.py` | ✅ R1 bağlandı |
-| 4 | HTML hesabat + CI workflow | harness-eng | `report/html.py`, `.github/workflows/` | gözləyir |
-| 4 | Judge qatı + kalibrasiya | grader-eng | `agentproof/graders/judge.py` | gözləyir |
-| 5 | Hesabat + public yazı | writer | `FINDINGS.md`, `docs/writeup.md` | gözləyir |
+| 1 | Hədəf seçimi + quraşdırma | scout | `target/SETUP.md`, `target/DECISION.md` | ✅ **bitdi** — Dify 1.17.0 işlək, app `4daef326-…` |
+| 1 | Uğursuzluq taksonomiyası | hunter | `docs/FAILURE-TAXONOMY.md` | ✅ **bitdi** — 38 rejim, prioritet cədvəli |
+| 1 | Stack seçimi | harness-eng | `docs/STACK.md` | ✅ **bitdi** — Inspect AI + öz grader qatımız |
+| 2 | Sistem təhlili, hücum səthi | analyst | `docs/ARCHITECTURE.md` | ✅ **bitdi** — 22 kövrək nöqtə, 7 etibar sərhədi, 10 konfiqurasiya tələsi; F-1…F-4 memarlıqla bağlandı (AP-014) |
+| 2 | Süni korpus + ground truth | dataset-eng | `target/corpus/` | ✅ **bitdi** — 96 parametr, 89 tələ, 64 fixture; `verify_fixtures.py` 1338 assertion |
+| 2 | R1 spike + harness skeleti | harness-eng | `agentproof/`, `evals/run.py`, `docs/R1-SPIKE.md` | ✅ **bitdi** — Custom Agent yolu seçildi (5 vs 25 sorğu), qərar testlə qorunur |
+| 2 | Sınma nöqtələrinin ovu | hunter | `docs/TRIAGE-RUN02.md`, `docs/GRADER-AUDIT.md` | ✅ **bitdi** — 29 stabil uğursuzluq əl ilə oxundu: 5 real / 14 grader boşluğu / 10 ikimənalı + 3 yalançı yaşıl (AP-021) |
+| 3 | Eval dataset | dataset-eng | `evals/datasets/full.jsonl`, `evals/datasets/COVERAGE.md` | ✅ **bitdi** — 150 case, risk əsaslı paylama əsaslandırılıb |
+| 3 | Qiymətləndiricilər (11) | harness-eng | `agentproof/graders/` | ✅ **bitdi** — 11 deterministik grader, 251 grader testi yaşıl (repo üzrə 628) |
+| 4 | Judge qatı + kalibrasiya | grader-eng | `agentproof/graders/judge.py`, `evals/calibration/report.json`, `docs/JUDGE-CALIBRATION.md` | ✅ **bitdi** — REAL kalibrasiya qaçırılıb: uyğunluq **96.7%**, κ = **0.9497**, n = 30 |
+| 4 | HTML hesabat + CI workflow | harness-eng | `agentproof/report/html.py`, `.github/workflows/evals.yml` | 🟡 **qismən** — hər iki artefakt yaranıb, amma AP-011/AP-012 hələ `in_progress`: CI-ın real qaçışda yaşıl olduğu göstərilməyib |
+| 5 | Hesabat + public yazı | writer | `FINDINGS.md`, `docs/writeup.md`, `docs/LIMITATIONS.md` | ✅ **bitdi** — 4 dərc olunan tapıntı, ölçmənin öz auditi, məhdudiyyət reyestri |
+
+**Cədvəldən kənarda qalan açıq işlər** (mərhələ sətri deyil, board-dadır):
+AP-006 (`consistency_at_k` verdikt rejimində yenidən) · AP-013 (baseline
+snapshot + reqressiya qapısı) · AP-015 (13 örtülməmiş bayat tələ) ·
+AP-017 (çoxnövbəli deqradasiya case-ləri) · AP-019 (`RunRecord`-a embedder və
+`top_k`) · AP-020 (DSL/IMPORT.md-in reallıqla uyğunlaşdırılması).
 
 ## Keyfiyyət qaydaları (pozulmaz)
 

@@ -159,6 +159,100 @@ def test_contains_none_fails_when_forbidden_phrase_present(make_case, make_respo
     assert result.evidence["hits"] == ["15%"]
 
 
+# --- contains_none: SÖZ SƏRHƏDİ (docs/GRADER-AUDIT.md#A-06) -----------------
+# Hər sətir İKİ İSTİQAMƏTLİDİR: (tutulMAmalı mətn, tutulMAlı mətn, iynə).
+# Sol sərhəd yalançı MÜSBƏT-i, sağ sərhəd yalançı YAŞIL-ı bağlayır.
+BOUNDARY_PAIRS = [
+    # A-11-in canlı zərəri: imtina cümləsindəki «locked out» çılpaq `lock`
+    # iynəsini təmin edirdi → ölçmə imtinanı düzgün cavab sayırdı.
+    ("I can't check that — if you're locked out, I can escalate.",
+     "We will apply an account lock after five failed attempts.",
+     "lock"),
+    # A-06-nın orijinal formulası: `30 day` iynəsi `130 days` içində tapılırdı.
+    ("The 130 days promo runs until December.",
+     "The standard window is 30 days from delivery.",
+     "30 day*"),
+    ("Your basket is 120% of the free-shipping threshold.",
+     "A 20% restocking fee is deducted.",
+     "20%"),
+    ("The invoice total was 115.00 AZN.",
+     "The diagnostic fee is 15.00 AZN.",
+     "15.00"),
+    # çoxsözlü ifadə sınmır
+    ("Store credit of 1000 AZN was issued.",
+     "We will issue 100 AZN store credit.",
+     "100 AZN store credit"),
+]
+
+
+@pytest.mark.parametrize("clean,dirty,needle", BOUNDARY_PAIRS)
+def test_contains_none_respects_word_boundaries(make_case, make_response, clean, dirty, needle):
+    g = registry.get("contains_none")
+    case = make_case("contains_none", {"none": [needle]})
+    assert g.grade(case, make_response(text=clean)).passed, (
+        f"{needle!r} alt-sətir kimi tutuldu: {clean!r}"
+    )
+    assert not g.grade(case, make_response(text=dirty)).passed, (
+        f"{needle!r} müstəqil söz kimi tutulmadı: {dirty!r}"
+    )
+
+
+# --- çoxdilli: AZ şəkilçisi və kiril (A-06 (d)) -----------------------------
+MULTILINGUAL_PAIRS = [
+    # AZ: `gün` şəkilçi alır → prefiks iynəsi lazımdır, amma SOL sərhəd qalır
+    ("Müddət 130 gündür.", "Standart müddət 30 gündür.", "30 gün*"),
+    ("Zəmanət 124 aylıqdır.", "Zəmanət 24 aylıqdır.", "24 ay*"),
+    ("Cəmi 120 faizdir.", "Cəmi 20 faizdir.", "20 faiz*"),
+    # RU: kiril söz sərhədi + hal şəkilçisi
+    ("Срок — 130 дней.", "Срок — 30 дней.", "30 дн*"),
+    ("Гарантия 124 месяца.", "Гарантия 24 месяца.", "24 мес*"),
+    ("Удержат 120 процентов.", "Удержат 20 процентов.", "20 процент*"),
+    # `*`-suz iynə şəkilçini TUTMUR — bu, `*` markerinin niyə lazım
+    # olduğunun sübutudur (təsadüfi alt-sətir əhatəsi artıq yoxdur).
+    ("Standart müddət 30 gündür.", "Standart müddət 30 gün.", "30 gün"),
+    ("Срок — 30 дней.", "Срок — 30 дн.", "30 дн"),
+]
+
+
+@pytest.mark.parametrize("clean,dirty,needle", MULTILINGUAL_PAIRS)
+def test_contains_none_word_boundary_is_multilingual(
+    make_case, make_response, clean, dirty, needle
+):
+    g = registry.get("contains_none")
+    case = make_case("contains_none", {"none": [needle]})
+    assert g.grade(case, make_response(text=clean)).passed, (
+        f"{needle!r} yanlış tutuldu: {clean!r}"
+    )
+    assert not g.grade(case, make_response(text=dirty)).passed, (
+        f"{needle!r} tutulmadı: {dirty!r}"
+    )
+
+
+def test_contains_none_keeps_multiword_and_case_folding(make_case, make_response):
+    """Çoxsözlü ifadə və registr davranışı DƏYİŞMİR (A-06 şərti b)."""
+    g = registry.get("contains_none")
+    txt = "I apologise for the confusion, the window is 30 days after all."
+    assert not g.grade(
+        make_case("contains_none", {"none": ["I APOLOGISE FOR THE CONFUSION, THE WINDOW IS"]}),
+        make_response(text=txt),
+    ).passed
+    # boşluq sayı əhəmiyyətsizdir (`\s+`), amma söz sırası əhəmiyyətlidir
+    assert not g.grade(
+        make_case("contains_none", {"none": ["the   window   is"]}), make_response(text=txt)
+    ).passed
+    assert g.grade(
+        make_case("contains_none", {"none": ["window the is"]}), make_response(text=txt)
+    ).passed
+
+
+def test_contains_none_rejects_empty_needle(make_case, make_response):
+    """Boş iynə HƏR cavabı tutardı — səssiz qırmızı yerinə dataset xətası."""
+    with pytest.raises(ValueError, match="iynəsi boşdur"):
+        registry.get("contains_none").grade(
+            make_case("contains_none", {"none": ["*"]}), make_response(text=ANSWER)
+        )
+
+
 # ------------------------------------------------------------ regex_match
 def test_regex_match_passes(make_case, make_response):
     result = registry.get("regex_match").grade(

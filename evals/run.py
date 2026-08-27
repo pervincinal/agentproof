@@ -31,6 +31,11 @@ from agentproof.report.baseline import GatePolicy, compare, gate  # noqa: E402
 from agentproof.report.normalize import normalize_log  # noqa: E402
 from agentproof.report.pr_comment import render, render_console  # noqa: E402
 from agentproof.runner.isolation import build_lane_pool  # noqa: E402
+from agentproof.runner.retrieval_config import (  # noqa: E402
+    RetrievalCheck,
+    apply_retrieval,
+    probe_retrieval_config,
+)
 from agentproof.runner.sut_model import (  # noqa: E402
     ModelCheck,
     SutModelMismatch,
@@ -95,6 +100,19 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                          "işarələnir"))
     p.add_argument("--skip-model-check", action="store_true",
                    help="model yoxlamasını bilərəkdən keç (səbəbi hesabata düşür)")
+    p.add_argument("--dataset-id",
+                   default=os.environ.get("AGENTPROOF_DATASET_ID", ""),
+                   help=("Dify knowledge base id — retrieval konfiqurasiyası bundan "
+                         "CANLI oxunur. `--dify-app-id` verilibsə app-ın ÖZ bağlı "
+                         "dataset-i üstün tutulur (env bayat ola bilər)"))
+    p.add_argument("--dataset-api-key",
+                   default=os.environ.get("AGENTPROOF_DATASET_KEY", ""),
+                   help=("Dify Knowledge API açarı (`dataset-...`). Verilməsə "
+                         "retrieval konfiqurasiyası `unknown` qalır — səssiz "
+                         "default verilmir"))
+    p.add_argument("--skip-retrieval-check", action="store_true",
+                   help=("embedder / `top_k` oxumasını bilərəkdən keç. Səbəb hesabata "
+                         "düşür: konfiqurasiyasız qaçış yenidən yoxlana bilmir (LIM-E06)"))
     p.add_argument("--log-dir", default=None)
     p.add_argument(
         "--tool-reset-url",
@@ -190,6 +208,43 @@ def main(argv: list[str] | None = None) -> int:
         print(f"XƏBƏRDARLIQ — model yoxlanmadı: {model_check.detail}", file=sys.stderr)
     sut_model = model_check.model
 
+    # --- retrieval konfiqurasiyası CANLI sistemdən (LIM-E06 / AP-019) -----
+    # Sənəddən, DSL-dən və ya konfiq faylından OXUNMUR — məhz onların
+    # ziddiyyəti (DSL `top_k: 4` ↔ faktiki 8) bu addımı doğurdu. Oxuna
+    # bilməsə qaçış DAYANMIR, amma dəyər `unknown` qalır və hesabatda
+    # xəbərdarlıq görünür.
+    if args.skip_retrieval_check:
+        retrieval = RetrievalCheck(
+            status="skipped",
+            detail="--skip-retrieval-check ilə bilərəkdən keçilib",
+            warnings=[
+                "retrieval konfiqurasiyası bilərəkdən oxunmadı — embedder və "
+                "`top_k` `unknown` qalır (LIM-E06)"
+            ],
+        )
+    else:
+        retrieval = probe_retrieval_config(
+            app_id=args.dify_app_id or None,
+            dataset_id=args.dataset_id or None,
+            base_url=os.environ.get("DIFY_BASE_URL", ""),
+            api_key=args.dataset_api_key,
+        )
+    if retrieval.ok:
+        print(
+            f"Retrieval oxundu: {retrieval.embedding_model} "
+            f"({retrieval.embedding_provider}) · top_k {retrieval.effective_top_k} · "
+            f"dataset {retrieval.dataset_id} [{retrieval.dataset_source}]",
+            file=sys.stderr,
+        )
+    else:
+        print(
+            f"XƏBƏRDARLIQ — retrieval konfiqurasiyası tam oxunmadı "
+            f"({retrieval.status}): {retrieval.detail or '—'}",
+            file=sys.stderr,
+        )
+    for warning in retrieval.warnings:
+        print(f"  ⚠️ {warning}", file=sys.stderr)
+
     lanes = load_lanes(args.lanes)
     pool = build_lane_pool(lanes, args.tool_reset_url or None)
 
@@ -253,6 +308,9 @@ def main(argv: list[str] | None = None) -> int:
     # Model yoxlamasının NƏTİCƏSİ hesabata düşür — "yoxlanmadı" halı gizlənə bilməz.
     record.totals["model_check"] = model_check.to_dict()
     record.totals["lanes"] = pool.size
+    # Konfiqurasiya artefaktın İÇİNƏ yazılır — kənar sənədə güvənmək məhz
+    # LIM-E06-nın səbəbi idi.
+    apply_retrieval(record, retrieval)
     record_path = out_dir / f"{record.run_id}.json"
     record_path.write_text(
         json.dumps(record.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8"

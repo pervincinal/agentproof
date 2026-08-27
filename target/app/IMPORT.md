@@ -66,24 +66,48 @@ allowlist-i istəyirsənsə: `SSRF_PROXY_ALLOW_PRIVATE_IPS=192.168.65.254/32`
 
 > **Status: icra edilib (2026-08-27).** Sıfırdan quraşdırmada təkrarla.
 
-Bu addımı buraxmaq **səssiz** ölçmə xətası verir. Agent app-da Dify bilik
-bazasını tool kimi verir və `DatasetRetrieverTool.get_dataset_tools()`
-retrieval strategiyasını məcburi `SINGLE`-a çevirir ("Agent only support SINGLE
-mode"). Ondan sonra `to_dataset_retriever_tool()` `top_k`, `search_method` və
-rerank ayarlarını **dataset-in özündən** oxuyur — app-in DSL-indəki
-`dataset_configs.top_k` yox. `retrieval_model` NULL olan dataset üçün lokal
-default `top_k: 2`-dir, yəni VALID-01-in ölçdüyündən iki bənd az.
+### ⚠️ Əvvəlcə bunu oxu: `top_k`-nı DSL YOX, DATASET həll edir
+
+Agent app-ında **dataset-in öz `retrieval_model`-u hökm edir.** App
+konfiqurasiyası və DSL-dəki `dataset_configs.top_k` **oxunmur**. Səbəb:
+
+1. Dify bilik bazasını tool kimi verir və
+   `DatasetRetrieverTool.get_dataset_tools()` retrieval strategiyasını məcburi
+   `SINGLE`-a çevirir (*"Agent only support SINGLE mode"*);
+2. sonra `to_dataset_retriever_tool()` `top_k`, `search_method` və rerank
+   ayarlarını **dataset sətrindən** oxuyur
+   (`api/core/rag/retrieval/dataset_retrieval.py:1312-1331`);
+3. `retrieval_model` NULL olan dataset üçün lokal default **`top_k: 2`**-dir.
+
+**Heç bir addımda xəbərdarlıq yoxdur.** UI, DSL və API bir rəqəm göstərir,
+sistem başqasını icra edir. Praktiki nəticələr:
+
+- DSL-də `top_k`-nı dəyişmək **HEÇ NƏYƏ təsir etmir**. Retrieval-ı dəyişmək
+  üçün aşağıdakı `PATCH`-i qaç.
+- Bu addımı buraxmaq **səssiz** ölçmə xətası verir: dataset NULL qalır, agent
+  2 bənd çəkir, sənədlər isə 8 yazır.
+- `GET /v1/datasets/{id}` cavabındakı `retrieval_model_dict.top_k` da tam
+  etibarlı deyil: sütun NULL olanda Dify orada **default** rəqəmi (`4`)
+  göstərir. Sütunun HƏQİQƏTƏN sabitləndiyini yalnız baza deyir (aşağıda).
+
+**Niyə 8, halbuki bu sənəd əvvəl 4 yazırdı** — `docs/OPS-FINDINGS.md →
+VALID-03`: canlı app-a atılan sorğu **8** `retriever_resources` qaytardı (bayat
+Appendix A bəndi 8-ci mövqedə). `4` rəqəmi VALID-01-dən gəlirdi, o isə
+retrieval-ı `POST /v1/datasets/{id}/retrieve` ilə TƏK ölçmüşdü, agent yolu ilə
+yox; VALID-02-dən sonra əsas qaçış `top_k=8`-ə keçdi (əks halda 31 R6 case-i
+səssizcə boş keçərdi), amma bu sənəd yenilənmədi. Aşağıdakı `PATCH` faktiki
+dəyəri yazır.
 
 ```bash
 set -a; . ~/agentproof-stack/dify/docker/.env; set +a
 curl -s -X PATCH \
-  "http://localhost:8088/v1/datasets/e1471e22-18f8-4b30-aeb1-012c048e38a5" \
+  "http://localhost:8088/v1/datasets/1623dd7e-3e9e-4a8c-97c3-d66fdbac8e39" \
   -H "Authorization: Bearer $AGENTPROOF_DATASET_KEY" \
   -H "Content-Type: application/json" \
   -d '{"retrieval_model":{"search_method":"semantic_search","reranking_enable":false,
        "reranking_mode":null,
        "reranking_model":{"reranking_provider_name":"","reranking_model_name":""},
-       "top_k":4,"score_threshold_enabled":false,"score_threshold":null}}' > /dev/null
+       "top_k":8,"score_threshold_enabled":false,"score_threshold":null}}' > /dev/null
 ```
 
 **Görünməlidir** — cavabın özünə baxma. `PATCH` və `GET /v1/datasets/{id}`
@@ -92,12 +116,20 @@ hər ikisi `retrieval_model: null` qaytarır (cavab modeli sahəni ümumiyyətl�
 
 ```bash
 docker exec docker-db_postgres-1 psql -U postgres -d dify -t -c \
-  "select retrieval_model from datasets where id='e1471e22-18f8-4b30-aeb1-012c048e38a5';"
-# {"top_k": 4, ..., "search_method": "semantic_search", ..., "reranking_enable": false, ...}
+  "select retrieval_model from datasets where id='1623dd7e-3e9e-4a8c-97c3-d66fdbac8e39';"
+# {"top_k": 8, ..., "search_method": "semantic_search", ..., "reranking_enable": false, ...}
 ```
 
-`top_k: 4`, `search_method: semantic_search`, `reranking_enable: false` —
-`docs/OPS-FINDINGS.md → VALID-01` ilə eyni konfiqurasiya.
+`top_k: 8`, `search_method: semantic_search`, `reranking_enable: false` —
+əsas qaçışın konfiqurasiyası (`docs/OPS-FINDINGS.md → VALID-02`, canlı sistemdə
+`VALID-03` ilə təsdiqləndi). Sorğu boş sətir qaytarırsa sütun **NULL**-dur:
+`PATCH` tutmayıb, agent 2 bənd çəkəcək.
+
+> Sənədə deyil, artefakta bax. Hər qaçış faktiki konfiqurasiyanı ÖZÜ ilə
+> daşıyır: `RunRecord.effective_top_k`, `embedding_model`,
+> `embedding_provider`, `reranking_enabled` — hamısı canlı dataset API-dən
+> oxunur (`agentproof/runner/retrieval_config.py`), oxunmasa açıq `unknown`
+> qalır. Bu fayl ilə artefakt fərqlənirsə, **artefakt doğrudur**.
 
 ---
 
@@ -270,7 +302,7 @@ curl -s -X POST http://localhost:8088/v1/chat-messages \
     "retriever_resources": [
       {
         "position": 1,
-        "dataset_id": "e1471e22-18f8-4b30-aeb1-012c048e38a5",
+        "dataset_id": "1623dd7e-3e9e-4a8c-97c3-d66fdbac8e39",
         "dataset_name": "Aurora Goods Policies",
         "document_name": "returns-and-refunds.md",
         "score": 0.79,
@@ -314,7 +346,8 @@ sınıqdır, addım 3-ə qayıt.
 | Cavab gəlir, `retriever_resources` boşdur | `retriever_resource.enabled` `false`-dur, VƏ YA agent retrieval etməyib | DSL-də `retriever_resource.enabled: true`; sonra Logs-da tool izinə bax |
 | Cavabda uydurulmuş sifariş məlumatı, tool izi yoxdur | `provider_id` placeholder qalıb, VƏ YA SSRF bloku | addım 3, sonra addım 0 |
 | Tool çağırışı `ToolSSRFError` verir | squid allowlist tətbiq olunmayıb | addım 0-ı təkrarla, `ssrf_proxy`-ni **recreate** et |
-| Retrieval 4 yox, 2 chunk qaytarır | dataset-in `retrieval_model`-u NULL-dur | addım 1 |
+| Retrieval 8 yox, 2 chunk qaytarır | dataset-in `retrieval_model`-u NULL-dur (DSL-dəki `top_k` oxunmur) | addım 1 |
+| DSL-də `top_k` dəyişdim, heç nə dəyişmədi | agent app-ında dataset hökm edir, DSL yox | addım 1 (`PATCH`) |
 | `Version Incompatibility` modalı | Dify versiyası 1.17.0 deyil | `docker compose ps` → image tag-larını yoxla |
 
 ---

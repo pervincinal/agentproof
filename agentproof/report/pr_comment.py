@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from agentproof.graders.calibration import judge_status
 from agentproof.report.baseline import GateResult
-from agentproof.types import RunDelta, RunRecord
+from agentproof.types import UNKNOWN, RunDelta, RunRecord
 
 
 def headline(delta: RunDelta) -> str:
@@ -108,10 +108,12 @@ def render(
         ]
 
     out += judge_block(current)
+    out += retrieval_block(current)
 
     out += [
         "---",
         f"<sub>model: {model_line(current)} · "
+        f"retrieval: {retrieval_line(current)} · "
         f"lane: {totals.get('lanes', 1)} · "
         f"xərc ${totals.get('cost_usd', 0):.2f} · "
         f"p50 {totals.get('p50_latency_ms', 0) / 1000:.1f}s · "
@@ -139,6 +141,48 @@ def model_line(record: RunRecord) -> str:
     return f"{name} (YOXLANILMADI — {check.get('detail', status)})"
 
 
+def retrieval_line(record: RunRecord) -> str:
+    """Embedder + faktiki `top_k` — konfiqurasiya oxunmayıbsa XƏBƏRDARLIQ.
+
+    LIM-E06: bu iki parametr olmadan tapıntılar yenidən yoxlana bilmir. Səssiz
+    default vermək burada ən pis variantdır — rəqəm inandırıcı görünür, amma
+    hansı konfiqurasiyaya aid olduğu sübut edilə bilmir (VALID-03).
+    """
+    check = record.totals.get("retrieval_check") or {}
+    status = check.get("status", "")
+    top_k = record.effective_top_k
+    top_k_text = UNKNOWN if top_k is None else str(top_k)
+    line = f"{record.embedding_model} · top_k {top_k_text}"
+    if record.reranking_enabled is not None:
+        line += f" · rerank {'açıq' if record.reranking_enabled else 'yox'}"
+    if not status:
+        return f"{line} (QEYD OLUNMAYIB — köhnə artefakt və ya yoxlama qaçmadı)"
+    if status == "live":
+        source = check.get("dataset_source", "")
+        origin = "app-ın bağlı olduğu dataset" if source == "app-config" else f"dataset ({source})"
+        return f"{line} (canlı oxundu — {origin} `{check.get('dataset_id', '')[:8]}`)"
+    if status == "skipped":
+        return f"{line} (YOXLANILMADI — {check.get('detail', 'bilərəkdən keçilib')})"
+    warnings = check.get("warnings") or []
+    head = warnings[0] if warnings else check.get("detail", status)
+    more = f" · +{len(warnings) - 1} xəbərdarlıq" if len(warnings) > 1 else ""
+    return f"{line} (⚠️ {head}{more})"
+
+
+def retrieval_block(record: RunRecord) -> list[str]:
+    """PR şərhində bütün retrieval xəbərdarlıqları — biri də gizlənmir."""
+    check = record.totals.get("retrieval_check") or {}
+    warnings = check.get("warnings") or []
+    if not warnings:
+        return []
+    return [
+        "### ⚠️ Retrieval konfiqurasiyası",
+        "",
+        *[f"- {w}" for w in warnings],
+        "",
+    ]
+
+
 def render_console(record: RunRecord, delta: RunDelta | None = None) -> str:
     """Baseline olmadan da işləyən insan üçün konsol xülasəsi."""
     t = record.totals
@@ -151,6 +195,7 @@ def render_console(record: RunRecord, delta: RunDelta | None = None) -> str:
         f"(qiymət cədvəli {t.get('price_table_as_of', '?')} · "
         f"dərəcə tarixi {t.get('priced_on', '?')})",
         f"  model   : {model_line(record)}",
+        f"  retrieval: {retrieval_line(record)}",
         f"  gecikmə : p50 {t.get('p50_latency_ms', 0):.0f} ms · p95 {t.get('p95_latency_ms', 0):.0f} ms",
         f"  növbə   : {t.get('multi_turn_cases', 0)} çoxnövbəli case zəncirləndi",
     ]

@@ -39,6 +39,8 @@ __all__ = [
     "numeric_spec",
     "contains_number",
     "cue_matches",
+    "phrase_spec",
+    "contains_phrase",
 ]
 
 TokenKind = Literal["quantity", "date", "word"]
@@ -122,14 +124,19 @@ _TRANSLATE = {
 }
 
 
-def canonical_text(text: str) -> str:
+def canonical_text(text: str, fold_case: bool = True) -> str:
     """Kiçik hərf, NFKC, tire/dırnaq vahidləşdirilməsi, boşluq sıxılması.
 
     Yeni sətir QORUNUR — bənd sərhədidir.
+
+    `fold_case=False` yalnız `case_sensitive` iynələr üçündür (A-06) — qalan
+    normallaşdırma (NFKC, tire, boşluq) eyni qalır ki, iynə ilə mətn eyni
+    səthdə müqayisə olunsun.
     """
     out = unicodedata.normalize("NFKC", text or "")
     out = out.translate(_TRANSLATE)
-    out = out.lower()
+    if fold_case:
+        out = out.lower()
     out = re.sub(r"[^\S\n]+", " ", out)
     out = re.sub(r"\n+", "\n", out)
     return out.strip()
@@ -510,26 +517,87 @@ def contains_number(text: str, value: str) -> bool:
 
 
 # ---------------------------------------------------------------- açar sözlər
-def _cue_pattern(cue: str) -> re.Pattern[str]:
-    cue = canonical_text(cue)
+def _cue_pattern(cue: str, fold_case: bool = True) -> re.Pattern[str] | None:
+    cue = canonical_text(cue, fold_case)
     prefix = cue.endswith("*")
     stem = cue[:-1] if prefix else cue
-    body = r"\s+".join(re.escape(p) for p in stem.split())
+    parts = stem.split()
+    if not parts:  # `""` və ya `"*"` — hər şeyi tutan iynə qəbul edilmir
+        return None
+    body = r"\s+".join(re.escape(p) for p in parts)
     tail = "" if prefix else r"(?!\w)"
     return re.compile(rf"(?<!\w){body}{tail}", re.UNICODE)
 
 
-_CUE_CACHE: dict[str, re.Pattern[str]] = {}
+_CUE_CACHE: dict[tuple[str, bool], re.Pattern[str] | None] = {}
+
+
+def _cached_cue(cue: str, fold_case: bool = True) -> re.Pattern[str] | None:
+    key = (cue, fold_case)
+    if key not in _CUE_CACHE:
+        _CUE_CACHE[key] = _cue_pattern(cue, fold_case)
+    return _CUE_CACHE[key]
 
 
 def cue_matches(text: str, cue: str) -> bool:
     """`cue` mətndə varmı. Sonu `*` olan cue prefiks kimi işləyir.
 
     `"warrant*"` → `warranty`, `warranties`; `"warranty"` → yalnız tam söz.
+
+    QEYD: `text` ARTIQ kanonik olmalıdır (çağıranlar bənd/klauza mətnini
+    `analyze()`-dən alır). Xam cavab mətni üçün `contains_phrase()` işlədin.
     """
     if not cue:
         return False
-    pat = _CUE_CACHE.get(cue)
+    pat = _cached_cue(cue)
+    return pat is not None and pat.search(text) is not None
+
+
+def phrase_spec(spec: str) -> tuple[str, bool] | None:
+    """`expect` mətn iynəsini `(stem, prefiks?)` cütünə ayırır.
+
+    `"30 day*"` → `("30 day", True)`; `"20%"` → `("20%", False)`.
+    Boş / yalnız `"*"` olan iynə üçün None — belə iynə hər şeyi tutardı və
+    dataset səhvidir.
+    """
+    cue = canonical_text(spec)
+    prefix = cue.endswith("*")
+    stem = " ".join((cue[:-1] if prefix else cue).split())
+    if not stem:
+        return None
+    return stem, prefix
+
+
+def contains_phrase(text: str, needle: str, case_sensitive: bool = False) -> bool:
+    """`needle` mətndə MÜSTƏQİL SÖZ / İFADƏ kimi varmı.
+
+    Niyə lazımdır (docs/GRADER-AUDIT.md#A-06): `contains_none` `normalize()` +
+    `in` işlədirdi, yəni ALT-SƏTİR axtarışı idi. İki cür zərər verirdi:
+
+      * sağ sərhəd yoxdur → çılpaq `lock` iynəsi imtina mətnindəki
+        «locked out» ilə təmin olunurdu (A-11) → **yalançı YAŞIL**;
+      * sol sərhəd yoxdur → `30 day` iynəsi `130 days` içində tapılırdı
+        (A-06-nın orijinal formulası) → **yalançı müsbət**.
+
+    Həll A-08-dəki (`numeric_spec` / `contains_number`) ilə eyni formadadır:
+    iynə öz token sərhədləri daxilində axtarılır. Fərq yalnız iynənin
+    növündədir — orada ədəd tokeni, burada söz tokeni.
+
+    **Morfologiya açıq elan olunur.** AZ/RU-da söz şəkilçi alır
+    (`30 gün` → `gündür`, `30 дн` → `дней`), ona görə belə iynələr `*` ilə
+    bitir və PREFİKS kimi işləyir. `*`-suz iynə tam sözdür. Beləliklə
+    «alt-sətir olduğuna görə təsadüfən işləyir» vəziyyəti «prefiks olduğu
+    AÇIQ yazılıb» vəziyyətinə çevrilir — eyni əhatə, görünən niyyət.
+
+        contains_phrase("locked out for 30 minutes", "lock")   → False
+        contains_phrase("we apply an account lock", "lock")    → True
+        contains_phrase("standart müddət 30 gündür", "30 gün") → False
+        contains_phrase("standart müddət 30 gündür", "30 gün*")→ True
+        contains_phrase("the 130 days promo", "30 day*")       → False
+    """
+    if not needle:
+        return False
+    pat = _cached_cue(needle, not case_sensitive)
     if pat is None:
-        pat = _CUE_CACHE[cue] = _cue_pattern(cue)
-    return pat.search(text) is not None
+        return False
+    return pat.search(canonical_text(text, not case_sensitive)) is not None

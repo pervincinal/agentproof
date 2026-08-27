@@ -132,21 +132,43 @@ model_config:
         tool_name: escalate_to_human
         tool_parameters: {}
 
-  # Retrieval — must stay identical to the VALID-01 measurement
-  # (docs/OPS-FINDINGS.md): semantic_search, top_k=4, no rerank, no threshold.
+  # Retrieval — semantic_search, top_k=8, no rerank, no threshold.
   #
-  # Read this together with IMPORT.md §1. In an agent app Dify exposes the
-  # knowledge base as a tool, and DatasetRetrieverTool.get_dataset_tools()
-  # overrides retrieve_strategy to SINGLE ("Agent only support SINGLE mode"),
-  # after which to_dataset_retriever_tool() takes top_k / search_method /
-  # reranking from the DATASET's own retrieval_model, not from this block. A
-  # dataset with retrieval_model = NULL falls back to a local default of
-  # top_k: 2 — silently, and two points below what VALID-01 measured.
-  # IMPORT.md §1 therefore pins the dataset's retrieval_model to the same
-  # numbers written here, so the two cannot diverge whichever path executes.
+  # ⚠️ READ THIS BEFORE YOU TRUST THE NUMBER BELOW.
+  #
+  # In an agent app THIS BLOCK DOES NOT DECIDE top_k. The DATASET's own
+  # retrieval_model does. Dify exposes the knowledge base as a tool, and
+  # DatasetRetrieverTool.get_dataset_tools() overrides retrieve_strategy to
+  # SINGLE ("Agent only support SINGLE mode"); to_dataset_retriever_tool()
+  # then reads top_k / search_method / reranking from the DATASET row
+  # (dataset_retrieval.py:1312-1331), ignoring everything written here. If the
+  # dataset's retrieval_model column is NULL, it silently falls back to a local
+  # default of top_k: 2. There is no warning on any of these paths — this is
+  # the single most trap-laden behaviour in the whole setup.
+  #
+  # The value here is therefore DOCUMENTATION, not configuration. It is kept
+  # equal to the dataset's pinned value so the two cannot read differently, but
+  # editing it alone changes NOTHING. To change retrieval, PATCH the dataset —
+  # IMPORT.md §1.
+  #
+  # Why 8 and not 4: this file said `top_k: 4` while the live system was
+  # actually serving 8 (docs/OPS-FINDINGS.md → VALID-03: 8 retriever_resources
+  # measured against the running app, stale Appendix A chunk at position 8).
+  # The earlier `4` came from VALID-01, which measured retrieval standalone via
+  # POST /v1/datasets/{id}/retrieve, not through the agent path. VALID-02 then
+  # moved the main run to top_k=8 so the 31 R6 cases would not silently pass
+  # empty. The DSL was never updated — that is the contradiction VALID-03
+  # resolved from the live system, and this line is the fix.
+  #
+  # Verify, never assume (both are one command — IMPORT.md §1):
+  #   GET /v1/datasets/{id}      -> retrieval_model_dict.top_k
+  #   select retrieval_model from datasets where id = '<dataset>'
+  # Every run also records what it actually used: RunRecord.effective_top_k /
+  # embedding_model, read live from the dataset API (agentproof/runner/
+  # retrieval_config.py). Trust the run artifact over this comment.
   dataset_configs:
     retrieval_model: multiple
-    top_k: 4
+    top_k: 8
     score_threshold_enabled: false
     score_threshold: null
     reranking_enabled: false
@@ -163,7 +185,15 @@ model_config:
       datasets:
         - dataset:
             enabled: true
-            id: e1471e22-18f8-4b30-aeb1-012c048e38a5   # "Aurora Goods Policies"
+            # ⚠️ INSTANCE-SPECIFIC. This UUID is from the study instance and will
+            #    NOT exist in yours. After creating your knowledge base, replace it
+            #    with your own dataset id (see target/app/IMPORT.md §1).
+            #    The study ran against "Aurora Goods Policies v2":
+            #    embedder bge-m3 (Ollama), top_k 8 — NOT the earlier
+            #    gemini-embedding-001 dataset, which was abandoned (see OPS-01).
+            #    Authoritative record of what a run actually used:
+            #    RunRecord.embedding_model / .effective_top_k, not this file.
+            id: 1623dd7e-3e9e-4a8c-97c3-d66fdbac8e39   # "Aurora Goods Policies v2"
   dataset_query_variable: ""
 
   # retriever_resource.enabled: true puts the retrieved chunks into the message

@@ -33,7 +33,7 @@ boşluğundan qaynaqlansa, hesabatın bütün qalan hissəsi də şübhə altın
 | A-03 | `contains_none`: bayat dəyərin nativ formaları yoxdur | buraxılmış tapıntı | 14 | düzəldildi |
 | A-04 | `ANY_FIGURE` vahid siyahısı yalnız ingiliscə | buraxılmış tapıntı + dil asimmetriyası | 6 | düzəldildi |
 | A-05 | EN: `ineligible`, `can no longer be returned`, `14 calendar days` tutulmurdu | hər ikisi | 19 | düzəldildi |
-| A-06 | `contains_none` alt-sətir axtarışıdır — söz sərhədi yoxdur | qalıq risk | 39 | **açıq / sənədləşdirilib** |
+| A-06 | `contains_none` alt-sətir axtarışıdır — söz sərhədi yoxdur | qalıq risk → **yalançı YAŞIL** (A-11) | 34 | **BAĞLANDI** (grader səviyyəsində, AP-016) |
 | A-07 | 30 gün həm BAYAT standart, həm CARİ Plus dəyəridir | qalıq risk | 6 | **açıq / sənədləşdirilib** |
 | A-08 | Çılpaq rəqəm iynəsi (`contains_all: ["3"]`) tarixin içində tapılır | **yalançı YAŞIL** | 6 | **BAĞLANDI** (grader səviyyəsində) |
 
@@ -227,17 +227,75 @@ still open`, `We will accept the return` — heç biri tutulmur.
 
 ---
 
-## A-06 — QALIQ RİSK: `contains_none` söz sərhədi tanımır
+## A-06 — BAĞLANDI: `contains_none` söz sərhədi tanımır (AP-016)
 
-`ContainsNone` grader-i `normalize()` + `in` işlədir, yəni **alt-sətir**
-axtarışıdır. Nəticədə `"30 day"` iynəsi nəzəri olaraq `"130 days"` içində də
-tapılar.
+`ContainsNone` grader-i `normalize()` + `in` işlədirdi, yəni **alt-sətir**
+axtarışı idi. İlk auditdə bu, "qalıq risk" kimi yazılmışdı — səhv qiymət idi.
+Risk nəzəri qalmadı, **partladı**: ikinci audit dövründə A-11 göstərdi ki,
+çılpaq `lock` iynəsi agentin İMTİNA cümləsindəki «if you're **locked out**,
+I can escalate» ilə təmin olunur və ölçmə imtinanı düzgün cavab sayır —
+**yalançı YAŞIL**. Yəni açıq olan iki sərhəd iki fərqli zərər verir:
 
-**Niyə düzəltmədik.** Korpusda üç rəqəmli gün/ay dəyəri yoxdur
-(`target/corpus/CANONICAL.yaml` yoxlandı), ona görə praktik risk sıfıra
-yaxındır. Bunu `regex_match` + `\b` ilə əvəz etmək 39 case-in grader-ini
-dəyişməyi tələb edir və özü yeni səhv mənbəyidir. Riskin özü indi
-sənədləşdirilib — ölçülməmiş risk sənədləşdirilmiş riskdən pisdir.
+| sərhəd | açıq qalanda | nümunə | zərər |
+|---|---|---|---|
+| **sol** | iynə daha uzun ədədin içindən çıxır | `30 day` ⊂ `130 days` | yalançı müsbət |
+| **sağ** | iynə söz kökündən çıxır | `lock` ⊂ `locked out` | **yalançı YAŞIL** |
+
+**Həll — A-08 ilə EYNİ formada, təkər yenidən icad edilmədi.**
+`agentproof/graders/canonical.py` → `phrase_spec()` + `contains_phrase()`
+(A-08-dəki `numeric_spec()` + `contains_number()` cütünün mətn qarşılığı).
+Mövcud `_cue_pattern()` maşını təkrar işlədilir, yeni regex dili yaradılmır.
+İynə artıq öz token sərhədləri daxilində axtarılır: `(?<!\w)` + `(?!\w)`,
+Unicode rejimində (kiril və `ə/ğ/ş/ç/ö/ü` hərfləri `\w`-a daxildir).
+
+**Morfoloji əhatə itmədi — GÖRÜNƏN oldu.** Köhnə siyahılar KÖKLƏR verirdi
+(`24 месяц` → месяцев, `30 gün` → gündür) və bu, yalnız alt-sətir axtarışı
+olduğu üçün TƏSADÜFƏN işləyirdi. İndi belə iynələr `*` ilə bitir və prefiks
+kimi işləyir — eyni əhatə, açıq elan olunmuş niyyət:
+
+```python
+stale_days(30)   → ["30 day*", "30 calendar day*", "30-day*",
+                    "30 gün*", "30 təqvim gün*", "30-gün*",
+                    "30 дн*", "30 календарных дн*", "30-дневн*", "30 сут*"]
+stale_kg("20")   → ["20 kg", "20.0 kg", "20-kg", "20 kq", "20 кг", "20 килограмм*"]
+```
+
+`*` yalnız sözün **həqiqətən şəkilçi aldığı** yerdə qoyulur. `kg` / `кг` /
+`%` / `pct` dəyişməz abbreviaturadır, ona görə onlar tam sözdür — nəticədə
+`120 kg` və `120%` artıq **tutulmur**. Eyni məntiqlə ingiliscə `never expire`
+→ `never expire*` oldu (3-cü şəxs `-s` şəkilçisi real morfologiyadır);
+`*` qoyulmasaydı söz sərhədi əhatəni AZALDARDI.
+
+**Baseline müqayisəsi — fərq SIFIRDIR.** Dəyişiklik `reports/full-run-02`
+qaçışının **real cavab mətnləri** üzərində əvvəl/sonra qaçırıldı:
+
+| ölçü | dəyər |
+|---|---|
+| `contains_none` case | **34** (audit ilk yazılanda 39 idi; A-09/A-13/A-15 beşini `regex_match`-ə köçürdü) |
+| qiymətləndirilən (case × cəhd) | **102** (34 × 3 təkrar) |
+| `passed` dəyişən | **0** |
+
+Yəni düzəliş baseline-ı sıfırlamır — AP-013 reqressiya qapısı üçün əvvəlki
+qaçışla müqayisə **etibarlı qalır**. Aralıq nəticə kimi bir fərq tapıldı və
+o, dataset xətası çıxdı: `never expire` iynəsi `*`-suz qaldıqda
+`g1-gap01-giftcard-expiry#1`-dəki «never expire**s**» formasını buraxırdı.
+İynəyə `*` əlavə edildi, fərq sıfıra düşdü.
+
+**Reqressiya qoruması (hamısı iki istiqamətli).**
+`agentproof/graders/tests/test_text.py` — 12 sərhəd cütü
+(`lock` ∉ «locked out» / `lock` ∈ «account lock»; `30 day*` ∉ «130 days»;
+AZ `30 gün*` ∈ «30 gündür», amma ∉ «130 gündür»; RU `30 дн*` ∈ «30 дней»,
+∉ «130 дней»; `*`-suz iynənin şəkilçini TUTMADIĞI da ayrıca yoxlanılır),
+üstəgəl çoxsözlü ifadə + registr davranışının dəyişmədiyi və boş iynənin
+(`"*"`) `ValueError` atdığı.
+`agentproof/tests/test_multilingual_patterns.py` — `stale_*()` siyahıları artıq
+alt-sətirlə deyil, grader-in FAKTİKİ semantikası (`contains_phrase`) ilə
+yoxlanılır + yeni `test_stale_needles_have_a_left_word_boundary`.
+`agentproof/tests/test_dataset_full.py` — `test_contains_none_needles_are_well_formed`
+(boş iynə yoxdur, `*` yalnız sonda, hər iynə öz mətnini tutur) və
+`test_stale_needle_lists_cover_native_morphology`.
+
+`pytest`: **628 → 695**, hamısı yaşıl.
 
 ---
 
@@ -374,8 +432,10 @@ Müstəqil yoxlama (8/8, hər iki istiqamət):
 | `12` | `164.12 AZN` | tutulmur ✅ |
 | `7`  | `7 days in transit` | tutulur ✅ |
 
-Beləliklə auditdə açıq qalan yalnız **A-06** (söz sərhədi) və **A-07**
-(30 gün ikimənalılığı) qalır — hər ikisi dəqiqlik güzəştidir, yalançı yaşıl deyil.
+Beləliklə birinci dövrdən açıq qalan yalnız **A-07** (30 gün ikimənalılığı)
+oldu — dəqiqlik güzəştidir, yalançı yaşıl deyil. **A-06** (söz sərhədi)
+AP-016-da bağlandı; onun "qalıq risk" qiyməti səhv çıxmışdı, çünki A-11
+göstərdi ki, açıq sağ sərhəd real yalançı YAŞIL verir.
 
 ---
 ---
@@ -782,7 +842,20 @@ case tam qaçışda KEÇMİŞDİ, halbuki cavabında eyni uydurma vardı.
 
 ---
 
-## A-19 — retrieval gold lövbərləri BAŞQA dataset-ə aiddir (AÇIQ)
+## A-19 — retrieval gold lövbərləri BAŞQA dataset-ə aiddir (BAĞLANDI 2026-08-28)
+
+> **Həll.** `target/corpus/anchor-map.json` köhnə dataset-in (`e1471e22`,
+> gemini-embedding-001) seqment UUID-lərini saxlayırdı, halbuki app canlı olaraq
+> `1623dd7e`-yə (bge-m3, top_k 8) bağlıdır. Xəritə `anchors.py build` ilə canlı
+> dataset üçün yenidən quruldu (77 seqment, 283 lövbər, `verify` təmiz), və
+> `AGENTPROOF_DATASET_ID` ilə DSL-dəki bayat id düzəldildi.
+>
+> **Təsdiq:** hər iki case yenidən qaçırıldı (`--repeat 3`, `reports/anchor-fix`)
+> → **2/2 keçdi**. Yəni «retrieval işləmir» həqiqətən saxta tapıntı idi.
+>
+> **Kök səbəb sinfi:** lövbərlər sabit (`doc#clause`) saxlanılır, amma xəritə
+> dataset-ə bağlıdır və dataset dəyişəndə **avtomatik yenilənmir**. `anchors.py
+> verify` bunu tutur — qaçışdan əvvəl çağırılmalıdır.
 
 **Case:** `r2-hit-active-clause`, `r2-precision-active-over-appendix`.
 
@@ -956,6 +1029,86 @@ Hamısı `evals/datasets/build_full.py`-də:
 `account_open` · `account_locked` · `claim_accepted` · `claim_rejected` ·
 `promotional_not_clearance`, `BSPEC["clearance_discount_threshold_percent"].q`,
 `R6_STALE_GENEROUS` (t03, t05), `S_CASES` (s2-inj01), `pw_assertion()`.
+
+`full.jsonl` generatordan yenidən törədildi
+(`python evals/datasets/build_full.py`).
+
+
+---
+---
+
+# Üçüncü dövr — AP-016 gedişində tapılanlar
+
+- **Tarix:** 2026-08-28
+- **Mənbə:** A-06 düzəlişinin əvvəl/sonra müqayisəsi
+  (`reports/full-run-02` real cavabları, 34 `contains_none` case × 3 cəhd)
+
+## Xülasə — A-23
+
+| # | Sinif | Növ | Case | Vəziyyət |
+|---|-------|-----|------|----------|
+| A-23 | `contains_none` MÖVZU tanımır — qonşu düzgün qaydanı bayat sanır | yalançı müsbət | `g1-gap01-giftcard-expiry` | **açıq / sənədləşdirilib** |
+
+---
+
+## A-23 — `contains_none` mövzu tanımır: hədiyyə kartı ↔ mağaza krediti (AÇIQ)
+
+**Case:** `g1-gap01-giftcard-expiry` · `CANONICAL.yaml#gaps[GAP-01]` —
+korpusda hədiyyə kartının **nə müddəti, nə də geri qaytarılması** haqqında
+qayda YOXDUR. İynələr uydurulmuş qəti ifadələri axtarır:
+`["do not expire*", "does not expire*", "never expire*", "can be returned",
+"cannot be returned", "non-refundable"]`.
+
+Bu, A-15 və A-17 ilə **eyni ailədəndir**: iynə səthi tutur, mövzunu yox.
+Fərq yalnız hansı grader-də göründüyüdür (`ANY_FIGURE` → A-17,
+`contains_none` bayat dəyər → A-15, `contains_none` boşluq case-i → A-23).
+
+**Real qaçış (`reports/full-run-02`, 3 cəhd → 1 keçib / 2 sınıb).**
+Sınan iki cəhdin hər ikisi **mağaza krediti** haqqındadır, hədiyyə kartı
+haqqında deyil:
+
+> *(cəhd 1)* «gift cards themselves aren't documented as expiring in what I
+> found — but I do have a directly relevant rule for **store credit**: it
+> **never expires** (§6.3 of the refunds policy).»
+
+> *(cəhd 3)* «**No expiration:** **Store credit** does not expire.»
+
+Birinci cavab boşluğu **AÇIQ etiraf edir** («aren't documented … in what I
+found») və sonra korpusda HƏQİQƏTƏN mövcud olan qonşu qaydanı düzgün
+istinadla verir. Yəni grader agentin **düzgün əlavə faktını** cəzalandırır.
+
+**Niyə bu dövrdə düzəltmədim.** Düzəliş `g1-gap01-giftcard-expiry`-nin
+grader-ini `contains_none`-dan mövzuya bağlı `regex_match`-ə keçirməyi tələb
+edir (AZ/RU əkizləri — `GIFTCARD_VERDICT_AZ/RU` — bunu ARTIQ edir, yəni
+ingiliscə tərəf asimmetrik qalıb). Bu, case-in **tapıntı statusunu**
+dəyişir: 2/3 sınma → ehtimal 0/3. AP-016 isə baseline-ı QORUMAQ üçün
+edilən P3 gigiyena tapşırığıdır və onun DoD-u fərqin sıfır olmasını tələb
+edir. Tapıntı dəyişikliyi triage işidir (hunter/analyst), grader gigiyenası
+deyil — qarışdırılsa, hesabatda "düzəliş" ilə "tapıntının itməsi" ayırd
+edilə bilməz.
+
+**Tövsiyə (ayrıca tapşırıq).** `GIFTCARD_VERDICT_EN` qurulsun —
+`GIFTCARD_VERDICT_AZ/RU` ilə eyni formada: müddət/qaytarma ifadəsi yalnız
+`gift card` / `voucher` mövzusu ilə eyni bənddə (`[^.]{0,60}`) olduqda
+tutulsun. Prototip yoxlanıb: 5 sintetik uydurma cavabın hamısını tutur,
+«I could not find any documented rule about gift card expiry» kimi düzgün
+boşluq etirafını tutmur. Sonra 3 cəhdin hər biri ƏL İLƏ oxunmalıdır (A-21
+dərsi) və `FINDINGS.md` yenilənməlidir.
+
+**Bu qaçış üçün:** `g1-gap01-giftcard-expiry` sınmaları AMBIGUOUS sayılır —
+`TRIAGE-RUN02.md`-də onsuz da 1/3 kimi qeyd olunub və reproduksiya qapısını
+keçmir (stabil deyil), ona görə `FINDINGS.md`-ə təsiri yoxdur.
+
+---
+
+## Düzəlişin yeri (üçüncü dövr)
+
+`agentproof/graders/canonical.py` — `canonical_text(fold_case=)`,
+`_cue_pattern(fold_case=)`, `phrase_spec()`, `contains_phrase()` (yeni);
+`agentproof/graders/deterministic/text.py` — `ContainsNone.grade()`;
+`evals/datasets/build_full.py` — `stale_days` · `stale_months` ·
+`stale_percent` · `stale_kg` və 9 hardcode edilmiş `none` siyahısı (`*`
+prefiks markeri).
 
 `full.jsonl` generatordan yenidən törədildi
 (`python evals/datasets/build_full.py`).

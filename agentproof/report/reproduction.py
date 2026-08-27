@@ -427,6 +427,45 @@ def from_records(records: Sequence[RunRecord], source: str = "") -> Reproduction
     return _finish(verdicts, source)
 
 
+# ------------------------------------------- mənbə 3: saxlanmış reproduction.json
+def report_from_dict(data: dict[str, Any]) -> ReproductionReport:
+    """`to_dict()`-in tərsi — saxlanmış `reproduction.json` yenidən oxunur.
+
+    Hesabat qatı (`report/html.py`) təsnifatı YENİDƏN APARMIR: qapı bir dəfə
+    `evals/reproduce.py` ilə qaçır, nəticəsi artefakt kimi saxlanılır. Səhifə
+    həmin artefakti oxuyur ki, hesabatda görünən təsnifat qapının verdiyi
+    təsnifatla eyni olsun — iki fərqli yerdə hesablanan iki fərqli rəqəm
+    auditdə müdafiə olunmur.
+    """
+    verdicts = [
+        CaseVerdict(
+            case_id=str(c.get("case_id", "")),
+            classification=str(c.get("classification", SKIPPED)),
+            attempts=[
+                Attempt(
+                    passed=bool(a.get("passed", False)),
+                    skipped=bool(a.get("skipped", False)),
+                    reason=str(a.get("reason", "")),
+                    grader=str(a.get("grader", "")),
+                )
+                for a in c.get("attempts", [])
+            ],
+            grader=str(c.get("grader", "")),
+            severity=str(c.get("severity", "medium")),
+            tags=list(c.get("tags", [])),
+            note=str(c.get("note", "")),
+        )
+        for c in data.get("cases", [])
+    ]
+    return ReproductionReport(
+        verdicts=verdicts,
+        repeats=int(data.get("repeats", 0)),
+        classifiable=bool(data.get("classification_possible", True)),
+        notice=str(data.get("notice", "")),
+        source=str(data.get("source", "")),
+    )
+
+
 # ------------------------------------------------------------------ çıxış
 def _pct(rate: float | None) -> str:
     return "n/a" if rate is None else f"{rate:.1%}"

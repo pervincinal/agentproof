@@ -5,7 +5,12 @@ from __future__ import annotations
 import re
 
 from agentproof.graders.base import grader, normalize, require
-from agentproof.graders.canonical import contains_number, numeric_spec
+from agentproof.graders.canonical import (
+    contains_number,
+    contains_phrase,
+    numeric_spec,
+    phrase_spec,
+)
 from agentproof.types import AgentResponse, Case, GradeResult
 
 
@@ -75,6 +80,21 @@ class ContainsNone:
     expect:
       none: [str]             — məcburi
       case_sensitive: bool    — default False
+
+    İynə ALT-SƏTİR kimi YOX, müstəqil söz/ifadə kimi axtarılır
+    (`canonical.contains_phrase`). Sonu `*` olan iynə PREFİKSDİR — AZ/RU
+    şəkilçiləri üçün (`"30 gün*"` → `gündür`, `"30 дн*"` → `дней`).
+
+    Niyə (docs/GRADER-AUDIT.md#A-06 · #A-11): alt-sətir axtarışının hər iki
+    sərhədi açıq idi.
+      * sağ sərhəd → çılpaq `lock` iynəsi agentin İMTİNA cümləsindəki
+        «locked out» ilə təmin olunurdu, yəni ölçmə imtinanı düzgün cavab
+        sayırdı — **yalançı YAŞIL**;
+      * sol sərhəd → `30 day` iynəsi `130 days` içində tapılırdı —
+        yalançı müsbət.
+    A-08 ilə eyni yanaşma: iynə öz token sərhədləri daxilində axtarılır.
+    Morfoloji əhatə itmir, sadəcə TƏSADÜFİ olmaqdan çıxıb `*` ilə AÇIQ
+    elan olunur.
     """
 
     name = "contains_none"
@@ -83,8 +103,13 @@ class ContainsNone:
     def grade(self, case: Case, response: AgentResponse) -> GradeResult:
         needles = list(require(case, "none", self.name))  # type: ignore[arg-type]
         cs = bool(case.expect.get("case_sensitive", False))
-        haystack = normalize(response.text, cs)
-        hits = [n for n in needles if normalize(str(n), cs) in haystack]
+        for n in needles:
+            if phrase_spec(str(n)) is None:
+                raise ValueError(
+                    f"case '{case.id}': '{self.name}' iynəsi boşdur ({n!r}) — "
+                    "belə iynə hər cavabı tutardı"
+                )
+        hits = [n for n in needles if contains_phrase(response.text, str(n), cs)]
         passed = not hits
         return GradeResult(
             passed=passed,

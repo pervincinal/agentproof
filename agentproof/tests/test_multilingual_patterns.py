@@ -33,6 +33,7 @@ from typing import Any
 import pytest
 
 from agentproof.graders import registry
+from agentproof.graders.canonical import contains_phrase
 from agentproof.runner.task import load_cases
 from agentproof.types import AgentResponse, Case
 
@@ -301,19 +302,48 @@ STALE_HITS = [
 def test_stale_needles_catch_native_morphology(
     bf: Any, fn: str, arg: Any, samples: list[str]
 ) -> None:
-    needles = [n.lower() for n in getattr(bf, fn)(arg)]
-    missed = [s for s in samples if not any(n in s.lower() for n in needles)]
+    """Morfoloji əhatə A-06-dan SONRA da qalır.
+
+    Yoxlama ARTIQ alt-sətir deyil — `contains_none` grader-inin faktiki
+    semantikası (`canonical.contains_phrase`) işlədilir. Əks halda test
+    grader-dən fərqli bir şeyi ölçərdi və `*` markerinin düzgün qoyulduğunu
+    təsdiqləməzdi.
+    """
+    needles = getattr(bf, fn)(arg)
+    missed = [s for s in samples if not any(contains_phrase(s, n) for n in needles)]
     assert not missed, f"{fn}({arg!r}) bu formaları buraxır: {missed}"
 
 
 def test_stale_needles_do_not_fire_on_correct_values(bf: Any) -> None:
     """Düzgün dəyər (14 gün / 14 дней) bayat siyahısına DÜŞMƏMƏLİDİR."""
-    needles = [n.lower() for n in bf.stale_days(30)]
+    needles = bf.stale_days(30)
     for ok in ["the standard window is 14 calendar days",
                "standart müddət 14 təqvim günüdür",
                "стандартный срок — 14 календарных дней"]:
-        hits = [n for n in needles if n in ok.lower()]
+        hits = [n for n in needles if contains_phrase(ok, n)]
         assert not hits, f"düzgün cavab bayat kimi işarələndi ({hits}): {ok!r}"
+
+
+# --- A-06: sol sərhəd — bayat iynə DAHA UZUN ədədin içindən çıxmır ---------
+STALE_MISSES = [
+    ("stale_days", 30, ["the 130 days promo", "130 gündür", "срок — 130 дней",
+                        "a 4530-day archive"]),
+    ("stale_months", 24, ["124 months of storage", "124 aylıq arxiv",
+                          "гарантия 124 месяца"]),
+    ("stale_percent", 20, ["a 120% surcharge", "120 faizdir", "120 процентов"]),
+    ("stale_kg", "20", ["120 kg pallet", "лимит 120 кг", "120 килограммов"]),
+]
+
+
+@pytest.mark.parametrize("fn,arg,samples", STALE_MISSES)
+def test_stale_needles_have_a_left_word_boundary(
+    bf: Any, fn: str, arg: Any, samples: list[str]
+) -> None:
+    """`30 day` iynəsi `130 days` içində TAPILMAMALIDIR (docs/GRADER-AUDIT.md#A-06)."""
+    needles = getattr(bf, fn)(arg)
+    for s in samples:
+        hits = [n for n in needles if contains_phrase(s, n)]
+        assert not hits, f"{fn}({arg!r}) alt-sətir kimi tutdu ({hits}): {s!r}"
 
 
 # ===========================================================================

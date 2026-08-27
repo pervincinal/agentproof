@@ -11,6 +11,13 @@ from typing import Any, Literal
 
 GraderKind = Literal["deterministic", "judge"]
 
+#: Oxuna bilməyən konfiqurasiya dəyəri üçün AÇIQ sentinel.
+#:
+#: Boş sətir və ya ağlabatan default YAZILMIR: "" hesabatda "sahə boşdur"
+#: kimi görünür və oxucu onu susqun keçir; `"unknown"` isə iddia edir —
+#: "bu dəyər ölçülmədi". LIM-E06-nın bütün mahiyyəti budur.
+UNKNOWN = "unknown"
+
 
 @dataclass(frozen=True)
 class Case:
@@ -325,6 +332,23 @@ class CaseResult:
         )
 
 
+#: 1 -> 2: retrieval konfiqurasiyası (`embedding_model`, `embedding_provider`,
+#: `effective_top_k`, `reranking_enabled`) artefaktın öz içindədir. `1`
+#: oxunmağa davam edir — həmin sahələr `UNKNOWN` / `None` qalır.
+SCHEMA_VERSION = 2
+
+
+def _opt_int(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _opt_bool(value: Any) -> bool | None:
+    return bool(value) if isinstance(value, bool) else None
+
+
 @dataclass
 class RunRecord:
     """Bizim sabit sxemimiz — Inspect-in log formatından asılı deyil (R2)."""
@@ -337,7 +361,21 @@ class RunRecord:
     started_at: str
     results: list[CaseResult] = field(default_factory=list)
     totals: dict[str, Any] = field(default_factory=dict)
-    schema_version: int = 1
+    schema_version: int = SCHEMA_VERSION
+
+    # --- retrieval konfiqurasiyası (LIM-E06 / AP-019) ---------------------
+    # Bu dörd sahə olmadan qaçış artefaktı öz-özünü təsvir etmir: embedder və
+    # `top_k` hesabatın ən yük daşıyan parametrləridir, amma kənar sənəddən
+    # oxunurdu. VALID-03-də DSL `4`, faktiki dəyər `8` idi — fərqi yalnız
+    # canlı sistemə sorğu ataraq tapmaq mümkün oldu.
+    #
+    # Dəyərlər CANLI sistemdən gəlir (`runner/retrieval_config.py` ->
+    # `GET /v1/datasets/{id}`), sənəddən yox. Oxuna bilməyəndə `UNKNOWN` /
+    # `None` qalır və `totals["retrieval_check"]` səbəbi göstərir.
+    embedding_model: str = UNKNOWN
+    embedding_provider: str = UNKNOWN
+    effective_top_k: int | None = None
+    reranking_enabled: bool | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -348,6 +386,10 @@ class RunRecord:
             "model": self.model,
             "dataset_hash": self.dataset_hash,
             "started_at": self.started_at,
+            "embedding_model": self.embedding_model,
+            "embedding_provider": self.embedding_provider,
+            "effective_top_k": self.effective_top_k,
+            "reranking_enabled": self.reranking_enabled,
             "results": [r.to_dict() for r in self.results],
             "totals": self.totals,
         }
@@ -363,7 +405,14 @@ class RunRecord:
             started_at=d.get("started_at", ""),
             results=[CaseResult.from_dict(r) for r in d.get("results", [])],
             totals=d.get("totals", {}),
-            schema_version=d.get("schema_version", 1),
+            schema_version=int(d.get("schema_version", 1)),
+            # Köhnə (schema_version 1) artefaktda bu sahələr YOXDUR. Onları
+            # ağlabatan dəyərlə doldurmaq, ölçülməmiş konfiqurasiyanı ölçülmüş
+            # kimi göstərmək olardı — ona görə açıq `UNKNOWN` / `None`.
+            embedding_model=str(d.get("embedding_model") or UNKNOWN),
+            embedding_provider=str(d.get("embedding_provider") or UNKNOWN),
+            effective_top_k=_opt_int(d.get("effective_top_k")),
+            reranking_enabled=_opt_bool(d.get("reranking_enabled")),
         )
 
 
