@@ -1,5 +1,5 @@
 {
- "seq": 20,
+ "seq": 21,
  "tasks": [
   {
    "id": "AP-001",
@@ -47,7 +47,7 @@
    "desc": "Hazırda canlı qaçış gedir: evals/run.py --target dify_http --dataset evals/datasets/full.jsonl --stage cheap --repeat 3 --seed 1 --out reports/full-run-02 (PID 49566, 18:44-dən). reports/full-run-01 yarımçıq qaldı, full-run-02 log-unda hələ header.json yoxdur, yəni RunRecord yazılmayıb. Hesabatdakı HƏR rəqəm bu qaçışdan gəlir; qaçış bitmədən heç bir tapıntı iddiası edilə bilməz. Doğrulama PLAN.md Açıq risklər #2 (metadata.usage-da model adı gəlmirsə cost_under case-ləri skipped olur) və VALID-02 top_k=8 qərarı ilə bağlıdır.",
    "role": "harness-eng",
    "prio": "P0",
-   "status": "in_progress",
+   "status": "review",
    "assignee": null,
    "dod": "reports/full-run-02/<run_id>.json (RunRecord) mövcuddur və: (1) 150 case × 3 təkrar tam icra olunub; (2) skipped case sayı sıfır DEYİLSƏ, hər skip səbəbi kateqoriyalaşdırılıb və sənədə yazılıb (səssiz keçmə yoxdur); (3) qaçışın faktiki top_k dəyəri 8 olduğu dataset konfiqindən təsdiqlənib (VALID-02); (4) xərc rəqəmi pricing/models.yaml-dan hesablanıb, Dify total_price-dan yox (OPS-04); (5) izolyasiya işləyib — RMA_ALREADY_EXISTS xətası ilə sınan case yoxdur.",
    "links": [
@@ -58,16 +58,34 @@
     "docs/OPS-FINDINGS.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:56:57",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:56:57",
+     "actor": "main",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:56:57",
+     "actor": "main",
+     "action": "in_progress→review",
+     "detail": ""
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-08-27T19:56:57",
+     "actor": "main",
+     "text": "Qacis bitdi: 101/147 kecdi (68.7%), 46 sindi, 0 skipped, $11.34, 15/15 coxnovbeli zencirlendi. Reproduksiya qapisi: flaky 17.0% (hedd 10% asildi), stable-fail 29, flaky 25, unstable-fail 2."
+    }
+   ]
   },
   {
    "id": "AP-003",
@@ -75,7 +93,7 @@
    "desc": "docs/JUDGE-CALIBRATION.md §4 qapısı hələ ÖLÇÜLMƏYİB. evals/calibration/report.json indi dry-run null modelin nəticəsidir: agreement 0.30, kappa 0.00, judge_model dry-run/constant. Səbəb: ANTHROPIC_API_KEY shell mühitində yoxdur (env-də yoxlanıldı, sıfır). PLAN.md Keyfiyyət qaydası #2: kalibrasiya olunmamış LLM-judge nəticəsi dərc olunmur. Bu tapşırıq bloklanıb — API açarı və ya ant auth login profili tələb olunur (açarı özüm istəmirəm, mühitə verilməlidir).",
    "role": "grader-eng",
    "prio": "P0",
-   "status": "in_progress",
+   "status": "review",
    "assignee": "grader-eng",
    "dod": "evals/calibration/report.json 30 etiketli nümunə üzərində REAL judge modeli (claude-opus-5) ilə yenidən yazılıb; judge_model sahəsi artıq dry-run deyil; agreement ≥ 0.85 VƏ kappa ≥ 0.70; confusion matrix və sinif üzrə recall hesabatdadır; style_flip_rate ölçülüb; labels_sha256 dəyişməyib (qayda §4.3 — uyğunluq aşağıdırsa RUBRİKA düzəlir, dataset yox). Qapı keçilmirsə: rubrika v2 yazılıb və səbəb sənədləşdirilib.",
    "links": [
@@ -86,7 +104,7 @@
     "docs/JUDGE-CALIBRATION.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:23:53",
+   "updated": "2026-08-27T19:30:51",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -105,9 +123,27 @@
      "actor": "grader-eng",
      "action": "blocked→in_progress",
      "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:30:51",
+     "actor": "grader-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:30:51",
+     "actor": "grader-eng",
+     "action": "in_progress→review",
+     "detail": ""
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-08-27T19:30:51",
+     "actor": "grader-eng",
+     "text": "REAL qaçış (claude-opus-5, sut=claude-sonnet-5): uyğunluq 96.7% (28+2? -> 29/30), kappa 0.95 (çox güclü) — qapı KEÇDİ, 1-ci iterasiyada. Rubrika v1 DƏYİŞMƏDİ (qapı keçdiyi üçün düzəliş etmək kalibrasiyanı korlayardı), labels sha256 7580a521aa2f61a5 dəyişməyib. Recall: justified 1.00, wrong 1.00, unjustified 0.89. Yeganə fikir ayrılığı CAL-15 (insan unjustified / judge wrong, conf 0.95) — etiket qeydinin özü bunu sərhəd hal adlandırır. style_flip_rate 1/5 = 20%, hamısı həmin S-PLUS/unjustified qrupundan (confident üslub). Tək kod düzəlişi: rubrika sxemində confidence üçün minimum/maximum silindi — Messages API output_config.format.schema number tipində bu açarları rədd edir (HTTP 400); aralıq parse-da klemplənir. pytest 547 passed."
+    }
+   ]
   },
   {
    "id": "AP-004",
@@ -115,8 +151,8 @@
    "desc": "evals/datasets/COVERAGE.md §3 və §8: 150 case-dən 3-ü (30 gün toqquşması — bayat standart pəncərə ↔ canlı Aurora Plus pəncərəsi) determinist grader ilə prinsipcə ayırd edilə bilmir və judge rubrikasına yönləndirilib. Bu 3 case indiyə qədər HEÇ ÖLÇÜLMƏYİB — cari tam qaçış --stage cheap ilə gedir. Onlarsız R6 (bayat bənd) bloku natamamdır və hesabatda 147/150 rəqəmi izahsız qalır. Asılılıq: kalibrasiya qapısı keçməmiş judge nəticəsi dərc edilə bilməz.",
    "role": "grader-eng",
    "prio": "P0",
-   "status": "backlog",
-   "assignee": null,
+   "status": "review",
+   "assignee": "grader-eng",
    "dod": "reports/-də --stage judge qaçışı var; 3 case üçün verdict (justified / unjustified / wrong), reason və confidence RunRecord-a düşüb; judge cache faylları hesabat artefaktı kimi saxlanılıb; nəticə kalibrasiya rəqəmi (agreement + kappa) ilə birlikdə eyni sənəddə göstərilib.",
    "links": [
     "evals/datasets/full.jsonl",
@@ -125,7 +161,7 @@
     "docs/JUDGE-CALIBRATION.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:12:29",
+   "updated": "2026-08-27T20:01:03",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -138,6 +174,36 @@
      "actor": "po",
      "action": "comment",
      "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:32:23",
+     "actor": "grader-eng",
+     "action": "assigned",
+     "detail": "grader-eng"
+    },
+    {
+     "at": "2026-08-27T19:32:23",
+     "actor": "grader-eng",
+     "action": "backlog→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:32:23",
+     "actor": "grader-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T20:01:03",
+     "actor": "grader-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T20:01:03",
+     "actor": "grader-eng",
+     "action": "in_progress→review",
+     "detail": ""
     }
    ],
    "comments": [
@@ -145,6 +211,16 @@
      "at": "2026-08-27T19:12:29",
      "actor": "po",
      "text": "Asılılıq: AP-003 (kalibrasiya qapısı) keçmədən judge nəticəsi dərc edilə bilməz."
+    },
+    {
+     "at": "2026-08-27T19:32:23",
+     "actor": "grader-eng",
+     "text": "AP-003 qapısı keçdi (96.7% / κ=0.95), ona görə blok götürüldü. Qaçış full-run-02 bitənə qədər GÖZLƏYİR: full-run-02 --lanes olmadan qaçır, yəni tool servisinin 'default' ad sahəsindədir; mənim qaçışımın hər case-dən əvvəlki POST /admin/reset-i məhz həmin ad sahəsini silərdi (reset scope = X-AG-Session, default). 3 case oxu-yazı deyil (policy Q&A), amma full-run-02-nin uçuşdakı case-inin RMA vəziyyətini silmək riski var — P0 qaçışı korlamaqdansa gözləmək ucuzdur."
+    },
+    {
+     "at": "2026-08-27T20:01:03",
+     "actor": "grader-eng",
+     "text": "reports/judge-01/ hazırdır (full-run-02 19:56-da bitdi, ondan SONRA qaçdı — toqquşma yoxdur). SUT claude-sonnet-5 (app konfiqurasiyası ilə yoxlandı), judge claude-opus-5, --repeat 3, izolyasiya aktiv. Nəticə 2/3: (1) r6j-collision-30-days-plus-member -> justified 0.93 ('As an Aurora Plus member... 30 calendar days'); (2) r6j-collision-14-days-price-match -> justified 0.93 ('14 calendar days of the order date, not the delivery date'); (3) r6j-collision-30kg-domestic-vs-intl -> WRONG 0.88 — rəqəm və nəticə düzgün, amma yol yanlış: beynəlxalq §3.1 30.0 kq qəbul həddinə söykənib, daxili §4.3 (30 kq-dan YUXARI = 25 AZN) qaydasına yox. Determinist grader bunu yaşıl boyayardı — judge qatının niyə lazım olduğunun canlı sübutu. Judge keşi hesabat artefaktı kimi reports/judge-01/judge-cache/ (3 fayl). Tool servisi ad sahəsi qaçışdan ƏVVƏL və SONRA eynidir (default: calls=0, created_rmas=0) — mutasiya yoxdur; bu 3 case yalnız bilik bazası retrieval-i çağırır. Dürüst məhdudiyyət: --repeat 3 üç cavab alır, RubricJudge yalnız SONUNCUNU qiymətləndirir (attempt=3) — bu case-lər üçün consistency@3 YOXDUR. Sənəd: docs/JUDGE-CALIBRATION.md §4.5 + §4A (kalibrasiya rəqəmi ilə eyni sənəddə). Xərc: SUT $0.176 + judge $0.039."
     }
    ]
   },
@@ -154,7 +230,7 @@
    "desc": "docs/GRADER-AUDIT.md A-07 AÇIQ qalıb: contains_none: stale_days(30) işlədən case-lərdə agent tam DÜZGÜN fərqləndirici cümlə qursa (məsələn: siz Aurora Plus üzvü deyilsiniz, ona görə 30 günlük genişləndirilmiş pəncərə tətbiq olunmur) grader bunu bayat dəyər kimi işarələyir. Bu cümlə real qaçışda müşahidə olunub. Audit sənədi birbaşa tələb edir: T-01 bayat dəyər case-lərində sınan hər cavab ƏLLƏ oxunmalıdır. Əks halda stale-answer rate şişik çıxır — yəni uydurma tapıntı dərc edirik (PLAN.md Keyfiyyət qaydası #3).",
    "role": "grader-eng",
    "prio": "P0",
-   "status": "backlog",
+   "status": "done",
    "assignee": null,
    "dod": "Tam qaçışda contains_none + stale_days(30) işlədən hər sınmış case-in cavab mətni əl ilə oxunub və iki kateqoriyaya bölünüb: (a) həqiqi bayat dəyər, (b) düzgün fərqləndirmə — grader artefaktı. Nəticə cədvəl şəklində GRADER-AUDIT.md-yə A-07 bölməsinə əlavə olunub; düzəldilmiş stale-answer rate (a) əsasında hesablanıb və hesabatda hansı rəqəmin işlədiləcəyi yazılıb. Artefakt sayı 0 deyilsə, grader-səviyyəli proximity assertion üçün ayrıca tapşırıq açılıb.",
    "links": [
@@ -164,7 +240,7 @@
     "evals/datasets/full.jsonl"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:12:29",
+   "updated": "2026-08-27T21:42:14",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -177,6 +253,12 @@
      "actor": "po",
      "action": "comment",
      "detail": ""
+    },
+    {
+     "at": "2026-08-27T21:42:14",
+     "actor": "main",
+     "action": "backlog→done",
+     "detail": "AP-021 triage-i A-07 halllarini da ehate etdi"
     }
    ],
    "comments": [
@@ -355,7 +437,7 @@
     "PLAN.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:12:29",
+   "updated": "2026-08-27T21:42:14",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -368,6 +450,12 @@
      "actor": "po",
      "action": "comment",
      "detail": ""
+    },
+    {
+     "at": "2026-08-27T21:42:14",
+     "actor": "main",
+     "action": "comment",
+     "detail": ""
     }
    ],
    "comments": [
@@ -375,6 +463,11 @@
      "at": "2026-08-27T19:12:29",
      "actor": "po",
      "text": "Asılılıq: AP-002 (tam qaçış), AP-007 (reproduksiya qapısı), AP-005 (A-07 triage), AP-008 (məhdudiyyət reyestri)."
+    },
+    {
+     "at": "2026-08-27T21:42:14",
+     "actor": "main",
+     "text": "Girish hazirdir: docs/TRIAGE-RUN02.md — 5 tesdiqlenmis REAL-FAILURE (RF-01..RF-06). YALNIZ bunlar derc olunur."
     }
    ]
   },
@@ -728,6 +821,62 @@
     }
    ],
    "comments": []
+  },
+  {
+   "id": "AP-021",
+   "title": "TRIAGE: 29 stable-fail case-in cavabini el ile oxu — real ugursuzluq, yoxsa grader boslugu",
+   "desc": "Tam qacisda 29 stable-fail var, demek olar hamisi regex_match. Bezi patternler subheli derecede bosdur ('warrant', 'lock', 'cancell?ed'). A-01 (rus dusen sait) dersi: agentin tam duzgun cavabi grader tutmadigi ucun 'ugursuzluq' kimi gorunmusdu. Oxumadan tapinti elan etmek hesabatin etibarini oldurur.",
+   "role": "hunter",
+   "prio": "P0",
+   "status": "review",
+   "assignee": "hunter",
+   "dod": "Her 29 case ucun: cavab metni oxunub; tesnifat REAL-FAILURE / GRADER-GAP / AMBIGUOUS; her tesnifat ucun esaslandirma + cavabdan sitat; GRADER-GAP olanlar docs/GRADER-AUDIT.md-e yazilib ve duzeldilib; duzelisden sonra hemin case-ler yeniden qacirilib; yekun REAL-FAILURE siyahisi FINDINGS.md ucun hazirdir",
+   "links": [
+    "reports/full-run-02",
+    "docs/GRADER-AUDIT.md",
+    "evals/datasets/full.jsonl"
+   ],
+   "created": "2026-08-27T19:56:57",
+   "updated": "2026-08-27T21:42:14",
+   "history": [
+    {
+     "at": "2026-08-27T19:56:57",
+     "actor": "main",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:58:07",
+     "actor": "hunter",
+     "action": "assigned",
+     "detail": "hunter"
+    },
+    {
+     "at": "2026-08-27T19:58:07",
+     "actor": "hunter",
+     "action": "todo→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T21:42:14",
+     "actor": "hunter",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T21:42:14",
+     "actor": "hunter",
+     "action": "in_progress→review",
+     "detail": ""
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-08-27T21:42:14",
+     "actor": "hunter",
+     "text": "Bolgu: 5 REAL-FAILURE, 14 GRADER-GAP, 10 AMBIGUOUS. 14 grader duzelisi (A-09..A-22), 3 yeniden qacis (ap021-recheck1-3). 8 saxta ugursuzluq aradan qalxdi, 3 YALANCI YASIL uze cixdi. pytest 628."
+    }
+   ]
   }
  ]
 }

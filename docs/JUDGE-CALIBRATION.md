@@ -135,6 +135,72 @@ qalması test ilə qorunur (`test_rubric_forbids_style_criteria_explicitly`).
 - **Dil yanlılığı** — AZ/RU üçün ayrıca etiketli dəst tələb edir; L1 ölçüsü
   açılanda əlavə olunmalıdır.
 
+### 4.5 Ölçülmüş nəticə (2026-08-27, REAL model)
+
+Qapı **KEÇDİ** — birinci iterasiyada, rubrika **v1 dəyişmədən**:
+
+| Ölçü | Dəyər | Hədd |
+|---|---|---|
+| Uyğunluq | **96.7%** (29/30) | ≥ 85% |
+| Cohen's kappa | **0.95** (çox güclü) | ≥ 0.70 |
+| Judge modeli | `claude-opus-5` (SUT `claude-sonnet-5` — tier 5 > 3) | — |
+| Etiket dəsti | `7580a521aa2f61a5…` — **dəyişməyib** | §4.3 |
+
+Sinif üzrə recall: `justified` 1.00 · `wrong` 1.00 · `unjustified` 0.89.
+
+**İterasiya sayı: 1.** Rubrika DÜZƏLDİLMƏDİ və düzəldilməməlidir: qapı ilk
+ölçmədə keçdi, ona görə mətni 30/30 dalınca dəyişmək §4.3 qaydasının ruhunu
+pozardı — bu, rubrikanı etiket dəstinə *overfit* etmək olardı.
+
+**Yeganə fikir ayrılığı — CAL-15** (insan `unjustified`, judge `wrong`,
+inam 0.95). Cavab: *"Şübhəsiz ki, 30 gün. Bu, bizim qaytarma siyasətimizin
+standart müddətidir və bütün müştərilər üçün eynidir."* Etiketin öz `note`
+sahəsi bunu **sərhəd hal** adlandırır: "standart, hamı üçün eyni" ifadəsi
+üzvlük şərtini inkar edir (judge bunu bayat T-01 standartına söykənmə sayıb —
+`wrong`), amma bayat bəndə açıq istinad da yoxdur (etiketçi ona görə
+`unjustified` verib). Hər iki qərar rubrikaya uyğun oxunur; bu, rubrikanın
+`unjustified`/`wrong` sərhədinin qalan qeyri-müəyyənliyidir və gizlədilmir.
+
+**Üslub yanlılığı:** `style_flip_rate` = 1/5 qrup (**20%**). Sapmanın hamısı
+həmin bir S-PLUS/`unjustified` qrupundandır (`confident` variant `wrong`-a
+keçdi; `neutral`/`verbose`/`hedged` eyni qaldı). Qalan 4 qrupda verdikt
+üsluba görə dəyişmədi — yəni verbosity/format yanlılığına dair sübut yoxdur,
+sapma yeganə sərhəd halla üst-üstə düşür. Ölçülməyənlər: mövqe yanlılığı,
+dil yanlılığı (§4.4).
+
+**Bir kod düzəlişi lazım oldu (rubrika mətni DEYİL):** `Rubric.schema` içində
+`confidence` üçün `minimum`/`maximum` göndərilirdi; Messages API bunu rədd edir
+(`400 … For 'number' type, properties maximum, minimum are not supported`).
+Sahələr sxemdən çıxarıldı, 0–1 aralığı `JudgeDecision.parse()` içində klemplənir
+və rubrikanın 6-cı qaydası ilə tələb olunur. Prompt baytları dəyişmədiyi üçün
+`JudgeCache` barmaq izi və rubrika versiyası eyni qalır.
+
+---
+
+## 4A. `requires_justification` case-lərinin ölçülməsi (`--stage judge`)
+
+`reports/judge-01/` · 2026-08-27 · SUT `claude-sonnet-5` (Dify app
+konfiqurasiyasından yoxlanıldı) · judge `claude-opus-5` · `--repeat 3` ·
+izolyasiya aktiv (1 lane) · **2/3 keçdi**.
+
+| Case | Verdikt | İnam | Judge-in əsası |
+|---|---|---|---|
+| `r6j-collision-30-days-plus-member` | `justified` | 0.93 | *"As an Aurora Plus member, you get an extended window of 30 calendar days"* — rəqəm üzvlük şərtindən çıxarılır, standart 14 gün ayrıca adlanır |
+| `r6j-collision-14-days-price-match` | `justified` | 0.93 | *"within 14 calendar days of the order date, not the delivery date"* — anchor açıq göstərilir, çatdırılma tarixi tələsi rədd edilir |
+| `r6j-collision-30kg-domestic-vs-intl` | `wrong` | 0.88 | *"maximum allowed international parcel weight"* — daxili göndəriş sualına BEYNƏLXALQ 30.0 kq həddi ilə cavab verilir; rəqəm və nəticə düz, yol yanlış |
+
+Üçüncü case məhz judge qatının niyə lazım olduğunu göstərir: cavabın **rəqəmi
+də, nəticəsi də düzgündür** ("göndərilir, əlavə ödəniş yoxdur"), ona görə
+`contains_all` tipli determinist yoxlayıcı onu YAŞIL boyayardı. Səhv yalnız
+əsaslandırmadadır — model daxili §4.3 (30.0 kq-dan YUXARI = 25 AZN əlavə haqq)
+əvəzinə beynəlxalq §3.1 (30.0 kq = qəbul həddi) bəndinə söykənib. Bu, hesabatda
+**nümayiş oluna bilən qüsurdur**, "təsadüfən düz" deyil.
+
+**Dürüst məhdudiyyət:** `--repeat 3` hər case üçün 3 müstəqil cavab alır, lakin
+`RubricJudge` yalnız SONUNCU cavabı qiymətləndirir (`attempt=3`; keşdə case
+başına 1 sorğu). Yəni bu 3 case üçün judge-in `consistency@3` ölçüsü YOXDUR —
+yuxarıdakı verdiktlər tək cavaba aiddir.
+
 ---
 
 ## 5. İstifadə
