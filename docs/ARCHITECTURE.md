@@ -35,7 +35,9 @@ bənddə açıq göstərirəm:
 
 ## 1. Sistem xəritəsi — canlı vəziyyət
 
-16 konteyner işləyir. Sorğu yolunda iştirak edənlər:
+Stack-də **15 işlək konteyner** var (`docker ps | grep '^docker-'`; FINDINGS.md
+§2.1 compose-un elan etdiyi 16 servisə istinad edir). Sorğu yolunda iştirak
+edənlər:
 
 | Konteyner | Image | Rolu |
 |---|---|---|
