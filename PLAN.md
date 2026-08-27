@@ -26,11 +26,16 @@ Cədvəl repo vəziyyəti ilə **2026-08-28**-də tutuşdurulub (AP-018).
 | 4 | HTML hesabat + CI workflow | harness-eng | `agentproof/report/html.py`, `.github/workflows/evals.yml` | 🟡 **qismən** — hər iki artefakt yaranıb, amma AP-011/AP-012 hələ `in_progress`: CI-ın real qaçışda yaşıl olduğu göstərilməyib |
 | 5 | Hesabat + public yazı | writer | `FINDINGS.md`, `docs/writeup.md`, `docs/LIMITATIONS.md` | ✅ **bitdi** — 4 dərc olunan tapıntı, ölçmənin öz auditi, məhdudiyyət reyestri |
 
-**Cədvəldən kənarda qalan açıq işlər** (mərhələ sətri deyil, board-dadır):
-AP-006 (`consistency_at_k` verdikt rejimində yenidən) · AP-013 (baseline
-snapshot + reqressiya qapısı) · AP-015 (13 örtülməmiş bayat tələ) ·
-AP-017 (çoxnövbəli deqradasiya case-ləri) · AP-019 (`RunRecord`-a embedder və
-`top_k`) · AP-020 (DSL/IMPORT.md-in reallıqla uyğunlaşdırılması).
+**Bu cədvəl mərhələ səviyyəsindədir.** Case-səviyyəli açıq işlər (baseline
+snapshot və reqressiya qapısı, örtülməmiş bayat tələlər, çoxnövbəli
+deqradasiya case-ləri, `consistency_at_k`-nın verdikt rejimi, `RunRecord`-a
+embedder/`top_k`, DSL və `IMPORT.md`-in reallıqla uyğunlaşdırılması) board-dadır
+və statusları orada dəyişir — **tək həqiqət mənbəyi `board/tasks.json`-dur**,
+bu cədvəl deyil:
+
+```bash
+AGENTPROOF_ACTOR=<rol> .venv/bin/python board/task.py list
+```
 
 ## Keyfiyyət qaydaları (pozulmaz)
 
