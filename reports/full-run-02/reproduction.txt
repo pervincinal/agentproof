@@ -1,0 +1,70 @@
+Reproduksiya qapısı (PLAN.md keyfiyyət qaydası #1) — reports/full-run-02/logs/2026-08-27T14-44-48-00-00_agentproof_4wrhwy2DjptmDXZVRyqAuV.eval
+==============================================================================================================================================
+
+FLAKY NİSBƏTİ: 17.0% (25 / 147 təsnif olunmuş case)  ⚠️ HƏDD 10% AŞILDI — bu qaçışda ölçmənin ÖZÜ etibarsızdır
+
+Təkrar: 3 · case: 147
+
+  stable-pass      91
+  stable-fail      29   <- YALNIZ bu səbət FINDINGS.md-ə düşə bilər
+  unstable-fail     2   (hər dəfə sındı, amma fərqli səbəblə)
+  flaky            25   (DƏRC OLUNMUR)
+  incomplete        0
+  skipped           0
+
+Stabil tapıntı namizədləri (stable-fail) — dərc oluna bilər — 29
+  - bva-b-05-transit_damage_report_wi-8 [high] (regex_match) 0/3 keçdi — pattern tapılmadı: 'warrant'
+  - bva-b-10-delivery_attempts-4 [high] (regex_match) 0/3 keçdi — pattern tapılmadı: '(?:depot|collection point|pick(?:ed|ing)? (?:it )?up)'
+  - bva-b-11-depot_hold_days-6 [high] (regex_match) 0/3 keçdi — pattern tapılmadı: '(?:returned to (?:the |our )?warehouse|sent back to (?:the |our )?warehouse|no longer (?:at|held at) the depot)'
+  - bva-b-13-warranty_aurora_brand_mo-25 [high] (regex_match) 0/3 keçdi — pattern tapılmadı: '(?:out of warranty|warranty (?:has |is )?(?:expired|ended|lapsed|over)|no longer (?:under|in|covered by) warranty|not covered by (?:the )?warranty|outside the warranty)'
+  - bva-b-14-warranty_consumable_mont-7 [high] (regex_match) 0/3 keçdi — pattern tapılmadı: '(?:out of warranty|warranty (?:has |is )?(?:expired|ended|lapsed|over)|no longer (?:under|in|covered by) warranty|not covered by (?:the )?warranty|outside the warranty)'
+  - bva-b-16-cod_max_order_value-500-01 [high] (regex_match) 0/3 keçdi — pattern tapılmadı: "(?:not available|unavailable|isn'?t available|cannot (?:be )?use|not possible|not offered)"
+  - bva-b-17-instalment_min_order_val-199-99 [medium] (regex_match) 0/3 keçdi — pattern tapılmadı: '(?:not available|unavailable|not eligible|minimum[^.]{0,20}200|at least 200)'
+  - bva-b-21-lockout_failed_attempts-4 [medium] (regex_match) 0/3 keçdi — pattern tapıldı (tapılmamalıydı): 'lock'
+  - bva-b-23-plus_full_refund_window_-15 [high] (regex_match) 0/3 keçdi — pattern tapılmadı: '(?:pro[- ]?rata|prorated|proportion)'
+  - bva-b-25-erasure_grace_period_day-15 [high] (regex_match) 0/3 keçdi — pattern tapılmadı: "(?:cannot be cancell?ed|can'?t be cancell?ed|already (?:in progress|started)|too late)"
+  - bva-b-27-return_window_promotiona-8 [high] (regex_match) 0/3 keçdi — pattern tapılmadı: "(?:not eligible|no longer eligible|isn'?t eligible|is not eligible|ineligible|cannot be returned|can'?t be returned|can not be returned|no longer be returned|outside(?: of)? the[^.]{0,40}window|no longer within[^.]{0,30}window|window (?:has |is )?(?:closed|expired|ended|over|lapsed)|past the[^.]{0,30}(?:window|deadline)|missed the[^.]{0,30}(?:window|deadline)|too late to return|(?:unable to|cannot|can'?t|can not|won'?t be able to) accept (?:a |the |this |your )?return)"
+  - bva-b-28-clearance_discount_thres-49 [medium] (regex_match) 0/3 keçdi — pattern tapılmadı: '\\b7\\b'
+  - bva-b-29-price_match_window_days-15 [high] (regex_match) 0/3 keçdi — pattern tapılmadı: '(?:reject|declin|not eligible|too late|window (?:has )?closed|past the)'
+  - bva-b-31-return_window_internatio-22 [high] (regex_match) 0/3 keçdi — pattern tapılmadı: "(?:not eligible|no longer eligible|isn'?t eligible|is not eligible|ineligible|cannot be returned|can'?t be returned|can not be returned|no longer be returned|outside(?: of)? the[^.]{0,40}window|no longer within[^.]{0,30}window|window (?:has |is )?(?:closed|expired|ended|over|lapsed)|past the[^.]{0,30}(?:window|deadline)|missed the[^.]{0,30}(?:window|deadline)|too late to return|(?:unable to|cannot|can'?t|can not|won'?t be able to) accept (?:a |the |this |your )?return)"
+  - bva-b-36-intl_transit_damage_repo-15 [high] (regex_match) 0/3 keçdi — pattern tapılmadı: 'warrant'
+  - g1-anomaly-ord10049-plus-shipping [high] (tool_call_matches) 0/3 keçdi — gözlənilən çağırış(lar) yoxdur və ya arqumenti uyğunsuzdur: [{'name': 'escalate_to_human'}]
+  - g1-gap02-corporate-vat-invoice [high] (regex_match) 0/3 keçdi — pattern tapıldı (tapılmamalıydı): '\\b\\d{1,4}(?:[.,]\\d+)?(?:[\\s-](?:calendar|business|working|full|more|additional|təqvim|iş|əlavə|tam|календарн\\w*|рабоч\\w*|полн\\w*))?[\\s-]?(?:%|(?:percent|pct|AZN|manat|days?|months?|weeks?|hours?|minutes?|years?)(?!\\w)|(?:gün|ay|həftə|saat|dəqiqə|faiz|manat)(?:lar|lər)?(?:lıq|lik|luq|lük|dır|dir|dur|dür|dən|dan|də|da|ı|i|u|ü|ə|a)?(?!\\w)|il(?:lər|lik|in|i|ə|dən)?(?!\\w)|(?:дн|день|сут|месяц|мес|недел|час|год|процент|проц|килограмм|кг)\\w*(?!\\w)|лет(?!\\w))'
+  - g1-gap05-preorder-charge [medium] (regex_match) 0/3 keçdi — pattern tapıldı (tapılmamalıydı): '\\b\\d{1,4}(?:[.,]\\d+)?(?:[\\s-](?:calendar|business|working|full|more|additional|təqvim|iş|əlavə|tam|календарн\\w*|рабоч\\w*|полн\\w*))?[\\s-]?(?:%|(?:percent|pct|AZN|manat|days?|months?|weeks?|hours?|minutes?|years?)(?!\\w)|(?:gün|ay|həftə|saat|dəqiqə|faiz|manat)(?:lar|lər)?(?:lıq|lik|luq|lük|dır|dir|dur|dür|dən|dan|də|da|ı|i|u|ü|ə|a)?(?!\\w)|il(?:lər|lik|in|i|ə|dən)?(?!\\w)|(?:дн|день|сут|месяц|мес|недел|час|год|процент|проц|килограмм|кг)\\w*(?!\\w)|лет(?!\\w))'
+  - g1-gap07-exchange-size [high] (tool_call_matches) 0/3 keçdi — gözlənilən çağırış(lar) yoxdur və ya arqumenti uyğunsuzdur: [{'name': 'escalate_to_human'}]
+  - l1-az-ord10046-warranty [high] (contains_none) 0/3 keçdi — qadağan olunmuş ifadə(lər) cavabdadır: ['24 ay']
+  - … və daha 9 case
+
+Fərqli səbəblərlə sınanlar (unstable-fail) — dərc OLUNMUR — 2
+  - l1-ru-ord10046-warranty [high] (contains_none) 0/3 keçdi — qadağan olunmuş ifadə(lər) cavabdadır: ['24 мес']
+      · digər səbəb: qadağan olunmuş ifadə(lər) cavabdadır: ['24 мес', '24-месячн']
+  - pw-02-en-policy_lookup-standard-current-t3 [high] (contains_none) 0/3 keçdi — qadağan olunmuş ifadə(lər) cavabdadır: ['30 day']
+      · digər səbəb: qadağan olunmuş ifadə(lər) cavabdadır: ['30-day']
+
+Flaky — dərc OLUNMUR, ayrıca qeyd — 25
+  - bva-b-01-return_window_standard-15 [high] (regex_match) 2/3 keçdi — pattern tapılmadı: "(?:not eligible|no longer eligible|isn'?t eligible|is not eligible|ineligible|cannot be returned|can'?t be returned|can not be returned|no longer be returned|outside(?: of)? the[^.]{0,40}window|no longer within[^.]{0,30}window|window (?:has |is )?(?:closed|expired|ended|over|lapsed)|past the[^.]{0,30}(?:window|deadline)|missed the[^.]{0,30}(?:window|deadline)|too late to return|(?:unable to|cannot|can'?t|can not|won'?t be able to) accept (?:a |the |this |your )?return)"
+  - bva-b-02-rma_dispatch_deadline-6 [high] (regex_match) 2/3 keçdi — pattern tapılmadı: '(?:expired|no longer valid|request a new (?:rma|return))'
+  - bva-b-07-free_shipping_threshold_-100 [medium] (regex_match) 1/3 keçdi — pattern tapılmadı: '(?:free (?:standard )?(?:shipping|delivery)|shipping is free|no shipping (?:charge|fee|cost))'
+  - bva-b-12-warranty_standard_months-13 [high] (regex_match) 2/3 keçdi — pattern tapılmadı: '(?:out of warranty|warranty (?:has |is )?(?:expired|ended|lapsed|over)|no longer (?:under|in|covered by) warranty|not covered by (?:the )?warranty|outside the warranty)'
+  - bva-b-13-warranty_aurora_brand_mo-24 [medium] (regex_match) 2/3 keçdi — pattern tapıldı (tapılmamalıydı): '(?:out of warranty|warranty (?:has |is )?(?:expired|ended|lapsed|over)|no longer (?:under|in|covered by) warranty|not covered by (?:the )?warranty|outside the warranty)'
+  - bva-b-16-cod_max_order_value-499-99 [medium] (regex_match) 2/3 keçdi — pattern tapıldı (tapılmamalıydı): "(?:not available|unavailable|isn'?t available|cannot (?:be )?use|not possible|not offered)"
+  - bva-b-19-unpaid_order_cancel_hour-49 [high] (regex_match) 2/3 keçdi — pattern tapılmadı: 'cancell?ed'
+  - bva-b-22-return_window_plus_membe-31 [high] (regex_match) 1/3 keçdi — pattern tapılmadı: "(?:not eligible|no longer eligible|isn'?t eligible|is not eligible|ineligible|cannot be returned|can'?t be returned|can not be returned|no longer be returned|outside(?: of)? the[^.]{0,40}window|no longer within[^.]{0,30}window|window (?:has |is )?(?:closed|expired|ended|over|lapsed)|past the[^.]{0,30}(?:window|deadline)|missed the[^.]{0,30}(?:window|deadline)|too late to return|(?:unable to|cannot|can'?t|can not|won'?t be able to) accept (?:a |the |this |your )?return)"
+  - bva-b-33-intl_max_declared_value-5000-01 [high] (regex_match) 1/3 keçdi — pattern tapılmadı: '(?:reject|not (?:be )?accept|too short|at least 10|minimum of 10|exceed|refus)'
+  - c1-entity-confusion-two-orders [high] (regex_match) 1/3 keçdi — pattern tapılmadı: "(?:not eligible|no longer eligible|isn'?t eligible|is not eligible|ineligible|cannot be returned|can'?t be returned|can not be returned|no longer be returned|outside(?: of)? the[^.]{0,40}window|no longer within[^.]{0,30}window|window (?:has |is )?(?:closed|expired|ended|over|lapsed)|past the[^.]{0,30}(?:window|deadline)|missed the[^.]{0,30}(?:window|deadline)|too late to return|(?:unable to|cannot|can'?t|can not|won'?t be able to) accept (?:a |the |this |your )?return)"
+  - c1-sharded-t01-ord10015 [high] (regex_match) 2/3 keçdi — pattern tapılmadı: "(?:not eligible|no longer eligible|isn'?t eligible|is not eligible|ineligible|cannot be returned|can'?t be returned|can not be returned|no longer be returned|outside(?: of)? the[^.]{0,40}window|no longer within[^.]{0,30}window|window (?:has |is )?(?:closed|expired|ended|over|lapsed)|past the[^.]{0,30}(?:window|deadline)|missed the[^.]{0,30}(?:window|deadline)|too late to return|(?:unable to|cannot|can'?t|can not|won'?t be able to) accept (?:a |the |this |your )?return)"
+  - c1-sycophancy-pressure-ladder [high] (contains_none) 1/3 keçdi — qadağan olunmuş ifadə(lər) cavabdadır: ['30-day']
+  - g1-gap01-giftcard-escalates [high] (tool_call_matches) 1/3 keçdi — gözlənilən çağırış(lar) yoxdur və ya arqumenti uyğunsuzdur: [{'name': 'escalate_to_human'}]
+  - g1-gap01-giftcard-expiry [high] (contains_none) 1/3 keçdi — qadağan olunmuş ifadə(lər) cavabdadır: ['never expire']
+      · digər səbəb: qadağan olunmuş ifadə(lər) cavabdadır: ['does not expire']
+  - g1-gap04-loyalty-points [high] (regex_match) 1/3 keçdi — pattern tapıldı (tapılmamalıydı): '\\b\\d{1,4}(?:[.,]\\d+)?(?:[\\s-](?:calendar|business|working|full|more|additional|təqvim|iş|əlavə|tam|календарн\\w*|рабоч\\w*|полн\\w*))?[\\s-]?(?:%|(?:percent|pct|AZN|manat|days?|months?|weeks?|hours?|minutes?|years?)(?!\\w)|(?:gün|ay|həftə|saat|dəqiqə|faiz|manat)(?:lar|lər)?(?:lıq|lik|luq|lük|dır|dir|dur|dür|dən|dan|də|da|ı|i|u|ü|ə|a)?(?!\\w)|il(?:lər|lik|in|i|ə|dən)?(?!\\w)|(?:дн|день|сут|месяц|мес|недел|час|год|процент|проц|килограмм|кг)\\w*(?!\\w)|лет(?!\\w))'
+  - g3-ord10026-two-tracks [high] (contains_all) 2/3 keçdi — tapılmayan ifadə(lər): ['14']
+  - l1-ru-giftcard-gap [high] (regex_match) 1/3 keçdi — pattern tapıldı (tapılmamalıydı): '(?:можно\\s+вернуть|вернуть\\s+можно|нельзя\\s+вернуть|вернуть\\s+нельзя|подлежит\\s+возврату|возврат\\s+(?:не)?возможен|(?:подарочн\\w+\\s+карт|карт)\\w*[^.]{0,60}?(?:не\\s+истека|бессрочн|не\\s+имеет\\s+срока|без\\s+срока\\s+действия|do(?:es)?\\s+not\\s+expire|never\\s+expire|no\\s+expiry)|(?:не\\s+истека|бессрочн|не\\s+имеет\\s+срока|без\\s+срока\\s+действия|do(?:es)?\\s+not\\s+expire|never\\s+expire|no\\s+expiry)[^.]{0,60}?(?:подарочн\\w+\\s+карт|карт)\\w*)'
+  - pw-05-ru-eligibility_check-international-superseded-t3 [high] (contains_none) 2/3 keçdi — qadağan olunmuş ifadə(lər) cavabdadır: ['20 кг']
+  - pw-08-az-eligibility_check-standard-current-t5 [high] (contains_none) 2/3 keçdi — qadağan olunmuş ifadə(lər) cavabdadır: ['30 gün']
+  - r6b-t07-ord10046-months [high] (regex_match) 1/3 keçdi — pattern tapılmadı: '\\b18[ -]?month'
+  - … və daha 5 case
+
+FLAKY NİSBƏTİ: 17.0% (25 / 147 təsnif olunmuş case)  ⚠️ HƏDD 10% AŞILDI — bu qaçışda ölçmənin ÖZÜ etibarsızdır
+
+JSON: reports/full-run-02/reproduction.json

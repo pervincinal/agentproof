@@ -8,6 +8,11 @@ node_modules/
 reports/runs/
 target/data/
 .DS_Store
-reports/
+reports/*
+!reports/full-run-02/
+reports/full-run-02/*
+!reports/full-run-02/*.json
+!reports/full-run-02/reproduction.txt
 .pytest_cache/
 
+target/plugins/*.difypkg

@@ -1,0 +1,21 @@
+AgentProof
+Copyright 2026 Parvin Yusifli
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+---
+
+The prose research report (`docs/writeup.md`, `FINDINGS.md`) is additionally
+made available under Creative Commons Attribution 4.0 International
+(CC BY 4.0) — https://creativecommons.org/licenses/by/4.0/
+
+The synthetic corpus in `target/corpus/` describes a fictional company
+("Aurora Goods"). Any resemblance to a real company, its policies or its
+customers is unintended.
+
+This project evaluates Dify (https://github.com/langgenius/dify), which is not
+affiliated with, and does not endorse, this work.
