@@ -92,3 +92,11 @@ traffic. See [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 ## License
 
 Code: Apache-2.0. Prose report: additionally CC BY 4.0. See `LICENSE`, `NOTICE`.
+
+## Contact
+
+I run this audit on production RAG and agent systems — including the tests that
+are currently green.
+
+Parvin Yusifli · yusifli.pervin@gmail.com ·
+[linkedin.com/in/yusifoff](https://www.linkedin.com/in/yusifoff/)

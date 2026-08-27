@@ -97,4 +97,4 @@ Where the platform did well, that stands: when Dify's SSRF proxy blocked our too
 
 If you have a RAG or agent product in production and suspect your evals are measuring the wrong thing, this is the audit I run on your system — including the tests that are currently green.
 
-Harness, dataset, graders and full run records: [repository link] · [contact]
+Harness, dataset, graders and full run records: https://github.com/pervincinal/agentproof · yusifli.pervin@gmail.com · https://www.linkedin.com/in/yusifoff/
