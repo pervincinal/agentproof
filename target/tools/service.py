@@ -23,6 +23,11 @@ in ``test_service.py``:
    byte-identical responses.  No randomness, no network, no wall clock.  RMA ids
    are derived from a stable fixture line index rather than from call order.
 
+4. **State is namespaced.**  Mutable state lives per ``X-AG-Session`` namespace,
+   not in one global dict, so eval lanes can run in parallel without leaking
+   RMAs into each other.  No header == the ``default`` namespace, i.e. the old
+   single-lane behaviour verbatim.
+
 The fixtures' ``purpose`` and ``expected`` blocks are ground truth for the
 grader and are *never* exposed over HTTP.
 
@@ -35,6 +40,7 @@ import datetime
 import os
 import pathlib
 import re
+import threading
 from typing import Any, Dict, List, Literal, Optional
 
 import yaml
@@ -132,24 +138,96 @@ ESCALATION_QUEUES = {
 }
 
 # ---------------------------------------------------------------------------
-# Mutable run state.  Reset between eval cases via POST /admin/reset so that
-# every case starts from identical fixture state (TOOLS.md §0.3).
+# Mutable run state, PARTITIONED BY SESSION (namespace).
+#
+# Why a namespace and not one global dict: a single global state forces the eval
+# runner to serialise (reset + invoke has to be atomic), which puts a 150-case
+# run an order of magnitude over the harness' 6-minute budget.  With a namespace
+# per lane, N lanes can run concurrently and each still starts from identical
+# fixture state (TOOLS.md §0.3).
+#
+# The namespace arrives in the ``X-AG-Session`` request header.  A request
+# without the header lands in ``DEFAULT_SESSION`` — which is exactly the old
+# single-lane behaviour, so nothing that does not know about namespaces changes.
+#
+# Determinism is *improved*, not weakened: escalation ticket numbers used to be
+# drawn from one global counter, so two concurrent cases would have raced for
+# ESC-…-0001.  Per-namespace counters make each lane's numbering reproducible.
+# RMA ids were already derived from the fixture line index, so they are
+# unaffected.
 # ---------------------------------------------------------------------------
 
-STATE: Dict[str, Any] = {}
+#: Namespace used when the caller sends no ``X-AG-Session`` header.
+DEFAULT_SESSION = "default"
+
+#: Header carrying the namespace.  Dify can only attach a *static* header per
+#: tool provider (``core/tools/custom_tool/tool.py::assembling_request`` builds
+#: headers from provider credentials alone), so one lane == one Dify app whose
+#: provider pins one value here.  See docs/STACK.md.
+SESSION_HEADER = "X-AG-Session"
+
+#: Namespace length cap — the header is attacker-reachable in principle, and an
+#: unbounded key would be an unbounded memory leak.
+MAX_SESSION_LEN = 128
+
+_STATES: Dict[str, Dict[str, Any]] = {}
+#: Guards ``_STATES`` and every read-modify-write inside a namespace.  FastAPI
+#: runs these sync endpoints in a threadpool, so `len(...) + 1` then `append`
+#: is a genuine race without it.
+_STATE_LOCK = threading.RLock()
 
 
-def reset_state() -> None:
-    STATE.clear()
-    STATE["created_rmas"] = {}      # (order_id, sku) -> rma record
-    STATE["escalations"] = []       # list of ticket records
-    STATE["audit"] = []             # every tool call, accepted or rejected
+def _blank_state() -> Dict[str, Any]:
+    return {
+        "created_rmas": {},   # (order_id, sku) -> rma record
+        "escalations": [],    # list of ticket records
+        "audit": [],          # every tool call, accepted or rejected
+    }
 
 
-reset_state()
+def session_key(raw: Optional[str]) -> str:
+    """Normalise the ``X-AG-Session`` header into a namespace key."""
+    key = (raw or "").strip()
+    if not key:
+        return DEFAULT_SESSION
+    if len(key) > MAX_SESSION_LEN:
+        raise ToolError(
+            "INVALID_ARGUMENT",
+            f"{SESSION_HEADER} must be at most {MAX_SESSION_LEN} characters.",
+        )
+    return key
+
+
+def state_for(raw: Optional[str]) -> Dict[str, Any]:
+    """The mutable state of one namespace, created on first use."""
+    key = session_key(raw)
+    with _STATE_LOCK:
+        state = _STATES.get(key)
+        if state is None:
+            state = _blank_state()
+            _STATES[key] = state
+        return state
+
+
+def reset_state(session: Optional[str] = None) -> None:
+    """Restore ONE namespace to fixture state (default namespace if unnamed)."""
+    key = session_key(session)
+    with _STATE_LOCK:
+        _STATES[key] = _blank_state()
+
+
+def reset_all_states() -> None:
+    """Drop every namespace.  Used at process start and by ``/admin/reset?all=1``."""
+    with _STATE_LOCK:
+        _STATES.clear()
+        _STATES[DEFAULT_SESSION] = _blank_state()
+
+
+reset_all_states()
 
 
 def _audit(
+    state: Dict[str, Any],
     tool: str,
     arguments: Dict[str, Any],
     outcome: str,
@@ -159,17 +237,18 @@ def _audit(
     """TOOLS.md §4: every call is appended with arguments, timestamp, conversation
     id and turn index.  The timestamp is the pinned date plus a monotonic
     sequence number — never a wall clock reading."""
-    STATE["audit"].append(
-        {
-            "seq": len(STATE["audit"]) + 1,
-            "today": TODAY,
-            "tool": tool,
-            "arguments": arguments,
-            "outcome": outcome,
-            "conversation_id": conversation_id,
-            "turn_index": turn_index,
-        }
-    )
+    with _STATE_LOCK:
+        state["audit"].append(
+            {
+                "seq": len(state["audit"]) + 1,
+                "today": TODAY,
+                "tool": tool,
+                "arguments": arguments,
+                "outcome": outcome,
+                "conversation_id": conversation_id,
+                "turn_index": turn_index,
+            }
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -271,8 +350,10 @@ def _require_delivered(order: Dict[str, Any]) -> None:
         )
 
 
-def _existing_rma(order: Dict[str, Any], sku: str) -> Optional[Dict[str, Any]]:
-    created = STATE["created_rmas"].get((order["order_id"], sku))
+def _existing_rma(
+    state: Dict[str, Any], order: Dict[str, Any], sku: str
+) -> Optional[Dict[str, Any]]:
+    created = state["created_rmas"].get((order["order_id"], sku))
     if created:
         return created
     seeded = order.get("existing_rma")
@@ -420,14 +501,16 @@ def lookup_order(
     x_conversation_id: Optional[str] = Header(default=None),
     x_turn_index: Optional[str] = Header(default=None),
     x_ag_fault: Optional[str] = Header(default=None),
+    x_ag_session: Optional[str] = Header(default=None),
 ) -> Dict[str, Any]:
     args = body.model_dump()
+    state = state_for(x_ag_session)
     try:
         _check_fault(x_ag_fault)
         order_id = _valid_order_id(body.order_id)
         order = _get_order(order_id)
     except ToolError as exc:
-        _audit("lookup_order", args, exc.code, x_conversation_id, x_turn_index)
+        _audit(state, "lookup_order", args, exc.code, x_conversation_id, x_turn_index)
         raise
 
     lines = []
@@ -485,7 +568,7 @@ def lookup_order(
         if optional in order:
             payload[optional] = order[optional]
 
-    _audit("lookup_order", args, "ok", x_conversation_id, x_turn_index)
+    _audit(state, "lookup_order", args, "ok", x_conversation_id, x_turn_index)
     return payload
 
 
@@ -497,8 +580,10 @@ def get_customer(
     x_conversation_id: Optional[str] = Header(default=None),
     x_turn_index: Optional[str] = Header(default=None),
     x_ag_fault: Optional[str] = Header(default=None),
+    x_ag_session: Optional[str] = Header(default=None),
 ) -> Dict[str, Any]:
     args = body.model_dump()
+    state = state_for(x_ag_session)
     try:
         _check_fault(x_ag_fault)
         email = _valid_email(body.email)
@@ -506,7 +591,7 @@ def get_customer(
         if customer is None:
             raise ToolError("CUSTOMER_NOT_FOUND", f"No customer with email {email}.")
     except ToolError as exc:
-        _audit("get_customer", args, exc.code, x_conversation_id, x_turn_index)
+        _audit(state, "get_customer", args, exc.code, x_conversation_id, x_turn_index)
         raise
 
     plus = customer["plus"]
@@ -534,7 +619,7 @@ def get_customer(
     if plus.get("cancelled_at") is not None:
         payload["plus"]["cancelled_at"] = plus["cancelled_at"]
 
-    _audit("get_customer", args, "ok", x_conversation_id, x_turn_index)
+    _audit(state, "get_customer", args, "ok", x_conversation_id, x_turn_index)
     return payload
 
 
@@ -564,9 +649,11 @@ def check_return_eligibility(
     x_conversation_id: Optional[str] = Header(default=None),
     x_turn_index: Optional[str] = Header(default=None),
     x_ag_fault: Optional[str] = Header(default=None),
+    x_ag_session: Optional[str] = Header(default=None),
 ) -> Dict[str, Any]:
     """Return the raw facts a return decision needs.  It does NOT decide."""
     args = body.model_dump()
+    state = state_for(x_ag_session)
     try:
         _check_fault(x_ag_fault)
         order_id = _valid_order_id(body.order_id)
@@ -575,12 +662,12 @@ def check_return_eligibility(
         line = _get_line(order, sku)
         _require_delivered(order)
     except ToolError as exc:
-        _audit("check_return_eligibility", args, exc.code, x_conversation_id, x_turn_index)
+        _audit(state, "check_return_eligibility", args, exc.code, x_conversation_id, x_turn_index)
         raise
 
     cat = SKUS[sku]
     customer = CUSTOMERS[order["customer_email"]]
-    rma = _existing_rma(order, sku)
+    rma = _existing_rma(state, order, sku)
 
     payload = {
         "today": TODAY,
@@ -621,7 +708,7 @@ def check_return_eligibility(
         "existing_rma": rma["rma_id"] if rma else None,
         "chargeback_open": order["chargeback_open"],
     }
-    _audit("check_return_eligibility", args, "ok", x_conversation_id, x_turn_index)
+    _audit(state, "check_return_eligibility", args, "ok", x_conversation_id, x_turn_index)
     return payload
 
 
@@ -633,6 +720,7 @@ def initiate_return(
     x_conversation_id: Optional[str] = Header(default=None),
     x_turn_index: Optional[str] = Header(default=None),
     x_ag_fault: Optional[str] = Header(default=None),
+    x_ag_session: Optional[str] = Header(default=None),
 ) -> Dict[str, Any]:
     """Create an RMA.  Performs NO policy validation — only structural refusals.
 
@@ -640,6 +728,7 @@ def initiate_return(
     mistakes and make the unauthorised-write rate unmeasurable (TOOLS.md §4).
     """
     args = body.model_dump()
+    state = state_for(x_ag_session)
     try:
         _check_fault(x_ag_fault)
         order_id = _valid_order_id(body.order_id)
@@ -659,14 +748,14 @@ def initiate_return(
                 "ORDER_FROZEN",
                 f"Order {order_id} is frozen: a chargeback is open. No return may be created.",
             )
-        existing = _existing_rma(order, sku)
+        existing = _existing_rma(state, order, sku)
         if existing:
             raise ToolError(
                 "RMA_ALREADY_EXISTS",
                 f"An open RMA ({existing['rma_id']}) already covers {order_id} / {sku}.",
             )
     except ToolError as exc:
-        _audit("initiate_return", args, exc.code, x_conversation_id, x_turn_index)
+        _audit(state, "initiate_return", args, exc.code, x_conversation_id, x_turn_index)
         raise
 
     seq = LINE_INDEX[(order_id, sku)]
@@ -682,8 +771,9 @@ def initiate_return(
         "carrier_handover_deadline": deadline.isoformat(),
         "status": "open",
     }
-    STATE["created_rmas"][(order_id, sku)] = record
-    _audit("initiate_return", args, "created", x_conversation_id, x_turn_index)
+    with _STATE_LOCK:
+        state["created_rmas"][(order_id, sku)] = record
+    _audit(state, "initiate_return", args, "created", x_conversation_id, x_turn_index)
     # No refund amount, no acceptance promise — the warehouse decides that.
     return record
 
@@ -696,8 +786,10 @@ def escalate_to_human(
     x_conversation_id: Optional[str] = Header(default=None),
     x_turn_index: Optional[str] = Header(default=None),
     x_ag_fault: Optional[str] = Header(default=None),
+    x_ag_session: Optional[str] = Header(default=None),
 ) -> Dict[str, Any]:
     args = body.model_dump()
+    state = state_for(x_ag_session)
     try:
         _check_fault(x_ag_fault)
         reason = body.reason or ""
@@ -715,20 +807,22 @@ def escalate_to_human(
                 "INVALID_ARGUMENT", "context_summary must be at most 1000 characters."
             )
     except ToolError as exc:
-        _audit("escalate_to_human", args, exc.code, x_conversation_id, x_turn_index)
+        _audit(state, "escalate_to_human", args, exc.code, x_conversation_id, x_turn_index)
         raise
 
-    seq = len(STATE["escalations"]) + 1
-    ticket = {
-        "today": TODAY,
-        "ticket_id": f"ESC-{TODAY_DATE:%Y%m%d}-{seq:04d}",
-        "category": body.category,
-        "queue": ESCALATION_QUEUES[body.category],  # assigned by category, not by the agent
-        "created_at": TODAY,
-        "status": "queued",
-    }
-    STATE["escalations"].append({**ticket, "reason": body.reason})
-    _audit("escalate_to_human", args, "queued", x_conversation_id, x_turn_index)
+    with _STATE_LOCK:
+        seq = len(state["escalations"]) + 1
+        ticket = {
+            "today": TODAY,
+            "ticket_id": f"ESC-{TODAY_DATE:%Y%m%d}-{seq:04d}",
+            "category": body.category,
+            # assigned by category, not by the agent
+            "queue": ESCALATION_QUEUES[body.category],
+            "created_at": TODAY,
+            "status": "queued",
+        }
+        state["escalations"].append({**ticket, "reason": body.reason})
+    _audit(state, "escalate_to_human", args, "queued", x_conversation_id, x_turn_index)
     return ticket
 
 
@@ -738,21 +832,57 @@ def escalate_to_human(
 # ---------------------------------------------------------------------------
 
 @app.post("/admin/reset")
-def admin_reset() -> Dict[str, Any]:
+def admin_reset(
+    all: bool = False,
+    x_ag_session: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
     """Restore fixture state.  The eval runner calls this between cases so every
-    case starts identically (pass^k determinism)."""
-    reset_state()
-    return {"status": "reset", "today": TODAY}
+    case starts identically (pass^k determinism).
+
+    Scope is ONE namespace — the one named by ``X-AG-Session``, or the default
+    namespace when the header is absent.  That is what makes parallel lanes
+    safe: lane 3's reset can never wipe lane 7's in-flight state.  ``?all=1``
+    drops every namespace and is for process-level cleanup only; a runner must
+    never use it mid-run.
+    """
+    if all:
+        reset_all_states()
+        return {"status": "reset", "scope": "all", "today": TODAY}
+    key = session_key(x_ag_session)
+    reset_state(key)
+    return {"status": "reset", "scope": "session", "session": key, "today": TODAY}
 
 
 @app.get("/admin/audit")
-def admin_audit() -> Dict[str, Any]:
+def admin_audit(x_ag_session: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    state = state_for(x_ag_session)
     return {
         "today": TODAY,
-        "calls": STATE["audit"],
-        "created_rmas": list(STATE["created_rmas"].values()),
-        "escalations": STATE["escalations"],
+        "session": session_key(x_ag_session),
+        "calls": state["audit"],
+        "created_rmas": list(state["created_rmas"].values()),
+        "escalations": state["escalations"],
     }
+
+
+@app.get("/admin/sessions")
+def admin_sessions() -> Dict[str, Any]:
+    """Which namespaces exist and how much each holds.  Debug aid: an unexpected
+    namespace (or an unexpectedly busy ``default``) means a lane's Dify app is
+    not sending the header it was configured with."""
+    with _STATE_LOCK:
+        return {
+            "today": TODAY,
+            "header": SESSION_HEADER,
+            "sessions": {
+                key: {
+                    "calls": len(st["audit"]),
+                    "created_rmas": len(st["created_rmas"]),
+                    "escalations": len(st["escalations"]),
+                }
+                for key, st in sorted(_STATES.items())
+            },
+        }
 
 
 if __name__ == "__main__":  # pragma: no cover

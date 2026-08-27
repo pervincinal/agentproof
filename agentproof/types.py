@@ -183,6 +183,24 @@ class AgentResponse:
     `SETUP.md §7.2`-də sadalanan Dify xəta kodları burada saxlanır.
     """
 
+    turns: list["AgentResponse"] = field(default_factory=list)
+    """Çoxnövbəli case-də HƏR NÖVBƏNİN öz cavabı (tək növbədə boş qalır).
+
+    Kontekst itkisi (C1) məhz növbələr ARASINDA görünür: agent 2-ci növbədə
+    sifariş nömrəsini unudursa, bu, yalnız növbə-növbə baxanda bilinir. Ona görə
+    yekun cavabla yanaşı hər növbənin mətni, tool çağırışları, `usage`-ı və
+    retrieval-ı ayrıca saxlanılır.
+
+    Yuxarıdakı sahələrin çoxnövbəli semantikası (`adapters/http_agent.py`):
+      text        -> SONUNCU növbənin mətni (qiymətləndirilən yekun cavab)
+      tool_calls  -> BÜTÜN növbələrin birləşməsi, sıra ilə. `forbidden_tools`
+                     üçün başqa cür olmaz: 2-ci növbədəki qadağan olunmuş
+                     çağırış son növbəyə baxmaqla görünməz.
+      retrieved   -> bütün növbələrin birləşməsi, `chunk_id` üzrə təkrarsız
+      usage       -> növbələrin CƏMİ (xərc bütöv söhbətə görə hesablanır)
+      latency_ms  -> növbələrin cəmi
+    """
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "text": self.text,
@@ -192,6 +210,7 @@ class AgentResponse:
             "latency_ms": self.latency_ms,
             "raw": self.raw,
             "error": self.error,
+            "turns": [t.to_dict() for t in self.turns],
         }
 
     @staticmethod
@@ -204,7 +223,18 @@ class AgentResponse:
             latency_ms=int(d.get("latency_ms", 0)),
             raw=d.get("raw", {}),
             error=d.get("error"),
+            turns=[AgentResponse.from_dict(t) for t in d.get("turns", [])],
         )
+
+    @property
+    def n_turns(self) -> int:
+        """Neçə növbə göndərildi (tək növbəli cavabda 1)."""
+        return len(self.turns) or 1
+
+    @property
+    def turn_texts(self) -> list[str]:
+        """Növbə-növbə cavab mətnləri — kontekst itkisini burada axtarın."""
+        return [t.text for t in self.turns] or [self.text]
 
 
 @dataclass

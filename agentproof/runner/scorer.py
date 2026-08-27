@@ -23,6 +23,18 @@ def grade_state(state: TaskState) -> tuple[Case, GradeResult]:
     """Inspect-dən asılı olmayan hissəni ayrıca funksiyaya çıxarırıq (test üçün)."""
     case = Case.from_dict(state.metadata)
     responses = pull_responses() or [_fallback_response(state)]
+    infra = [r.error for r in responses if r.error]
+    if infra:
+        # `AgentResponse.error` müqaviləsi: infrastruktur xətası MƏZMUN
+        # uğursuzluğu deyil. Bu yoxlama olmasa xəta cavabı boş mətn olduğuna
+        # görə bütün İNKAR assertion-ları (`contains_none`, `must_not_match`)
+        # YALANÇI KEÇİD verərdi — yəni sınmış qaçış yaşıl görünərdi.
+        return case, GradeResult.skip(
+            case.grader,
+            f"hədəf infrastruktur xətası qaytardı: {sorted(set(infra))} — "
+            "case qiymətləndirilmədi (nə keçdi, nə sındı)",
+            {"target_errors": infra, "n_responses": len(responses)},
+        )
     grader = registry.get(case.grader)
     if registry.is_aggregate(case.grader):
         result = grader.grade_many(case, responses)  # type: ignore[union-attr]

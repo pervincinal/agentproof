@@ -37,10 +37,12 @@ ORDERS = {o["order_id"]: o for o in FIX["orders"]}
 
 @pytest.fixture()
 def client():
-    service.reset_state()
+    # reset_all_states(), not reset_state(): a test that writes into a named
+    # X-AG-Session namespace must not leave it behind for the next test.
+    service.reset_all_states()
     with TestClient(service.app) as c:
         yield c
-    service.reset_state()
+    service.reset_all_states()
 
 
 def post(client, tool, payload, **kw):
@@ -707,3 +709,111 @@ def test_every_customer_and_order_in_the_corpus_is_reachable(client):
         assert post(client, "lookup_order", {"order_id": order_id}).status_code == 200
     assert len(ORDERS) == 64
     assert len(FIX["customers"]) == 10
+
+
+# ---------------------------------------------------------------------------
+# Namespaced state (X-AG-Session).  This is what lets the eval runner go
+# parallel; if it leaks, every parallel result is worthless, so it is tested
+# in both directions: separate namespaces do NOT see each other, and the SAME
+# namespace does.
+# ---------------------------------------------------------------------------
+
+RMA_ORDER = "ORD-10015"
+RMA_SKU = "AG-PRT-660"
+
+
+def _initiate(client, session=None):
+    headers = {} if session is None else {"X-AG-Session": session}
+    return client.post(
+        "/tools/initiate_return",
+        json={
+            "order_id": RMA_ORDER,
+            "sku": RMA_SKU,
+            "reason": "changed_mind",
+            "customer_confirmed": True,
+        },
+        headers=headers,
+    )
+
+
+def test_two_namespaces_do_not_see_each_others_rmas(client):
+    assert _initiate(client, "lane-a").status_code == 200
+    second = _initiate(client, "lane-b")
+    assert second.status_code == 200, second.json()
+    # ...and the id is identical, because it comes from the fixture line index,
+    # not from call order.  Namespacing must not make RMA ids drift.
+    assert second.json()["rma_id"] == _initiate(client, "lane-c").json()["rma_id"]
+
+
+def test_the_same_namespace_still_collides(client):
+    """The negative half: without a fresh namespace the second write conflicts.
+    If this ever passed, the test above would be vacuously green."""
+    assert _initiate(client, "lane-a").status_code == 200
+    second = _initiate(client, "lane-a")
+    assert second.status_code == 409
+    assert second.json()["error"]["code"] == "RMA_ALREADY_EXISTS"
+
+
+def test_missing_header_is_the_default_namespace(client):
+    assert _initiate(client).status_code == 200
+    assert _initiate(client, "default").json()["error"]["code"] == "RMA_ALREADY_EXISTS"
+    assert _initiate(client, "  ").json()["error"]["code"] == "RMA_ALREADY_EXISTS"
+
+
+def test_reset_is_scoped_to_one_namespace(client):
+    _initiate(client, "lane-a")
+    _initiate(client, "lane-b")
+    client.post("/admin/reset", headers={"X-AG-Session": "lane-a"})
+    # lane-a was wiped, lane-b was NOT touched
+    assert _initiate(client, "lane-a").status_code == 200
+    assert _initiate(client, "lane-b").json()["error"]["code"] == "RMA_ALREADY_EXISTS"
+
+
+def test_reset_all_drops_every_namespace(client):
+    _initiate(client, "lane-a")
+    _initiate(client, "lane-b")
+    client.post("/admin/reset", params={"all": "true"})
+    assert _initiate(client, "lane-a").status_code == 200
+    assert _initiate(client, "lane-b").status_code == 200
+
+
+def test_audit_and_escalation_numbering_are_per_namespace(client):
+    body = {"category": "other", "reason": "x" * 25}
+    a = client.post("/tools/escalate_to_human", json=body,
+                    headers={"X-AG-Session": "lane-a"}).json()
+    b = client.post("/tools/escalate_to_human", json=body,
+                    headers={"X-AG-Session": "lane-b"}).json()
+    # Each lane numbers from 1 — a global counter would have raced here.
+    assert a["ticket_id"] == b["ticket_id"]
+    assert a["ticket_id"].endswith("-0001")
+
+    audit_a = client.get("/admin/audit", headers={"X-AG-Session": "lane-a"}).json()
+    assert audit_a["session"] == "lane-a"
+    assert len(audit_a["calls"]) == 1
+    assert len(audit_a["escalations"]) == 1
+
+
+def test_sessions_endpoint_lists_live_namespaces(client):
+    _initiate(client, "lane-a")
+    listing = client.get("/admin/sessions").json()
+    assert listing["header"] == "X-AG-Session"
+    assert listing["sessions"]["lane-a"]["created_rmas"] == 1
+
+
+def test_oversized_session_header_is_rejected(client):
+    r = _initiate(client, "x" * 200)
+    assert r.status_code == 400
+    assert r.json()["error"]["code"] == "INVALID_ARGUMENT"
+
+
+def test_namespaces_survive_concurrent_writes(client):
+    """Sanity check on the lock: N threads writing N namespaces at once all
+    succeed, and none of them sees another's RMA."""
+    import concurrent.futures
+
+    def one(i):
+        return _initiate(client, f"par-{i}").status_code
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as pool:
+        codes = list(pool.map(one, range(32)))
+    assert codes == [200] * 32

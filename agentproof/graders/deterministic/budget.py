@@ -7,7 +7,7 @@ qaytarır — SƏSSİZCƏ KEÇMİR. Eyni məntiq naməlum model üçün də işl
 from __future__ import annotations
 
 from agentproof.graders.base import grader, require
-from agentproof.pricing.table import load_prices
+from agentproof.pricing.table import load_prices, pricing_date
 from agentproof.types import AgentResponse, Case, GradeResult
 
 
@@ -25,13 +25,16 @@ class CostUnder:
     def grade(self, case: Case, response: AgentResponse) -> GradeResult:
         limit = float(require(case, "max_cost_usd", self.name))  # type: ignore[arg-type]
         prices = load_prices()
+        # Dərəcə tarixlidir (introductory qiymətlər bitir) — hansı günün
+        # dərəcəsi ilə hesablandığı sübutda görünməlidir.
+        day = pricing_date()
         if response.usage is None:
             return GradeResult.skip(
                 self.name,
                 "hədəf `usage` qaytarmadı — xərc hesablana bilmir",
                 {"limit_usd": limit, "price_table_as_of": prices.as_of},
             )
-        cost = prices.cost_usd(response.usage)
+        cost = prices.cost_usd(response.usage, on=day)
         if cost is None:
             return GradeResult.skip(
                 self.name,
@@ -58,6 +61,8 @@ class CostUnder:
                 "limit_usd": limit,
                 "usage": response.usage.to_dict(),
                 "price_table_as_of": prices.as_of,
+                "priced_on": day.isoformat(),
+                "rate_basis": prices.basis(response.usage.model, on=day),
             },
         )
 

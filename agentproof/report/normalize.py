@@ -6,7 +6,7 @@ Token -> USD çevrilməsi burada `pricing/models.yaml` ilə edilir.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 
 from inspect_ai.log import EvalLog, read_eval_log
@@ -14,6 +14,15 @@ from inspect_ai.log import EvalLog, read_eval_log
 from agentproof.graders.calibration import judge_status
 from agentproof.pricing.table import load_prices
 from agentproof.types import AgentResponse, CaseResult, GradeResult, RunRecord
+
+
+def _run_date(log: EvalLog) -> date:
+    """Qaçışın başlama tarixi — qiymət dərəcəsini seçən tarix."""
+    created = getattr(log.eval, "created", "") or ""
+    try:
+        return datetime.fromisoformat(str(created)).date()
+    except ValueError:
+        return datetime.now(timezone.utc).date()
 
 
 def percentile(values: list[float], p: float) -> float:
@@ -31,6 +40,10 @@ def normalize_log(
     model: str = "",
 ) -> RunRecord:
     prices = load_prices()
+    # Dərəcə QAÇIŞ tarixinə görə seçilir, bugünkü tarixə görə yox: köhnə bir
+    # logu yenidən normallaşdırmaq həmin qaçışın xərcini dəyişdirməməlidir
+    # (`pricing/models.yaml`-da keçidli dərəcələr var).
+    run_day = _run_date(log)
     results: list[CaseResult] = []
 
     for sample in log.samples or []:
@@ -42,7 +55,10 @@ def normalize_log(
         value = None if score is None else score.value
         passed = value == 1.0 or value is True
 
-        cost = sum(c for c in (prices.cost_usd(r.usage) for r in responses) if c is not None)
+        cost = sum(
+            c for c in (prices.cost_usd(r.usage, on=run_day) for r in responses)
+            if c is not None
+        )
         results.append(
             CaseResult(
                 case_id=str(sample.id),
@@ -79,6 +95,11 @@ def normalize_log(
         "p50_latency_ms": percentile(latencies, 50),
         "p95_latency_ms": percentile(latencies, 95),
         "price_table_as_of": prices.as_of,
+        "priced_on": run_day.isoformat(),
+        # Neçə case HƏQİQƏTƏN çoxnövbəli ölçüldü. Zəncirlənmə sükutla sınsa,
+        # bu rəqəm sıfıra düşür və hesabatda dərhal görünür — əks halda 15
+        # çoxnövbəli case tək-növbəli kimi ölçülüb yaşıl görünərdi.
+        "multi_turn_cases": sum(1 for r in results if r.response.n_turns > 1),
         # Judge kalibrasiyası hesabata AVTOMATIK düşür — ayrıca addım tələb
         # etmədiyi üçün gizlədilə bilmir (grader-eng.md: kalibrasiya edilməmiş
         # judge nəticəsi elmi zibildir).

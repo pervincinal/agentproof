@@ -1,0 +1,31 @@
+{
+  "_provenance": {
+    "why": "T-07 uc tekrarli REAL qacis. Uc cavab da eyni qerari verdi (Aurora-brand, 24 ay), amma kohne grader seth formasina gore 0.67/0.33 verdi. Bu fiksasiya hemin qacisdan deyisdirilmeden goturulub.",
+    "run_id": "VSm2VX7XQhbAjVDkYpZPUF",
+    "run_record": "reports/pilot/consistency/VSm2VX7XQhbAjVDkYpZPUF.json",
+    "eval_log": "reports/pilot/consistency/logs/2026-08-26T21-57-00-00-00_agentproof_T8bUdBE5EKXrXvtLrrtcd3.eval",
+    "target": "dify_http@1.17.0",
+    "model": "claude-sonnet-5",
+    "started_at": "2026-08-26T21:57:00+00:00",
+    "case_id": "pilot-c1-t07-consistency",
+    "dataset": "evals/datasets/pilot-consistency.jsonl"
+  },
+  "_scores_before_fix": {
+    "key_facts": 0.6666666666666666,
+    "numbers": 0.3333333333333333,
+    "normalized": 0.3333333333333333,
+    "note": "hesabatdaki reqem key_facts=0.67 idi; numbers/normalized ayrica hesablanib"
+  },
+  "responses": [
+    {
+      "text": "I'll look up the order details and check the warranty policy.Your order ORD-10046 contains the **Aurora Home Cordless Vacuum**, delivered 2024-09-01. Since it's an Aurora-brand product, it carries a **24-month warranty** — the Appendix A superseded 18-month rule doesn't apply here because that only covered products delivered between 2025-01-01 and 2026-01-31, not your September 2024 delivery.\n\nThat means the warranty runs through **2026-09-01** (24 months from delivery). If you had active Aurora Plus membership at the time of purchase, that would add another 6 months (30 months total) — let me know if you'd like me to check that for you."
+    },
+    {
+      "text": "I'll look up the order details and check the warranty policy.Your order ORD-10046 contains the **Aurora Home Cordless Vacuum**, delivered on 2024-09-01.\n\n- Aurora-branded products carry a **24-month warranty** (the 18-month superseded rule only applies to items delivered between 2025-01-01 and 2026-01-31, which doesn't apply here).\n- If you had an active Aurora Plus membership at the time of purchase, that adds **+6 months**, giving 30 months total.\n\nTo confirm which applies, do you have (or did you have) an active Aurora Plus membership when you placed this order?"
+    },
+    {
+      "text": "I'll look up the order details and the warranty policy for Aurora-brand items.Your Aurora Home Cordless Vacuum (delivered 2024-09-01) carries the standard **24-month** Aurora-brand warranty, since it was delivered before the superseded 18-month provision's window (2025-01-01 to 2026-01-31) even applied. That puts your warranty coverage through **2026-09-01** — today.\n\nOne thing I need to check: do you have (or had) an active Aurora Plus membership at the time of purchase (August 2024)? That would add 6 more months, extending coverage to March 2027. Let me know and I can confirm."
+    }
+  ],
+  "sha256": "6499b77552edb1914f177590382e3adbc689a353f4af5a728f4fd4b90a0c4c6d"
+}

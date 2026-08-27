@@ -330,3 +330,61 @@ sınıqdır, addım 3-ə qayıt.
 - §6-dakı cavab nümunəsi sxem baxımından doğrudur (sahə adları
   `service_api`-nin cavab modelindən), rəqəmlər isə illüstrativdir.
 - Addım 0 və 1 **icra edilib və yoxlanılıb**.
+
+---
+
+## 9. Paralel lane-lərin provizyonu (opsional — sürət üçün)
+
+Tək app ilə eval qaçışı seriallaşır (`docs/STACK.md §12`): ölçülən 8.5 s/case,
+450 sorğu ≈ 64 dəqiqə. Paralel qaçmaq üçün hər lane-in ÖZ app-i olmalıdır,
+çünki Dify custom tool-a case-dən case-ə dəyişən başlıq ötürə bilmir
+(`core/tools/custom_tool/tool.py::assembling_request` — başlıqlar yalnız
+provider credential-larından yığılır).
+
+Hər lane üçün, `N = 1..K`:
+
+**9.1 Tool provider yarat** — §2-dəki OpenAPI ilə eyni, YALNIZ auth fərqli:
+
+| sahə | dəyər |
+|---|---|
+| Authorization type | API Key |
+| Header name | `X-AG-Session` |
+| Header prefix | Custom (prefiks YOXDUR) |
+| API key value | `lane-N` |
+
+Servis eyni qalır (`http://host.docker.internal:8099`) — ayrı port lazım deyil,
+vəziyyəti ad sahəsi bölür.
+
+**9.2 App-i import et** — §4-dəki DSL, yalnız `provider_id`-lər 9.1-dəki yeni
+provider-in UUID-si ilə əvəz olunur, `app.name` isə `… (lane-N)` olur.
+
+**9.3 App API açarını al** — §5.
+
+**9.4 Yoxla ki, başlıq həqiqətən gedir:**
+
+```bash
+curl -s http://localhost:8099/admin/sessions | jq .
+# lane-N ad sahəsi görünməlidir; `default`-da gözlənilməz trafik VARSA,
+# həmin lane-in provider credential-ı düzgün qurulmayıb.
+```
+
+**9.5 Konfiqurasiyanı yaz** (`evals/lanes.json`) və qaçır:
+
+```bash
+python evals/run.py --target dify_http --lanes evals/lanes.json \
+  --dify-app-id <lane-1 app id> --model claude-sonnet-5
+```
+
+⚠️ Bütün lane app-lərinin model konfiqurasiyası EYNİ olmalıdır — əks halda
+nəticələr müqayisə edilə bilməz. Hər app id üçün:
+
+```bash
+docker exec docker-db_postgres-1 psql -U postgres -d dify -tAc \
+  "select a.name, amc.model::text from apps a
+   join app_model_configs amc on amc.id = a.app_model_config_id
+   where a.name like 'Aurora Goods Support Agent%';"
+```
+
+⚠️ Bir lane = bir ad sahəsi. İki lane eyni `tool_session` dəyərini bölüşərsə,
+`build_lane_pool` qaçışı BAŞLAMAZDAN ƏVVƏL rədd edir — bu, susqun sızmanın
+qarşısını alır.

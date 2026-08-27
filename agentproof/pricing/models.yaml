@@ -1,6 +1,10 @@
 # Token -> USD cədvəli. Inspect dollar vermir (STACK.md M5).
 # R3: qiymətlər köhnəlir -> `as_of` hesabatda açıq göstərilir.
-as_of: "2026-08-26"
+#
+# TARİXƏ HƏSSAS DƏRƏCƏ: `effective_until` + `after` verilibsə, dərəcə QAÇIŞ
+# TARİXİNƏ görə seçilir (`pricing/table.py`). Belə olmasa keçid günündən sonra
+# bütün xərc hesabatı səssizcə köhnə dərəcə ilə çıxardı.
+as_of: "2026-08-27"
 source: "target/SETUP.md §9 (Scout tərəfindən yığılıb)"
 currency: USD
 # $ / 1M token
@@ -9,10 +13,26 @@ models:
     input: 1.0
     output: 5.0
     cached_input: 0.1
+
+  # ⚠️ $2/$10 DÜZGÜNDÜR və qəsdən belədir (OPS-04, təsdiqlənib).
+  # Bu, 2026-08-31 daxil olmaqla keçərli olan introductory qiymətdir.
+  # 2026-09-01-dən dərəcə $3/$15-ə qalxır — `after` bloku məhz onu tutur.
+  #
+  # Dify-ın anthropic plugin-i BU MODELİ HƏLƏ İNDİ $3/$15 kimi hesablayır və
+  # ona görə `message_end.metadata.usage`-dakı `total_price` bizim rəqəmdən
+  # ~50% yuxarı çıxır. Fərq gözləniləndir; plugin-in rəqəmi `raw.dify_usage`-da
+  # müqayisə üçün saxlanılır. DƏYƏRİ PLUGIN-Ə UYĞUNLAŞDIRMAYIN.
   claude-sonnet-5:
+    note: "introductory qiymət; 2026-08-31-dən sonra $3/$15"
     input: 2.0
     output: 10.0
     cached_input: 0.2
+    effective_until: "2026-08-31"
+    after:
+      input: 3.0
+      output: 15.0
+      cached_input: 0.3
+
   claude-opus-5:
     input: 5.0
     output: 25.0

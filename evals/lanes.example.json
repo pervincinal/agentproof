@@ -1,0 +1,14 @@
+[
+  {
+    "name": "lane-1",
+    "tool_reset_url": "http://localhost:8099/admin/reset",
+    "tool_session": "lane-1",
+    "adapter": {"api_key": "app-LANE-1-APP-API-ACARI"}
+  },
+  {
+    "name": "lane-2",
+    "tool_reset_url": "http://localhost:8099/admin/reset",
+    "tool_session": "lane-2",
+    "adapter": {"api_key": "app-LANE-2-APP-API-ACARI"}
+  }
+]

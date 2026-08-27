@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 
 from agentproof.graders.base import grader, normalize, require
+from agentproof.graders.canonical import contains_number, numeric_spec
 from agentproof.types import AgentResponse, Case, GradeResult
 
 
@@ -15,6 +16,18 @@ class ContainsAll:
     expect:
       all: [str]              — məcburi
       case_sensitive: bool    — default False
+
+    TAMAMİLƏ RƏQƏM olan iynə (`"14"`, `"3"`, `"149.99"`) alt-sətir kimi YOX,
+    müstəqil ədəd tokeni kimi axtarılır (`canonical.contains_number`).
+
+    Niyə (docs/GRADER-AUDIT.md#A-08): alt-sətir axtarışı ilə `"3"` iynəsi
+    `2026-08-1<3>` tarixinin içində tapılırdı, yəni cavabda cəhd sayı heç
+    olmasa belə case KEÇİRDİ — yalançı YAŞIL. Yalançı yaşıl yalançı qırmızıdan
+    pisdir: real uğursuzluğu gizlədir və heç bir yerdə görünmür.
+
+    Bu, grader səviyyəsində həll olunub, case-bəcase yamaqla yox — əks halda
+    növbəti dataset genişlənməsində eyni səhv qayıdardı. Rəqəm olmayan iynələr
+    üçün davranış DƏYİŞMİR.
     """
 
     name = "contains_all"
@@ -24,7 +37,19 @@ class ContainsAll:
         needles = list(require(case, "all", self.name))  # type: ignore[arg-type]
         cs = bool(case.expect.get("case_sensitive", False))
         haystack = normalize(response.text, cs)
-        missing = [n for n in needles if normalize(str(n), cs) not in haystack]
+
+        missing: list[object] = []
+        numeric: list[object] = []
+        for n in needles:
+            value = numeric_spec(str(n))
+            if value is None:
+                hit = normalize(str(n), cs) in haystack
+            else:
+                numeric.append(n)
+                hit = contains_number(response.text, value)
+            if not hit:
+                missing.append(n)
+
         found = [n for n in needles if n not in missing]
         passed = not missing
         return GradeResult(
@@ -37,6 +62,8 @@ class ContainsAll:
                 else f"tapılmayan ifadə(lər): {missing}"
             ),
             evidence={"expected": needles, "missing": missing, "found": found,
+                      # hansı iynələr ədəd tokeni kimi (tarix/ID-dən kənar) axtarıldı
+                      "numeric_needles": numeric,
                       "answer_excerpt": response.text[:400]},
         )
 

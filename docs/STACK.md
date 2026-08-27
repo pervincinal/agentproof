@@ -373,3 +373,223 @@ python evals/run.py \
 - [Braintrust pricing 2026](https://www.truefoundry.com/blog/braintrust-pricing) · [self-hosting changelog](https://www.braintrust.dev/docs/data-plane-changelog) · [Coverge analizi](https://coverge.ai/blog/braintrust-pricing)
 - [LangSmith pricing 2026](https://coverge.ai/blog/langsmith-pricing) · [Langfuse vs LangSmith — lock-in](https://www.morphllm.com/comparisons/langfuse-vs-langsmith)
 - [Langfuse (MIT, self-host)](https://github.com/langfuse/langfuse) — nüvə kimi seçilmədi, amma müştəri artıq observability istəyirsə export hədəfi kimi baxıla bilər
+
+---
+
+## 12. Paralel qaçış və izolyasiya (6 dəqiqə qaydası)
+
+### 12.1 Problem
+
+`POST /admin/reset` tool servisinin QLOBAL vəziyyətini sıfırlayırdı, ona görə
+`reset + invoke` cütü atomik olmalı idi və qaçış FAKTİKİ OLARAQ SERİALLAŞIRDI.
+`--max-connections` artırmaq heç nə vermirdi.
+
+Ölçülən (10 case, `evals/datasets/full.jsonl`-dən, canlı Dify 1.17.0, `dify_http`):
+
+| rejim | wall | s/case | p50 gecikmə |
+|---|---|---|---|
+| 1 lane (köhnə davranış) | 85 s | **8.5** | 9 172 ms |
+| 5 lane | 22 s | **2.2** | 9 347 ms |
+
+450 sorğuluq qaçış: 8.5 s/case → **~64 dəqiqə**.
+
+### 12.2 Həll — tool vəziyyətinin ad sahəsi
+
+`target/tools/service.py` mutasiya edən vəziyyəti `X-AG-Session` başlığına görə
+bölür. Başlıq yoxdursa `default` ad sahəsi işlədilir — yəni köhnə davranışın
+eynisi. `POST /admin/reset` YALNIZ öz ad sahəsini sıfırlayır (`?all=1` bütün
+ad sahələrini silir, ancaq proses səviyyəsində təmizlik üçündür).
+
+Runner tərəfdə (`agentproof/runner/isolation.py`) bu, **lane hovuzuna** çevrilir:
+hər case bir lane icarəyə götürür, lane-in ad sahəsi case-dən sonra sıfırlanır,
+lane geri qaytarılır. Paralellik lane sayı ilə məhdudlaşır və AÇIQ göstərilir
+(`task.metadata.lanes`, `RunRecord.totals.lanes`).
+
+Zəmanət pozulmur:
+
+* lane daxilində `reset + invoke` hələ də atomikdir;
+* iki lane eyni `(reset_url, ad sahəsi)` cütünü bölüşə bilməz — `build_lane_pool`
+  bunu qaçış BAŞLAMAZDAN ƏVVƏL xəta ilə rədd edir;
+* sıfırlama uğursuz olarsa lane ÖLÜ elan olunur və bir daha case-ə verilmir
+  (`LaneExhausted`), qaçış səssizcə davam etmir.
+
+Testlər `agentproof/tests/test_isolation.py`-dədir və HƏR İKİ istiqamətlidir:
+3 case eyni sifarişə EYNİ ANDA (`threading.Barrier`) RMA açır və hamısı
+uğurludur; ad sahəsi başlığı söndürüləndə həmin qaçış `RMA_ALREADY_EXISTS`
+ilə sınır.
+
+### 12.3 ⚠️ Dify məhdudiyyəti — bir lane = bir Dify app-i
+
+Dify custom tool-a case-dən case-ə DƏYİŞƏN başlıq ötürə BİLMİR. Mənbədən
+yoxlanılıb (Dify 1.17.0):
+
+* `api/core/tools/custom_tool/tool.py::assembling_request` — başlıqları yalnız
+  provider credential-larından (`api_key_header` / `api_key_value`) yığır;
+* `…::do_http_request` — əlavə olaraq yalnız openapi-də elan edilmiş
+  `in: header` parametrlərini qoyur, onların dəyəri isə LLM-in tool
+  arqumentlərindən gəlir (yəni modelin nəzarətindədir — ölçməni çirkləndirər);
+* nə `conversation_id`, nə `/v1/chat-messages`-in `user` sahəsi tool sorğusuna
+  düşmür.
+
+Deməli ad sahəsi **statik** olmalıdır: hər lane üçün ayrıca Dify app-i (eyni
+DSL) + ayrıca tool provider, provider-in credential-ı `X-AG-Session: lane-N`
+göndərir. Provizyon addımları: `target/app/IMPORT.md §9`.
+
+Yalnız OXUYAN case-lərdən ibarət dataset istisnadır: mutasiya olmadığı üçün
+tək app ilə də paralel qaçmaq etibarlıdır. Yuxarıdakı 5 lane-lik ölçmə məhz
+belədir və `GET /admin/sessions` ilə təsdiqlənib (`created_rmas: 0`,
+`escalations: 0`).
+
+### 12.4 Nə qədər lane lazımdır — və tavan
+
+Canlı Dify-ın buraxma qabiliyyəti (yalnız oxuyan sorğularla ölçülüb):
+
+| eyni anda | wall | s/sorğu | median gecikmə | buraxma |
+|---|---|---|---|---|
+| 4  | 10.8 s | 2.71 | 9.4 s | 0.37 sorğu/s |
+| 10 | 11.0 s | 1.10 | 9.2 s | **0.91 sorğu/s** |
+| 16 | 19.7 s | 1.23 | 10.4 s | 0.81 sorğu/s |
+
+Buraxma ~10-12 paralellikdə doyur (16-da maksimum gecikmə 19.7 s-ə qalxır —
+növbə başlayır). Yəni **bir Dify instansiyasında tavan ≈ 0.9 sorğu/s**:
+
+* 450 sorğu (150 case × `--repeat 3`) → ən yaxşı halda **≈ 8.3 dəqiqə**;
+* 6 dəqiqəyə girmək üçün ya sorğu sayı azalmalıdır (`--repeat 3` yalnız
+  qeyri-determinist alt dəstə tətbiq olunsun: 150 + 2×N), ya da Dify
+  `api`/`worker` replikaları artırılmalıdır.
+
+Bu, dürüst rəqəmdir: lane-lər harness-in seriallaşmasını aradan qaldırır,
+amma hədəfin öz tavanını qaldırmır.
+
+### 12.5 İstifadə
+
+```bash
+# tək lane — köhnə davranış (dəyişməyib)
+python evals/run.py --target dify_http --tool-reset-url http://localhost:8099/admin/reset
+
+# N lane
+python evals/run.py --target dify_http --lanes evals/lanes.json
+```
+
+`evals/lanes.json`:
+
+```json
+[
+  {"name": "lane-1",
+   "tool_reset_url": "http://localhost:8099/admin/reset",
+   "tool_session": "lane-1",
+   "adapter": {"api_key": "app-…lane-1 app-inin açarı…"}},
+  {"name": "lane-2", "tool_reset_url": "http://localhost:8099/admin/reset",
+   "tool_session": "lane-2", "adapter": {"api_key": "app-…"}}
+]
+```
+
+---
+
+## 13. `usage.model` — əl etiketi deyil, yoxlanılan dəyər
+
+Dify `message_end.metadata.usage`-da model ADINI vermir, ona görə etiket
+`AGENTPROOF_SUT_MODEL`-dən gəlirdi. App-də model dəyişilib env unudulsa, xərc
+SƏSSİZCƏ yanlış dərəcə ilə hesablanırdı — hesabat isə inandırıcı görünürdü.
+
+`agentproof/runner/sut_model.py` qaçışın əvvəlində avtoritet mənbəni oxuyur:
+
+```sql
+select amc.model::text from apps a
+join app_model_configs amc on amc.id = a.app_model_config_id
+where a.id = '<APP_ID>';
+```
+
+⚠️ `where app_id = …` ilə oxumaq SƏHVDİR: hər redaktə `app_model_configs`-a yeni
+sətir yazır və canlı bazada həmin app üçün artıq iki sətir var. Aktiv olan
+yalnız `apps.app_model_config_id`-nin göstərdiyidir.
+
+Davranış:
+
+| hal | nəticə |
+|---|---|
+| etiket == app-in modeli | `match` — qaçış davam edir |
+| etiket != app-in modeli | **`SutModelMismatch`, qaçış dayanır (exit 1)** |
+| etiket boşdur | `adopted` — bazadakı ad götürülür |
+| baza əlçatmazdır (CI) | `unavailable` — XƏBƏRDARLIQ, hesabata düşür |
+
+Nəticə `RunRecord.totals.model_check`-ə yazılır, yəni "yoxlanmadı" halı
+hesabatda gizlənə bilmir.
+
+```bash
+python evals/run.py --target dify_http \
+  --dify-app-id 4daef326-beb5-4c36-88a4-167d20194729 \
+  --model claude-sonnet-5
+```
+
+---
+
+## 14. Çoxnövbəli söhbət (`conversation_id` zəncirlənməsi)
+
+### 14.1 Problem
+
+`dify_http` adapteri yalnız `req.query`-ni (sonuncu istifadəçi növbəsini)
+göndərirdi və `conversation_id`-ni zəncirləmirdi. `full.jsonl`-dəki **15
+çoxnövbəli case tək-növbəli kimi** ölçülərdi. C1 (kontekst itkisi) taksonomiyada
+**P=20** prioritetlidir — yəni hesabatda rəqəm görünərdi, amma yalan olardı.
+Yanlış ölçmək ölçməməkdən pisdir.
+
+### 14.2 Həll
+
+Adapter case-in bütün **istifadəçi** növbələrini bir söhbətdə ardıcıl göndərir:
+
+1. növbə 0 → `conversation_id: ""` (yeni söhbət, SETUP.md §7.2);
+2. cavabdan gələn `conversation_id` yadda saxlanır;
+3. növbə 1..n → həmin id ilə. `user` sahəsi bütün növbələrdə **eynidir** —
+   Dify söhbəti son istifadəçiyə bağlayır.
+
+Susqun deqradasiya yoxdur:
+
+| hal | davranış |
+|---|---|
+| bir növbə xəta verdi | qalan növbələr **göndərilmir**, `error` saxlanılır |
+| ilk növbə `conversation_id` qaytarmadı, daha növbə var | **`conversation_not_returned`** xətası (yeni söhbətlə davam etmək case-i gizlicə tək-növbəliyə çevirərdi) |
+| dataset-də skriptləşdirilmiş `assistant` növbəsi var | göndərilə bilmir (Dify tarixçəni özü qurur) → `raw.dropped_scripted_assistant_turns`-də **sayılır** |
+
+### 14.3 Növbə-növbə qeyd
+
+`AgentResponse.turns` hər növbənin öz `text` / `tool_calls` / `retrieved` /
+`usage` / `latency_ms` dəyərini saxlayır (`raw.turn_index`, `raw.query`,
+`raw.sent_conversation_id` ilə birlikdə). Yekun cavabın sahələri:
+
+| sahə | çoxnövbəli semantika | niyə |
+|---|---|---|
+| `text` | **sonuncu** növbə | qiymətləndirilən yekun cavabdır |
+| `tool_calls` | **bütün** növbələrin birləşməsi, sıra ilə | `forbidden_tools` başqa cür işləmir: 2-ci növbədəki icazəsiz `initiate_return` son növbəyə baxmaqla görünməz (T1, P=20) |
+| `retrieved` | bütün növbələr, `chunk_id` üzrə təkrarsız | çoxnövbəli hit@k "hansısa növbədə tapıldı" deməkdir |
+| `usage` | növbələrin **cəmi** | xərc bütöv söhbətə görədir |
+| `latency_ms` | növbələrin cəmi | |
+
+Tək növbəli case-də heç nə sarılmır — `turns` boş qalır və davranış əvvəlki
+ilə **bit-bit eynidir**.
+
+### 14.4 Lane və sıfırlama ilə uyğunluq
+
+* Bir case = bir `invoke()` = **bir lane icarəsi**, ona görə çoxnövbəli case-in
+  bütün növbələri eyni tool ad sahəsindədir (`test_all_turns_of_a_case_stay_in_one_lane`).
+* `/admin/reset` case-in **əvvəlində** çağırılır, növbələr **arasında yox**.
+  Növbələr arasında sıfırlansaydı, agent öz 1-ci növbədə yaratdığı RMA-nı 3-cü
+  növbədə "yoxdur" görərdi — bu, hədəfin səhvi deyil, harness-in uydurduğu
+  uğursuzluq olardı (`test_tool_state_is_not_reset_between_turns_of_one_case`).
+
+### 14.5 Canlı sistemdə təsdiq
+
+`mt-probe-01` — 2 növbə, 2-ci növbədə sifariş nömrəsi **qəsdən təkrarlanmır**:
+
+```
+növbə 0  sent_conversation_id=''   "Hi, my order is ORD-10015."
+         -> "What would you like to know about ORD-10015 …"
+növbə 1  sent_conversation_id='814c56aa-…'  "When was it delivered, and is it
+         still inside the return window?"
+         -> lookup_order çağırıldı; "Here's what I have for ORD-10015:
+            Delivered: 2026-08-12 … 20 days since delivery"
+conversation_chained: True   (hər iki növbə eyni id-də)
+input_tokens: 2 994 -> 12 114   (artım = yığılan söhbət tarixçəsi)
+```
+
+`pw-02-en-policy_lookup-standard-current-t3` (3 növbə) da eyni id ilə keçdi.

@@ -30,6 +30,12 @@ from agentproof.graders.judge import (  # noqa: E402
 from agentproof.report.baseline import GatePolicy, compare, gate  # noqa: E402
 from agentproof.report.normalize import normalize_log  # noqa: E402
 from agentproof.report.pr_comment import render, render_console  # noqa: E402
+from agentproof.runner.isolation import build_lane_pool  # noqa: E402
+from agentproof.runner.sut_model import (  # noqa: E402
+    ModelCheck,
+    SutModelMismatch,
+    verify_sut_model,
+)
 from agentproof.runner.task import build_task, select_cases  # noqa: E402
 from agentproof.types import RunRecord  # noqa: E402
 
@@ -50,6 +56,18 @@ def adapter_config_from_env(target: str) -> dict[str, object]:
     return config
 
 
+def load_lanes(spec: str) -> list[dict[str, object]] | None:
+    """`--lanes` ya JSON fayl yoludur, ya birbaşa JSON sətri."""
+    spec = (spec or "").strip()
+    if not spec:
+        return None
+    text = Path(spec).read_text(encoding="utf-8") if not spec.startswith("[") else spec
+    lanes = json.loads(text)
+    if not isinstance(lanes, list) or not lanes:
+        raise ValueError("--lanes: boş olmayan JSON siyahısı gözlənilir")
+    return lanes
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(prog="agentproof", description="AgentProof eval qaçışı")
     p.add_argument("--target", required=True, help="adapter adı (mock | dify_http)")
@@ -67,7 +85,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--max-pass-rate-drop", type=float, default=0.02)
     p.add_argument("--target-version", default=os.environ.get("AGENTPROOF_TARGET_VERSION", ""))
     p.add_argument("--model", default=os.environ.get("AGENTPROOF_SUT_MODEL", ""),
-                   help="hədəfin İÇİNDƏKİ model (yalnız hesabat üçün etiket)")
+                   help=("hədəfin İÇİNDƏKİ model. ETİKETDİR — Dify usage-da model adı "
+                         "gəlmir. `--dify-app-id` ilə birlikdə AVTORİTET mənbədən "
+                         "(Dify bazası) yoxlanılır"))
+    p.add_argument("--dify-app-id",
+                   default=os.environ.get("AGENTPROOF_DIFY_APP_ID", ""),
+                   help=("modelin yoxlanacağı Dify app id-si. Verilməsə `--model` "
+                         "yoxlanılmamış əl etiketi olaraq qalır və hesabatda belə "
+                         "işarələnir"))
+    p.add_argument("--skip-model-check", action="store_true",
+                   help="model yoxlamasını bilərəkdən keç (səbəbi hesabata düşür)")
     p.add_argument("--log-dir", default=None)
     p.add_argument(
         "--tool-reset-url",
@@ -76,6 +103,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "hədəfin tool servisinin POST /admin/reset ünvanı. Verilməsə İZOLYASİYA "
             "YOXDUR: case n-in yaratdığı RMA case n+1-ə sızır (PLAN.md). "
             "Verilirsə case-lər ATOMİK olur, yəni qaçış seriallaşır."
+        ),
+    )
+    p.add_argument(
+        "--lanes",
+        default=os.environ.get("AGENTPROOF_LANES", ""),
+        help=(
+            "paralel lane konfiqurasiyası: JSON fayl yolu və ya sətir. Hər lane "
+            "öz tool ad sahəsini (`tool_session` -> X-AG-Session) və öz hədəf "
+            "konfiqurasiyasını (`adapter`) alır. N lane = N paralel case, "
+            "izolyasiya pozulmadan. Verilməsə tək lane (seriallaşmış) qaçır."
         ),
     )
     p.add_argument("--judge-model", default=DEFAULT_JUDGE_MODEL,
@@ -131,26 +168,60 @@ def main(argv: list[str] | None = None) -> int:
     for name in bind_judges(selected, args):
         print(f"Judge bağlandı: {name} · model {args.judge_model}", file=sys.stderr)
 
+    # --- `usage.model` AVTORİTET mənbədən yoxlanır ------------------------
+    # Uyğunsuzluqda burada dayanırıq: yanlış modelə yazılmış xərc, xərcin
+    # ümumiyyətlə olmamasından pisdir, çünki hesabat inandırıcı görünür.
+    if args.skip_model_check:
+        model_check = ModelCheck(
+            status="skipped", declared=args.model, actual="",
+            detail="--skip-model-check ilə bilərəkdən keçilib",
+        )
+    else:
+        try:
+            model_check = verify_sut_model(args.model, args.dify_app_id or None)
+        except SutModelMismatch as e:
+            print(f"\n{e}", file=sys.stderr)
+            return 1
+    if model_check.status == "match":
+        print(f"Model yoxlandı: {model_check.actual} (Dify app konfiqurasiyası)", file=sys.stderr)
+    elif model_check.status == "adopted":
+        print(f"Model app-dən götürüldü: {model_check.actual}", file=sys.stderr)
+    else:
+        print(f"XƏBƏRDARLIQ — model yoxlanmadı: {model_check.detail}", file=sys.stderr)
+    sut_model = model_check.model
+
+    lanes = load_lanes(args.lanes)
+    pool = build_lane_pool(lanes, args.tool_reset_url or None)
+
+    adapter_config = adapter_config_from_env(args.target)
+    if sut_model and args.target == "dify_http":
+        # Etiket adapterə də ötürülür ki, `usage.model` mühit dəyişəni ilə
+        # yoxlanılmış dəyər arasında ayrılmasın.
+        adapter_config["model"] = sut_model
+
     task, _cases = build_task(
         dataset_path=args.dataset,
         adapter=args.target,
-        adapter_config=adapter_config_from_env(args.target),
+        adapter_config=adapter_config,
         filter_expr=args.filter_expr,
         stage=args.stage,
         repeat=args.repeat,
         seed=args.seed,
-        reset_url=args.tool_reset_url or None,
+        lanes=pool,
     )
 
-    if args.tool_reset_url:
+    if pool.isolated:
+        sessions = ", ".join(f"{ln.name}:{ln.session or '(default)'}" for ln in pool.lanes)
         print(
-            f"İzolyasiya AKTİV: {args.tool_reset_url} — case-lər seriallaşır.",
+            f"İzolyasiya AKTİV · {pool.size} lane [{sessions}] — "
+            + ("case-lər seriallaşır (tək lane)." if pool.size == 1
+               else f"{pool.size} case paralel, hər biri öz tool ad sahəsində."),
             file=sys.stderr,
         )
     else:
         print(
-            "İzolyasiya YOXDUR (--tool-reset-url verilməyib) — stateful tool-lu "
-            "dataset-də nəticələr bir-birinə sıza bilər.",
+            "İzolyasiya YOXDUR (--tool-reset-url / --lanes verilməyib) — stateful "
+            "tool-lu dataset-də nəticələr bir-birinə sıza bilər.",
             file=sys.stderr,
         )
 
@@ -164,8 +235,10 @@ def main(argv: list[str] | None = None) -> int:
         # Nəticə: API açarı olmadan da qaçır (R1 spike, yol b).
         model=None,
         log_dir=log_dir,
-        max_connections=args.max_connections,
-        max_samples=args.max_connections,
+        # Paralellik həddi lane sayıdır: hovuz onsuz da bloklayır, amma
+        # Inspect-in öz həddi daha kiçik olsa lane-lər boş qalardı.
+        max_connections=max(args.max_connections, pool.size),
+        max_samples=max(args.max_connections, pool.size),
         display="plain",
         log_level="warning",
     )
@@ -175,8 +248,11 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     record = normalize_log(
-        log, target=args.target, target_version=args.target_version, model=args.model
+        log, target=args.target, target_version=args.target_version, model=sut_model
     )
+    # Model yoxlamasının NƏTİCƏSİ hesabata düşür — "yoxlanmadı" halı gizlənə bilməz.
+    record.totals["model_check"] = model_check.to_dict()
+    record.totals["lanes"] = pool.size
     record_path = out_dir / f"{record.run_id}.json"
     record_path.write_text(
         json.dumps(record.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8"

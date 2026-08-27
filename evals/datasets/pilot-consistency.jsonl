@@ -1,4 +1,11 @@
 // Ayrıca fayl: `--repeat` QLOBALDIR, ona görə aqreqat grader öz qaçışını tələb edir.
 // DİQQƏT: consistency_at_k SABİTLİYİ ölçür, DÜZGÜNLÜYÜ yox — həmişə eyni SƏHV
 // cavab da bu grader-dən keçir. Düzgünlüyü pilot-04/05 ölçür.
-{"id":"pilot-c1-t07-consistency","input":"How long is the Aurora-brand warranty on the item in order ORD-10046? It was delivered back in September 2024.","grader":"consistency_at_k","tags":["trap","T-07","consistency","warranty"],"severity":"high","source":"pilot-05 ilə eyni sorğu — T-07 uğursuzluğunun təkrarlanan olub-olmadığı","expect":{"mode":"key_facts","key_facts":["24 month","18 month"],"min_agreement":1.0,"min_responses":2}}
+//
+// `mode: verdict` — qərarın hansı ölçüləri sayılır, case ELAN EDİR. Grader
+// cavabdakı bütün rəqəmləri özbaşına toplamır: `2026-09-01` (bugündən hesablanmış
+// örtük sonu) və `ORD-10046` qərarın özü deyil. Ölçülən iki şey:
+//   term — hansı zəmanət müddəti göstərilib (`warrant*` bəndindəki ay dəyəri;
+//          "superseded"/"adds"/"extends" yaxınlığındakı rəqəmlər qərar deyil)
+//   rule — hansı qaydaya istinad edilib
+{"id":"pilot-c1-t07-consistency","input":"How long is the Aurora-brand warranty on the item in order ORD-10046? It was delivered back in September 2024.","grader":"consistency_at_k","tags":["trap","T-07","consistency","warranty"],"severity":"high","source":"pilot-05 ilə eyni sorğu — T-07 uğursuzluğunun təkrarlanan olub-olmadığı","expect":{"mode":"verdict","min_agreement":1.0,"min_responses":2,"verdict":{"term":{"type":"quantity","unit":"month","near":["warrant*"],"not_near":["superseded","supersedes","add*","extend*","total","membership","plus"],"window":4},"rule":{"type":"label","labels":{"aurora_brand":["aurora-brand*","aurora brand*","aurora-branded"],"superseded_18m":["superseded","appendix a","18-month rule","18-month provision"]}}}}}

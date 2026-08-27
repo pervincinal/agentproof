@@ -1,0 +1,2273 @@
+{
+  "schema_version": 1,
+  "dataset_id": "e1471e22-18f8-4b30-aeb1-012c048e38a5",
+  "base_url": "http://localhost:8088/v1",
+  "built_at": "2026-08-27T06:30:51+00:00",
+  "n_anchors": 283,
+  "anchors": {
+    "account-and-membership.md#1": {
+      "anchor": "account-and-membership.md#1",
+      "segment_id": "1187f648-9ee8-4dd7-9e50-0b63ba630195",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 2,
+      "content_sha256": "9d424a8baab00ffe"
+    },
+    "account-and-membership.md#1.1": {
+      "anchor": "account-and-membership.md#1.1",
+      "segment_id": "1187f648-9ee8-4dd7-9e50-0b63ba630195",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 2,
+      "content_sha256": "9d424a8baab00ffe"
+    },
+    "account-and-membership.md#1.2": {
+      "anchor": "account-and-membership.md#1.2",
+      "segment_id": "1187f648-9ee8-4dd7-9e50-0b63ba630195",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 2,
+      "content_sha256": "9d424a8baab00ffe"
+    },
+    "account-and-membership.md#1.3": {
+      "anchor": "account-and-membership.md#1.3",
+      "segment_id": "1187f648-9ee8-4dd7-9e50-0b63ba630195",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 2,
+      "content_sha256": "9d424a8baab00ffe"
+    },
+    "account-and-membership.md#1.4": {
+      "anchor": "account-and-membership.md#1.4",
+      "segment_id": "1187f648-9ee8-4dd7-9e50-0b63ba630195",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 2,
+      "content_sha256": "9d424a8baab00ffe"
+    },
+    "account-and-membership.md#2": {
+      "anchor": "account-and-membership.md#2",
+      "segment_id": "9624e605-4efb-44e4-a915-9de77bfd0e1b",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 3,
+      "content_sha256": "af2992b9d66e1cc7"
+    },
+    "account-and-membership.md#2.1": {
+      "anchor": "account-and-membership.md#2.1",
+      "segment_id": "9624e605-4efb-44e4-a915-9de77bfd0e1b",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 3,
+      "content_sha256": "af2992b9d66e1cc7"
+    },
+    "account-and-membership.md#2.2": {
+      "anchor": "account-and-membership.md#2.2",
+      "segment_id": "9624e605-4efb-44e4-a915-9de77bfd0e1b",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 3,
+      "content_sha256": "af2992b9d66e1cc7"
+    },
+    "account-and-membership.md#2.3": {
+      "anchor": "account-and-membership.md#2.3",
+      "segment_id": "9624e605-4efb-44e4-a915-9de77bfd0e1b",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 3,
+      "content_sha256": "af2992b9d66e1cc7"
+    },
+    "account-and-membership.md#2.4": {
+      "anchor": "account-and-membership.md#2.4",
+      "segment_id": "9624e605-4efb-44e4-a915-9de77bfd0e1b",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 3,
+      "content_sha256": "af2992b9d66e1cc7"
+    },
+    "account-and-membership.md#3": {
+      "anchor": "account-and-membership.md#3",
+      "segment_id": "3c925410-266e-4c4c-84a5-a33911c1ff26",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 4,
+      "content_sha256": "ce1dd797ce9db66a"
+    },
+    "account-and-membership.md#3.1": {
+      "anchor": "account-and-membership.md#3.1",
+      "segment_id": "3c925410-266e-4c4c-84a5-a33911c1ff26",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 4,
+      "content_sha256": "ce1dd797ce9db66a"
+    },
+    "account-and-membership.md#3.2": {
+      "anchor": "account-and-membership.md#3.2",
+      "segment_id": "3c925410-266e-4c4c-84a5-a33911c1ff26",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 4,
+      "content_sha256": "ce1dd797ce9db66a"
+    },
+    "account-and-membership.md#3.3": {
+      "anchor": "account-and-membership.md#3.3",
+      "segment_id": "3c925410-266e-4c4c-84a5-a33911c1ff26",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 4,
+      "content_sha256": "ce1dd797ce9db66a"
+    },
+    "account-and-membership.md#4": {
+      "anchor": "account-and-membership.md#4",
+      "segment_id": "b5001c6e-d1e0-491c-ab6b-d7f91a6e6bce",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 5,
+      "content_sha256": "fef0f0b077ff5561"
+    },
+    "account-and-membership.md#4.1": {
+      "anchor": "account-and-membership.md#4.1",
+      "segment_id": "b5001c6e-d1e0-491c-ab6b-d7f91a6e6bce",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 5,
+      "content_sha256": "fef0f0b077ff5561"
+    },
+    "account-and-membership.md#4.2": {
+      "anchor": "account-and-membership.md#4.2",
+      "segment_id": "b5001c6e-d1e0-491c-ab6b-d7f91a6e6bce",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 5,
+      "content_sha256": "fef0f0b077ff5561"
+    },
+    "account-and-membership.md#4.3": {
+      "anchor": "account-and-membership.md#4.3",
+      "segment_id": "b5001c6e-d1e0-491c-ab6b-d7f91a6e6bce",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 5,
+      "content_sha256": "fef0f0b077ff5561"
+    },
+    "account-and-membership.md#4.4": {
+      "anchor": "account-and-membership.md#4.4",
+      "segment_id": "b5001c6e-d1e0-491c-ab6b-d7f91a6e6bce",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 5,
+      "content_sha256": "fef0f0b077ff5561"
+    },
+    "account-and-membership.md#5": {
+      "anchor": "account-and-membership.md#5",
+      "segment_id": "f64922d2-32a1-4ae0-a499-675bb0795849",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 6,
+      "content_sha256": "086b6b9c045ebde1"
+    },
+    "account-and-membership.md#5.1": {
+      "anchor": "account-and-membership.md#5.1",
+      "segment_id": "f64922d2-32a1-4ae0-a499-675bb0795849",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 6,
+      "content_sha256": "086b6b9c045ebde1"
+    },
+    "account-and-membership.md#5.2": {
+      "anchor": "account-and-membership.md#5.2",
+      "segment_id": "f64922d2-32a1-4ae0-a499-675bb0795849",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 6,
+      "content_sha256": "086b6b9c045ebde1"
+    },
+    "account-and-membership.md#5.3": {
+      "anchor": "account-and-membership.md#5.3",
+      "segment_id": "f64922d2-32a1-4ae0-a499-675bb0795849",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 6,
+      "content_sha256": "086b6b9c045ebde1"
+    },
+    "account-and-membership.md#5.4": {
+      "anchor": "account-and-membership.md#5.4",
+      "segment_id": "f64922d2-32a1-4ae0-a499-675bb0795849",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 6,
+      "content_sha256": "086b6b9c045ebde1"
+    },
+    "account-and-membership.md#6": {
+      "anchor": "account-and-membership.md#6",
+      "segment_id": "b7c1f02d-a4a7-48a1-9b2d-3decc81a8ac7",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 7,
+      "content_sha256": "18cb8667a8d5ade2"
+    },
+    "account-and-membership.md#6.1": {
+      "anchor": "account-and-membership.md#6.1",
+      "segment_id": "b7c1f02d-a4a7-48a1-9b2d-3decc81a8ac7",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 7,
+      "content_sha256": "18cb8667a8d5ade2"
+    },
+    "account-and-membership.md#6.2": {
+      "anchor": "account-and-membership.md#6.2",
+      "segment_id": "b7c1f02d-a4a7-48a1-9b2d-3decc81a8ac7",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 7,
+      "content_sha256": "18cb8667a8d5ade2"
+    },
+    "account-and-membership.md#6.3": {
+      "anchor": "account-and-membership.md#6.3",
+      "segment_id": "b7c1f02d-a4a7-48a1-9b2d-3decc81a8ac7",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 7,
+      "content_sha256": "18cb8667a8d5ade2"
+    },
+    "account-and-membership.md#7": {
+      "anchor": "account-and-membership.md#7",
+      "segment_id": "3aefc27f-fdd2-4f06-8976-8640cdc296b1",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 8,
+      "content_sha256": "22e525e07f4b08d6"
+    },
+    "account-and-membership.md#7.1": {
+      "anchor": "account-and-membership.md#7.1",
+      "segment_id": "3aefc27f-fdd2-4f06-8976-8640cdc296b1",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 8,
+      "content_sha256": "22e525e07f4b08d6"
+    },
+    "account-and-membership.md#7.2": {
+      "anchor": "account-and-membership.md#7.2",
+      "segment_id": "3aefc27f-fdd2-4f06-8976-8640cdc296b1",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 8,
+      "content_sha256": "22e525e07f4b08d6"
+    },
+    "account-and-membership.md#7.3": {
+      "anchor": "account-and-membership.md#7.3",
+      "segment_id": "3aefc27f-fdd2-4f06-8976-8640cdc296b1",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 8,
+      "content_sha256": "22e525e07f4b08d6"
+    },
+    "account-and-membership.md#appendix-a": {
+      "anchor": "account-and-membership.md#appendix-a",
+      "segment_id": "47ad9448-ae5b-4b1a-97e9-10909ce31f91",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 9,
+      "content_sha256": "bd4e2a90ccf6db6a"
+    },
+    "account-and-membership.md#appendix-a.1": {
+      "anchor": "account-and-membership.md#appendix-a.1",
+      "segment_id": "47ad9448-ae5b-4b1a-97e9-10909ce31f91",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 9,
+      "content_sha256": "bd4e2a90ccf6db6a"
+    },
+    "account-and-membership.md#appendix-a.2": {
+      "anchor": "account-and-membership.md#appendix-a.2",
+      "segment_id": "47ad9448-ae5b-4b1a-97e9-10909ce31f91",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 9,
+      "content_sha256": "bd4e2a90ccf6db6a"
+    },
+    "account-and-membership.md#appendix-a.3": {
+      "anchor": "account-and-membership.md#appendix-a.3",
+      "segment_id": "47ad9448-ae5b-4b1a-97e9-10909ce31f91",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 9,
+      "content_sha256": "bd4e2a90ccf6db6a"
+    },
+    "account-and-membership.md#appendix-a.4": {
+      "anchor": "account-and-membership.md#appendix-a.4",
+      "segment_id": "47ad9448-ae5b-4b1a-97e9-10909ce31f91",
+      "document_id": "dc673898-0503-45c8-8ffe-a2b113baab0e",
+      "document_name": "account-and-membership.md",
+      "position": 9,
+      "content_sha256": "bd4e2a90ccf6db6a"
+    },
+    "international-shipping.md#1": {
+      "anchor": "international-shipping.md#1",
+      "segment_id": "74d10815-b4b0-49d8-a983-7cf5d026c907",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 2,
+      "content_sha256": "ecc32d8d1b8624f2"
+    },
+    "international-shipping.md#1.1": {
+      "anchor": "international-shipping.md#1.1",
+      "segment_id": "74d10815-b4b0-49d8-a983-7cf5d026c907",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 2,
+      "content_sha256": "ecc32d8d1b8624f2"
+    },
+    "international-shipping.md#1.2": {
+      "anchor": "international-shipping.md#1.2",
+      "segment_id": "74d10815-b4b0-49d8-a983-7cf5d026c907",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 2,
+      "content_sha256": "ecc32d8d1b8624f2"
+    },
+    "international-shipping.md#2": {
+      "anchor": "international-shipping.md#2",
+      "segment_id": "09bfc580-39b7-4ac4-be3f-53b264c15d83",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 3,
+      "content_sha256": "9c7ff78ae6d1d7aa"
+    },
+    "international-shipping.md#2.1": {
+      "anchor": "international-shipping.md#2.1",
+      "segment_id": "09bfc580-39b7-4ac4-be3f-53b264c15d83",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 3,
+      "content_sha256": "9c7ff78ae6d1d7aa"
+    },
+    "international-shipping.md#2.2": {
+      "anchor": "international-shipping.md#2.2",
+      "segment_id": "09bfc580-39b7-4ac4-be3f-53b264c15d83",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 3,
+      "content_sha256": "9c7ff78ae6d1d7aa"
+    },
+    "international-shipping.md#3": {
+      "anchor": "international-shipping.md#3",
+      "segment_id": "e1b235ca-13d9-4880-bc96-5cb2923d4db1",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 4,
+      "content_sha256": "85e495afb9129269"
+    },
+    "international-shipping.md#3.1": {
+      "anchor": "international-shipping.md#3.1",
+      "segment_id": "e1b235ca-13d9-4880-bc96-5cb2923d4db1",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 4,
+      "content_sha256": "85e495afb9129269"
+    },
+    "international-shipping.md#3.2": {
+      "anchor": "international-shipping.md#3.2",
+      "segment_id": "e1b235ca-13d9-4880-bc96-5cb2923d4db1",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 4,
+      "content_sha256": "85e495afb9129269"
+    },
+    "international-shipping.md#3.3": {
+      "anchor": "international-shipping.md#3.3",
+      "segment_id": "e1b235ca-13d9-4880-bc96-5cb2923d4db1",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 4,
+      "content_sha256": "85e495afb9129269"
+    },
+    "international-shipping.md#4": {
+      "anchor": "international-shipping.md#4",
+      "segment_id": "648877d9-d6d5-46a8-9093-419d70252989",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 5,
+      "content_sha256": "b4b10384ab59125d"
+    },
+    "international-shipping.md#4.0": {
+      "anchor": "international-shipping.md#4.0",
+      "segment_id": "648877d9-d6d5-46a8-9093-419d70252989",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 5,
+      "content_sha256": "b4b10384ab59125d"
+    },
+    "international-shipping.md#4.1": {
+      "anchor": "international-shipping.md#4.1",
+      "segment_id": "648877d9-d6d5-46a8-9093-419d70252989",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 5,
+      "content_sha256": "b4b10384ab59125d"
+    },
+    "international-shipping.md#4.2": {
+      "anchor": "international-shipping.md#4.2",
+      "segment_id": "648877d9-d6d5-46a8-9093-419d70252989",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 5,
+      "content_sha256": "b4b10384ab59125d"
+    },
+    "international-shipping.md#4.3": {
+      "anchor": "international-shipping.md#4.3",
+      "segment_id": "648877d9-d6d5-46a8-9093-419d70252989",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 5,
+      "content_sha256": "b4b10384ab59125d"
+    },
+    "international-shipping.md#4.4": {
+      "anchor": "international-shipping.md#4.4",
+      "segment_id": "08854d4e-2e29-438a-b616-74c6b7be2e1f",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 6,
+      "content_sha256": "0f6cf0137c4b8330"
+    },
+    "international-shipping.md#5": {
+      "anchor": "international-shipping.md#5",
+      "segment_id": "a0588225-bbb0-4738-8a0c-db09502a865c",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 7,
+      "content_sha256": "04216a26775470ff"
+    },
+    "international-shipping.md#5.1": {
+      "anchor": "international-shipping.md#5.1",
+      "segment_id": "a0588225-bbb0-4738-8a0c-db09502a865c",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 7,
+      "content_sha256": "04216a26775470ff"
+    },
+    "international-shipping.md#5.2": {
+      "anchor": "international-shipping.md#5.2",
+      "segment_id": "a0588225-bbb0-4738-8a0c-db09502a865c",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 7,
+      "content_sha256": "04216a26775470ff"
+    },
+    "international-shipping.md#5.3": {
+      "anchor": "international-shipping.md#5.3",
+      "segment_id": "98196fcb-46f9-436c-8740-0061a407a008",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 8,
+      "content_sha256": "4a6e9caeaf131f78"
+    },
+    "international-shipping.md#5.4": {
+      "anchor": "international-shipping.md#5.4",
+      "segment_id": "98196fcb-46f9-436c-8740-0061a407a008",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 8,
+      "content_sha256": "4a6e9caeaf131f78"
+    },
+    "international-shipping.md#5.5": {
+      "anchor": "international-shipping.md#5.5",
+      "segment_id": "98196fcb-46f9-436c-8740-0061a407a008",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 8,
+      "content_sha256": "4a6e9caeaf131f78"
+    },
+    "international-shipping.md#5.6": {
+      "anchor": "international-shipping.md#5.6",
+      "segment_id": "98196fcb-46f9-436c-8740-0061a407a008",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 8,
+      "content_sha256": "4a6e9caeaf131f78"
+    },
+    "international-shipping.md#6": {
+      "anchor": "international-shipping.md#6",
+      "segment_id": "2bb153f2-d088-4af7-8dd8-ecaf1b137535",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 9,
+      "content_sha256": "d4d6baaed83c688a"
+    },
+    "international-shipping.md#6.1": {
+      "anchor": "international-shipping.md#6.1",
+      "segment_id": "2bb153f2-d088-4af7-8dd8-ecaf1b137535",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 9,
+      "content_sha256": "d4d6baaed83c688a"
+    },
+    "international-shipping.md#7": {
+      "anchor": "international-shipping.md#7",
+      "segment_id": "25eee0f5-420d-4eff-9d8c-f28b4b3222c5",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 10,
+      "content_sha256": "75678520b76cefb1"
+    },
+    "international-shipping.md#7.1": {
+      "anchor": "international-shipping.md#7.1",
+      "segment_id": "25eee0f5-420d-4eff-9d8c-f28b4b3222c5",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 10,
+      "content_sha256": "75678520b76cefb1"
+    },
+    "international-shipping.md#7.2": {
+      "anchor": "international-shipping.md#7.2",
+      "segment_id": "25eee0f5-420d-4eff-9d8c-f28b4b3222c5",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 10,
+      "content_sha256": "75678520b76cefb1"
+    },
+    "international-shipping.md#appendix-a": {
+      "anchor": "international-shipping.md#appendix-a",
+      "segment_id": "4e783376-2167-4b39-8771-823aedec073f",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 11,
+      "content_sha256": "5ae2826921e3185e"
+    },
+    "international-shipping.md#appendix-a.1": {
+      "anchor": "international-shipping.md#appendix-a.1",
+      "segment_id": "4e783376-2167-4b39-8771-823aedec073f",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 11,
+      "content_sha256": "5ae2826921e3185e"
+    },
+    "international-shipping.md#appendix-a.2": {
+      "anchor": "international-shipping.md#appendix-a.2",
+      "segment_id": "4e783376-2167-4b39-8771-823aedec073f",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 11,
+      "content_sha256": "5ae2826921e3185e"
+    },
+    "international-shipping.md#appendix-a.3": {
+      "anchor": "international-shipping.md#appendix-a.3",
+      "segment_id": "4e783376-2167-4b39-8771-823aedec073f",
+      "document_id": "d7a69235-732f-4937-bdf1-aeb2978c5f82",
+      "document_name": "international-shipping.md",
+      "position": 11,
+      "content_sha256": "5ae2826921e3185e"
+    },
+    "payments-and-billing.md#1": {
+      "anchor": "payments-and-billing.md#1",
+      "segment_id": "42f2c775-df1c-40ff-843a-d3b2abca2867",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 2,
+      "content_sha256": "9a013523cd534bb9"
+    },
+    "payments-and-billing.md#1.1": {
+      "anchor": "payments-and-billing.md#1.1",
+      "segment_id": "42f2c775-df1c-40ff-843a-d3b2abca2867",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 2,
+      "content_sha256": "9a013523cd534bb9"
+    },
+    "payments-and-billing.md#1.2": {
+      "anchor": "payments-and-billing.md#1.2",
+      "segment_id": "42f2c775-df1c-40ff-843a-d3b2abca2867",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 2,
+      "content_sha256": "9a013523cd534bb9"
+    },
+    "payments-and-billing.md#2": {
+      "anchor": "payments-and-billing.md#2",
+      "segment_id": "73a0429e-db44-4c91-b2c9-6575a92a7c01",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 3,
+      "content_sha256": "f668985b3ebf2f90"
+    },
+    "payments-and-billing.md#2.0": {
+      "anchor": "payments-and-billing.md#2.0",
+      "segment_id": "73a0429e-db44-4c91-b2c9-6575a92a7c01",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 3,
+      "content_sha256": "f668985b3ebf2f90"
+    },
+    "payments-and-billing.md#2.1": {
+      "anchor": "payments-and-billing.md#2.1",
+      "segment_id": "73a0429e-db44-4c91-b2c9-6575a92a7c01",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 3,
+      "content_sha256": "f668985b3ebf2f90"
+    },
+    "payments-and-billing.md#2.2": {
+      "anchor": "payments-and-billing.md#2.2",
+      "segment_id": "73a0429e-db44-4c91-b2c9-6575a92a7c01",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 3,
+      "content_sha256": "f668985b3ebf2f90"
+    },
+    "payments-and-billing.md#2.3": {
+      "anchor": "payments-and-billing.md#2.3",
+      "segment_id": "73a0429e-db44-4c91-b2c9-6575a92a7c01",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 3,
+      "content_sha256": "f668985b3ebf2f90"
+    },
+    "payments-and-billing.md#2.4": {
+      "anchor": "payments-and-billing.md#2.4",
+      "segment_id": "73a0429e-db44-4c91-b2c9-6575a92a7c01",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 3,
+      "content_sha256": "f668985b3ebf2f90"
+    },
+    "payments-and-billing.md#3": {
+      "anchor": "payments-and-billing.md#3",
+      "segment_id": "b66b63ea-8cc0-4fd4-95e6-cc21f9d3ccfe",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 4,
+      "content_sha256": "a9494c10e9723e45"
+    },
+    "payments-and-billing.md#3.1": {
+      "anchor": "payments-and-billing.md#3.1",
+      "segment_id": "b66b63ea-8cc0-4fd4-95e6-cc21f9d3ccfe",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 4,
+      "content_sha256": "a9494c10e9723e45"
+    },
+    "payments-and-billing.md#3.2": {
+      "anchor": "payments-and-billing.md#3.2",
+      "segment_id": "b66b63ea-8cc0-4fd4-95e6-cc21f9d3ccfe",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 4,
+      "content_sha256": "a9494c10e9723e45"
+    },
+    "payments-and-billing.md#3.3": {
+      "anchor": "payments-and-billing.md#3.3",
+      "segment_id": "b66b63ea-8cc0-4fd4-95e6-cc21f9d3ccfe",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 4,
+      "content_sha256": "a9494c10e9723e45"
+    },
+    "payments-and-billing.md#3.4": {
+      "anchor": "payments-and-billing.md#3.4",
+      "segment_id": "b66b63ea-8cc0-4fd4-95e6-cc21f9d3ccfe",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 4,
+      "content_sha256": "a9494c10e9723e45"
+    },
+    "payments-and-billing.md#4": {
+      "anchor": "payments-and-billing.md#4",
+      "segment_id": "49a0e6a0-d9e6-4168-b549-0747ee7be5b3",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 5,
+      "content_sha256": "a84ba4cb43261d8f"
+    },
+    "payments-and-billing.md#4.1": {
+      "anchor": "payments-and-billing.md#4.1",
+      "segment_id": "49a0e6a0-d9e6-4168-b549-0747ee7be5b3",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 5,
+      "content_sha256": "a84ba4cb43261d8f"
+    },
+    "payments-and-billing.md#4.2": {
+      "anchor": "payments-and-billing.md#4.2",
+      "segment_id": "49a0e6a0-d9e6-4168-b549-0747ee7be5b3",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 5,
+      "content_sha256": "a84ba4cb43261d8f"
+    },
+    "payments-and-billing.md#4.3": {
+      "anchor": "payments-and-billing.md#4.3",
+      "segment_id": "49a0e6a0-d9e6-4168-b549-0747ee7be5b3",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 5,
+      "content_sha256": "a84ba4cb43261d8f"
+    },
+    "payments-and-billing.md#5": {
+      "anchor": "payments-and-billing.md#5",
+      "segment_id": "39dbf25f-75ea-43d6-8304-dbd27baa998d",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 6,
+      "content_sha256": "d51b2799a72bbce3"
+    },
+    "payments-and-billing.md#5.1": {
+      "anchor": "payments-and-billing.md#5.1",
+      "segment_id": "39dbf25f-75ea-43d6-8304-dbd27baa998d",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 6,
+      "content_sha256": "d51b2799a72bbce3"
+    },
+    "payments-and-billing.md#5.2": {
+      "anchor": "payments-and-billing.md#5.2",
+      "segment_id": "39dbf25f-75ea-43d6-8304-dbd27baa998d",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 6,
+      "content_sha256": "d51b2799a72bbce3"
+    },
+    "payments-and-billing.md#5.3": {
+      "anchor": "payments-and-billing.md#5.3",
+      "segment_id": "39dbf25f-75ea-43d6-8304-dbd27baa998d",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 6,
+      "content_sha256": "d51b2799a72bbce3"
+    },
+    "payments-and-billing.md#6": {
+      "anchor": "payments-and-billing.md#6",
+      "segment_id": "ebf7a335-ef30-4466-9cf6-2062fc779c05",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 7,
+      "content_sha256": "797538e1d3b4c540"
+    },
+    "payments-and-billing.md#6.1": {
+      "anchor": "payments-and-billing.md#6.1",
+      "segment_id": "ebf7a335-ef30-4466-9cf6-2062fc779c05",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 7,
+      "content_sha256": "797538e1d3b4c540"
+    },
+    "payments-and-billing.md#6.2": {
+      "anchor": "payments-and-billing.md#6.2",
+      "segment_id": "ebf7a335-ef30-4466-9cf6-2062fc779c05",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 7,
+      "content_sha256": "797538e1d3b4c540"
+    },
+    "payments-and-billing.md#6.3": {
+      "anchor": "payments-and-billing.md#6.3",
+      "segment_id": "ebf7a335-ef30-4466-9cf6-2062fc779c05",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 7,
+      "content_sha256": "797538e1d3b4c540"
+    },
+    "payments-and-billing.md#6.4": {
+      "anchor": "payments-and-billing.md#6.4",
+      "segment_id": "b114d1b5-f8e5-4fdc-bc31-9ce082b77e25",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 8,
+      "content_sha256": "9652c574c04f5029"
+    },
+    "payments-and-billing.md#6.5": {
+      "anchor": "payments-and-billing.md#6.5",
+      "segment_id": "b114d1b5-f8e5-4fdc-bc31-9ce082b77e25",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 8,
+      "content_sha256": "9652c574c04f5029"
+    },
+    "payments-and-billing.md#7": {
+      "anchor": "payments-and-billing.md#7",
+      "segment_id": "18f91bea-dacf-42ad-b3d4-bc517bacdd5f",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 9,
+      "content_sha256": "36d021be0bb2a85b"
+    },
+    "payments-and-billing.md#7.1": {
+      "anchor": "payments-and-billing.md#7.1",
+      "segment_id": "18f91bea-dacf-42ad-b3d4-bc517bacdd5f",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 9,
+      "content_sha256": "36d021be0bb2a85b"
+    },
+    "payments-and-billing.md#7.2": {
+      "anchor": "payments-and-billing.md#7.2",
+      "segment_id": "18f91bea-dacf-42ad-b3d4-bc517bacdd5f",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 9,
+      "content_sha256": "36d021be0bb2a85b"
+    },
+    "payments-and-billing.md#8": {
+      "anchor": "payments-and-billing.md#8",
+      "segment_id": "6823d5b5-5220-4828-b9d4-227d55a79a93",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 10,
+      "content_sha256": "e7e10c5b15c1ada4"
+    },
+    "payments-and-billing.md#8.1": {
+      "anchor": "payments-and-billing.md#8.1",
+      "segment_id": "6823d5b5-5220-4828-b9d4-227d55a79a93",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 10,
+      "content_sha256": "e7e10c5b15c1ada4"
+    },
+    "payments-and-billing.md#8.2": {
+      "anchor": "payments-and-billing.md#8.2",
+      "segment_id": "6823d5b5-5220-4828-b9d4-227d55a79a93",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 10,
+      "content_sha256": "e7e10c5b15c1ada4"
+    },
+    "payments-and-billing.md#appendix-a": {
+      "anchor": "payments-and-billing.md#appendix-a",
+      "segment_id": "de1e46d0-49e3-4c27-9c53-565a3ea7979e",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 11,
+      "content_sha256": "5f0eb9f398d82d00"
+    },
+    "payments-and-billing.md#appendix-a.1": {
+      "anchor": "payments-and-billing.md#appendix-a.1",
+      "segment_id": "de1e46d0-49e3-4c27-9c53-565a3ea7979e",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 11,
+      "content_sha256": "5f0eb9f398d82d00"
+    },
+    "payments-and-billing.md#appendix-a.2": {
+      "anchor": "payments-and-billing.md#appendix-a.2",
+      "segment_id": "de1e46d0-49e3-4c27-9c53-565a3ea7979e",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 11,
+      "content_sha256": "5f0eb9f398d82d00"
+    },
+    "payments-and-billing.md#appendix-a.3": {
+      "anchor": "payments-and-billing.md#appendix-a.3",
+      "segment_id": "de1e46d0-49e3-4c27-9c53-565a3ea7979e",
+      "document_id": "13570435-e16e-4def-950c-00609b5f484d",
+      "document_name": "payments-and-billing.md",
+      "position": 11,
+      "content_sha256": "5f0eb9f398d82d00"
+    },
+    "privacy-and-data.md#1": {
+      "anchor": "privacy-and-data.md#1",
+      "segment_id": "dcba6a40-340a-4088-b317-7c180ca2308e",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 2,
+      "content_sha256": "165e17f30327583e"
+    },
+    "privacy-and-data.md#1.1": {
+      "anchor": "privacy-and-data.md#1.1",
+      "segment_id": "dcba6a40-340a-4088-b317-7c180ca2308e",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 2,
+      "content_sha256": "165e17f30327583e"
+    },
+    "privacy-and-data.md#1.2": {
+      "anchor": "privacy-and-data.md#1.2",
+      "segment_id": "dcba6a40-340a-4088-b317-7c180ca2308e",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 2,
+      "content_sha256": "165e17f30327583e"
+    },
+    "privacy-and-data.md#1.3": {
+      "anchor": "privacy-and-data.md#1.3",
+      "segment_id": "dcba6a40-340a-4088-b317-7c180ca2308e",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 2,
+      "content_sha256": "165e17f30327583e"
+    },
+    "privacy-and-data.md#1.4": {
+      "anchor": "privacy-and-data.md#1.4",
+      "segment_id": "dcba6a40-340a-4088-b317-7c180ca2308e",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 2,
+      "content_sha256": "165e17f30327583e"
+    },
+    "privacy-and-data.md#1.5": {
+      "anchor": "privacy-and-data.md#1.5",
+      "segment_id": "dcba6a40-340a-4088-b317-7c180ca2308e",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 2,
+      "content_sha256": "165e17f30327583e"
+    },
+    "privacy-and-data.md#2": {
+      "anchor": "privacy-and-data.md#2",
+      "segment_id": "88b0c731-4a74-4d92-8993-3d17f62ec3ca",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 3,
+      "content_sha256": "0a0b40653f38e2bf"
+    },
+    "privacy-and-data.md#2.1": {
+      "anchor": "privacy-and-data.md#2.1",
+      "segment_id": "88b0c731-4a74-4d92-8993-3d17f62ec3ca",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 3,
+      "content_sha256": "0a0b40653f38e2bf"
+    },
+    "privacy-and-data.md#2.2": {
+      "anchor": "privacy-and-data.md#2.2",
+      "segment_id": "88b0c731-4a74-4d92-8993-3d17f62ec3ca",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 3,
+      "content_sha256": "0a0b40653f38e2bf"
+    },
+    "privacy-and-data.md#2.3": {
+      "anchor": "privacy-and-data.md#2.3",
+      "segment_id": "88b0c731-4a74-4d92-8993-3d17f62ec3ca",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 3,
+      "content_sha256": "0a0b40653f38e2bf"
+    },
+    "privacy-and-data.md#3": {
+      "anchor": "privacy-and-data.md#3",
+      "segment_id": "22c1e70d-bf54-4e9f-888f-d54c531d0fd5",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 4,
+      "content_sha256": "939fe9bafc3a236a"
+    },
+    "privacy-and-data.md#3.1": {
+      "anchor": "privacy-and-data.md#3.1",
+      "segment_id": "22c1e70d-bf54-4e9f-888f-d54c531d0fd5",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 4,
+      "content_sha256": "939fe9bafc3a236a"
+    },
+    "privacy-and-data.md#3.2": {
+      "anchor": "privacy-and-data.md#3.2",
+      "segment_id": "22c1e70d-bf54-4e9f-888f-d54c531d0fd5",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 4,
+      "content_sha256": "939fe9bafc3a236a"
+    },
+    "privacy-and-data.md#3.3": {
+      "anchor": "privacy-and-data.md#3.3",
+      "segment_id": "22c1e70d-bf54-4e9f-888f-d54c531d0fd5",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 4,
+      "content_sha256": "939fe9bafc3a236a"
+    },
+    "privacy-and-data.md#3.4": {
+      "anchor": "privacy-and-data.md#3.4",
+      "segment_id": "22c1e70d-bf54-4e9f-888f-d54c531d0fd5",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 4,
+      "content_sha256": "939fe9bafc3a236a"
+    },
+    "privacy-and-data.md#3.5": {
+      "anchor": "privacy-and-data.md#3.5",
+      "segment_id": "22c1e70d-bf54-4e9f-888f-d54c531d0fd5",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 4,
+      "content_sha256": "939fe9bafc3a236a"
+    },
+    "privacy-and-data.md#4": {
+      "anchor": "privacy-and-data.md#4",
+      "segment_id": "e9f7ee0e-9dba-425f-8ca5-ebecc772e54e",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 5,
+      "content_sha256": "37630760e8800008"
+    },
+    "privacy-and-data.md#4.1": {
+      "anchor": "privacy-and-data.md#4.1",
+      "segment_id": "e9f7ee0e-9dba-425f-8ca5-ebecc772e54e",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 5,
+      "content_sha256": "37630760e8800008"
+    },
+    "privacy-and-data.md#4.2": {
+      "anchor": "privacy-and-data.md#4.2",
+      "segment_id": "e9f7ee0e-9dba-425f-8ca5-ebecc772e54e",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 5,
+      "content_sha256": "37630760e8800008"
+    },
+    "privacy-and-data.md#4.3": {
+      "anchor": "privacy-and-data.md#4.3",
+      "segment_id": "e9f7ee0e-9dba-425f-8ca5-ebecc772e54e",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 5,
+      "content_sha256": "37630760e8800008"
+    },
+    "privacy-and-data.md#5": {
+      "anchor": "privacy-and-data.md#5",
+      "segment_id": "52161953-2026-4fb8-8442-5aa262ab9345",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 6,
+      "content_sha256": "d1c10bf415eb287f"
+    },
+    "privacy-and-data.md#6": {
+      "anchor": "privacy-and-data.md#6",
+      "segment_id": "537d9eac-1c72-4f46-9bd6-cceed1734476",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 7,
+      "content_sha256": "b9e8a1b4d5987de8"
+    },
+    "privacy-and-data.md#6.1": {
+      "anchor": "privacy-and-data.md#6.1",
+      "segment_id": "537d9eac-1c72-4f46-9bd6-cceed1734476",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 7,
+      "content_sha256": "b9e8a1b4d5987de8"
+    },
+    "privacy-and-data.md#6.2": {
+      "anchor": "privacy-and-data.md#6.2",
+      "segment_id": "537d9eac-1c72-4f46-9bd6-cceed1734476",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 7,
+      "content_sha256": "b9e8a1b4d5987de8"
+    },
+    "privacy-and-data.md#6.3": {
+      "anchor": "privacy-and-data.md#6.3",
+      "segment_id": "537d9eac-1c72-4f46-9bd6-cceed1734476",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 7,
+      "content_sha256": "b9e8a1b4d5987de8"
+    },
+    "privacy-and-data.md#7": {
+      "anchor": "privacy-and-data.md#7",
+      "segment_id": "5eeef2b4-f645-48e0-a27c-e80f1cfbbbde",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 8,
+      "content_sha256": "6e098795d53aec3e"
+    },
+    "privacy-and-data.md#7.1": {
+      "anchor": "privacy-and-data.md#7.1",
+      "segment_id": "5eeef2b4-f645-48e0-a27c-e80f1cfbbbde",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 8,
+      "content_sha256": "6e098795d53aec3e"
+    },
+    "privacy-and-data.md#7.2": {
+      "anchor": "privacy-and-data.md#7.2",
+      "segment_id": "5eeef2b4-f645-48e0-a27c-e80f1cfbbbde",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 8,
+      "content_sha256": "6e098795d53aec3e"
+    },
+    "privacy-and-data.md#7.3": {
+      "anchor": "privacy-and-data.md#7.3",
+      "segment_id": "5eeef2b4-f645-48e0-a27c-e80f1cfbbbde",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 8,
+      "content_sha256": "6e098795d53aec3e"
+    },
+    "privacy-and-data.md#8": {
+      "anchor": "privacy-and-data.md#8",
+      "segment_id": "2e8c2216-0d9a-4325-9bb1-5b90d7eb5e40",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 9,
+      "content_sha256": "0a18c9b756aeea57"
+    },
+    "privacy-and-data.md#8.1": {
+      "anchor": "privacy-and-data.md#8.1",
+      "segment_id": "2e8c2216-0d9a-4325-9bb1-5b90d7eb5e40",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 9,
+      "content_sha256": "0a18c9b756aeea57"
+    },
+    "privacy-and-data.md#appendix-a": {
+      "anchor": "privacy-and-data.md#appendix-a",
+      "segment_id": "82af2e46-7445-4d64-853f-17e4261b279b",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 10,
+      "content_sha256": "1023d4ee6cb8c2b5"
+    },
+    "privacy-and-data.md#appendix-a.1": {
+      "anchor": "privacy-and-data.md#appendix-a.1",
+      "segment_id": "82af2e46-7445-4d64-853f-17e4261b279b",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 10,
+      "content_sha256": "1023d4ee6cb8c2b5"
+    },
+    "privacy-and-data.md#appendix-a.2": {
+      "anchor": "privacy-and-data.md#appendix-a.2",
+      "segment_id": "82af2e46-7445-4d64-853f-17e4261b279b",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 10,
+      "content_sha256": "1023d4ee6cb8c2b5"
+    },
+    "privacy-and-data.md#appendix-a.3": {
+      "anchor": "privacy-and-data.md#appendix-a.3",
+      "segment_id": "82af2e46-7445-4d64-853f-17e4261b279b",
+      "document_id": "5de28544-8e9a-4ca2-93b5-2b72698f2dad",
+      "document_name": "privacy-and-data.md",
+      "position": 10,
+      "content_sha256": "1023d4ee6cb8c2b5"
+    },
+    "promotions-and-price-match.md#1": {
+      "anchor": "promotions-and-price-match.md#1",
+      "segment_id": "85ae364d-2a7e-4f48-a9b0-a09c3c8ae987",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 2,
+      "content_sha256": "c80e75f52ad72f7f"
+    },
+    "promotions-and-price-match.md#1.1": {
+      "anchor": "promotions-and-price-match.md#1.1",
+      "segment_id": "85ae364d-2a7e-4f48-a9b0-a09c3c8ae987",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 2,
+      "content_sha256": "c80e75f52ad72f7f"
+    },
+    "promotions-and-price-match.md#1.2": {
+      "anchor": "promotions-and-price-match.md#1.2",
+      "segment_id": "85ae364d-2a7e-4f48-a9b0-a09c3c8ae987",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 2,
+      "content_sha256": "c80e75f52ad72f7f"
+    },
+    "promotions-and-price-match.md#1.3": {
+      "anchor": "promotions-and-price-match.md#1.3",
+      "segment_id": "3b19c5b1-f66c-47d2-aeea-dbfa64daf3ee",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 3,
+      "content_sha256": "f420a50c9b8e3182"
+    },
+    "promotions-and-price-match.md#2": {
+      "anchor": "promotions-and-price-match.md#2",
+      "segment_id": "7a88f070-7ae8-44a9-9cac-451584b72016",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 4,
+      "content_sha256": "4a48b1fbb4b5ea17"
+    },
+    "promotions-and-price-match.md#2.1": {
+      "anchor": "promotions-and-price-match.md#2.1",
+      "segment_id": "7a88f070-7ae8-44a9-9cac-451584b72016",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 4,
+      "content_sha256": "4a48b1fbb4b5ea17"
+    },
+    "promotions-and-price-match.md#2.2": {
+      "anchor": "promotions-and-price-match.md#2.2",
+      "segment_id": "7a88f070-7ae8-44a9-9cac-451584b72016",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 4,
+      "content_sha256": "4a48b1fbb4b5ea17"
+    },
+    "promotions-and-price-match.md#2.3": {
+      "anchor": "promotions-and-price-match.md#2.3",
+      "segment_id": "7a88f070-7ae8-44a9-9cac-451584b72016",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 4,
+      "content_sha256": "4a48b1fbb4b5ea17"
+    },
+    "promotions-and-price-match.md#2.4": {
+      "anchor": "promotions-and-price-match.md#2.4",
+      "segment_id": "a5640e1d-4e33-44f2-8dd4-4154a2b431b5",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 5,
+      "content_sha256": "245e0daafd89da27"
+    },
+    "promotions-and-price-match.md#2.5": {
+      "anchor": "promotions-and-price-match.md#2.5",
+      "segment_id": "a5640e1d-4e33-44f2-8dd4-4154a2b431b5",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 5,
+      "content_sha256": "245e0daafd89da27"
+    },
+    "promotions-and-price-match.md#2.6": {
+      "anchor": "promotions-and-price-match.md#2.6",
+      "segment_id": "a5640e1d-4e33-44f2-8dd4-4154a2b431b5",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 5,
+      "content_sha256": "245e0daafd89da27"
+    },
+    "promotions-and-price-match.md#3": {
+      "anchor": "promotions-and-price-match.md#3",
+      "segment_id": "af6c59f1-33a7-45ac-b093-2d7cea29025e",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 6,
+      "content_sha256": "52e130efbccc541d"
+    },
+    "promotions-and-price-match.md#3.1": {
+      "anchor": "promotions-and-price-match.md#3.1",
+      "segment_id": "af6c59f1-33a7-45ac-b093-2d7cea29025e",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 6,
+      "content_sha256": "52e130efbccc541d"
+    },
+    "promotions-and-price-match.md#3.2": {
+      "anchor": "promotions-and-price-match.md#3.2",
+      "segment_id": "af6c59f1-33a7-45ac-b093-2d7cea29025e",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 6,
+      "content_sha256": "52e130efbccc541d"
+    },
+    "promotions-and-price-match.md#3.3": {
+      "anchor": "promotions-and-price-match.md#3.3",
+      "segment_id": "af6c59f1-33a7-45ac-b093-2d7cea29025e",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 6,
+      "content_sha256": "52e130efbccc541d"
+    },
+    "promotions-and-price-match.md#3.4": {
+      "anchor": "promotions-and-price-match.md#3.4",
+      "segment_id": "af6c59f1-33a7-45ac-b093-2d7cea29025e",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 6,
+      "content_sha256": "52e130efbccc541d"
+    },
+    "promotions-and-price-match.md#3.5": {
+      "anchor": "promotions-and-price-match.md#3.5",
+      "segment_id": "af6c59f1-33a7-45ac-b093-2d7cea29025e",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 6,
+      "content_sha256": "52e130efbccc541d"
+    },
+    "promotions-and-price-match.md#4": {
+      "anchor": "promotions-and-price-match.md#4",
+      "segment_id": "7f274ac4-2f52-4091-be3c-cd2d3868c69c",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 7,
+      "content_sha256": "ef1be6f535f0bf86"
+    },
+    "promotions-and-price-match.md#4.1": {
+      "anchor": "promotions-and-price-match.md#4.1",
+      "segment_id": "7f274ac4-2f52-4091-be3c-cd2d3868c69c",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 7,
+      "content_sha256": "ef1be6f535f0bf86"
+    },
+    "promotions-and-price-match.md#4.2": {
+      "anchor": "promotions-and-price-match.md#4.2",
+      "segment_id": "7f274ac4-2f52-4091-be3c-cd2d3868c69c",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 7,
+      "content_sha256": "ef1be6f535f0bf86"
+    },
+    "promotions-and-price-match.md#4.3": {
+      "anchor": "promotions-and-price-match.md#4.3",
+      "segment_id": "7f274ac4-2f52-4091-be3c-cd2d3868c69c",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 7,
+      "content_sha256": "ef1be6f535f0bf86"
+    },
+    "promotions-and-price-match.md#4.4": {
+      "anchor": "promotions-and-price-match.md#4.4",
+      "segment_id": "7f274ac4-2f52-4091-be3c-cd2d3868c69c",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 7,
+      "content_sha256": "ef1be6f535f0bf86"
+    },
+    "promotions-and-price-match.md#5": {
+      "anchor": "promotions-and-price-match.md#5",
+      "segment_id": "1361877d-b204-472f-9a30-79f75a779d95",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 8,
+      "content_sha256": "0d46c1921cf9136c"
+    },
+    "promotions-and-price-match.md#5.1": {
+      "anchor": "promotions-and-price-match.md#5.1",
+      "segment_id": "1361877d-b204-472f-9a30-79f75a779d95",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 8,
+      "content_sha256": "0d46c1921cf9136c"
+    },
+    "promotions-and-price-match.md#5.2": {
+      "anchor": "promotions-and-price-match.md#5.2",
+      "segment_id": "1361877d-b204-472f-9a30-79f75a779d95",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 8,
+      "content_sha256": "0d46c1921cf9136c"
+    },
+    "promotions-and-price-match.md#5.3": {
+      "anchor": "promotions-and-price-match.md#5.3",
+      "segment_id": "1361877d-b204-472f-9a30-79f75a779d95",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 8,
+      "content_sha256": "0d46c1921cf9136c"
+    },
+    "promotions-and-price-match.md#5.4": {
+      "anchor": "promotions-and-price-match.md#5.4",
+      "segment_id": "1361877d-b204-472f-9a30-79f75a779d95",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 8,
+      "content_sha256": "0d46c1921cf9136c"
+    },
+    "promotions-and-price-match.md#5.5": {
+      "anchor": "promotions-and-price-match.md#5.5",
+      "segment_id": "2587ae95-bd47-4a1f-9f6a-1151c3dc6997",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 9,
+      "content_sha256": "6dafd5588356dcef"
+    },
+    "promotions-and-price-match.md#5.6": {
+      "anchor": "promotions-and-price-match.md#5.6",
+      "segment_id": "2587ae95-bd47-4a1f-9f6a-1151c3dc6997",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 9,
+      "content_sha256": "6dafd5588356dcef"
+    },
+    "promotions-and-price-match.md#appendix-a": {
+      "anchor": "promotions-and-price-match.md#appendix-a",
+      "segment_id": "bd396278-5f43-4dd8-9882-003a9535084d",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 10,
+      "content_sha256": "dc3e3a616af633bf"
+    },
+    "promotions-and-price-match.md#appendix-a.1": {
+      "anchor": "promotions-and-price-match.md#appendix-a.1",
+      "segment_id": "bd396278-5f43-4dd8-9882-003a9535084d",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 10,
+      "content_sha256": "dc3e3a616af633bf"
+    },
+    "promotions-and-price-match.md#appendix-a.2": {
+      "anchor": "promotions-and-price-match.md#appendix-a.2",
+      "segment_id": "bd396278-5f43-4dd8-9882-003a9535084d",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 10,
+      "content_sha256": "dc3e3a616af633bf"
+    },
+    "promotions-and-price-match.md#appendix-a.3": {
+      "anchor": "promotions-and-price-match.md#appendix-a.3",
+      "segment_id": "bd396278-5f43-4dd8-9882-003a9535084d",
+      "document_id": "6cb058c7-6f8f-4fd8-884c-45f29a44164c",
+      "document_name": "promotions-and-price-match.md",
+      "position": 10,
+      "content_sha256": "dc3e3a616af633bf"
+    },
+    "returns-and-refunds.md#1": {
+      "anchor": "returns-and-refunds.md#1",
+      "segment_id": "f6989d30-88f4-41b4-81ae-8b0ae7fe901c",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 2,
+      "content_sha256": "7744d2ce4da57f78"
+    },
+    "returns-and-refunds.md#1.1": {
+      "anchor": "returns-and-refunds.md#1.1",
+      "segment_id": "f6989d30-88f4-41b4-81ae-8b0ae7fe901c",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 2,
+      "content_sha256": "7744d2ce4da57f78"
+    },
+    "returns-and-refunds.md#1.2": {
+      "anchor": "returns-and-refunds.md#1.2",
+      "segment_id": "f6989d30-88f4-41b4-81ae-8b0ae7fe901c",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 2,
+      "content_sha256": "7744d2ce4da57f78"
+    },
+    "returns-and-refunds.md#1.3": {
+      "anchor": "returns-and-refunds.md#1.3",
+      "segment_id": "f6989d30-88f4-41b4-81ae-8b0ae7fe901c",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 2,
+      "content_sha256": "7744d2ce4da57f78"
+    },
+    "returns-and-refunds.md#1.4": {
+      "anchor": "returns-and-refunds.md#1.4",
+      "segment_id": "f6989d30-88f4-41b4-81ae-8b0ae7fe901c",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 2,
+      "content_sha256": "7744d2ce4da57f78"
+    },
+    "returns-and-refunds.md#1.5": {
+      "anchor": "returns-and-refunds.md#1.5",
+      "segment_id": "2d6f37b3-5187-4f72-840c-84ad7ac12ec1",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 3,
+      "content_sha256": "0afda64914040b08"
+    },
+    "returns-and-refunds.md#2": {
+      "anchor": "returns-and-refunds.md#2",
+      "segment_id": "5d00bd2a-1ed2-4206-b910-5e01e8d4b6b3",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 4,
+      "content_sha256": "c80d5c652a3acb5f"
+    },
+    "returns-and-refunds.md#2.1": {
+      "anchor": "returns-and-refunds.md#2.1",
+      "segment_id": "5d00bd2a-1ed2-4206-b910-5e01e8d4b6b3",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 4,
+      "content_sha256": "c80d5c652a3acb5f"
+    },
+    "returns-and-refunds.md#2.2": {
+      "anchor": "returns-and-refunds.md#2.2",
+      "segment_id": "5d00bd2a-1ed2-4206-b910-5e01e8d4b6b3",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 4,
+      "content_sha256": "c80d5c652a3acb5f"
+    },
+    "returns-and-refunds.md#2.3": {
+      "anchor": "returns-and-refunds.md#2.3",
+      "segment_id": "5d00bd2a-1ed2-4206-b910-5e01e8d4b6b3",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 4,
+      "content_sha256": "c80d5c652a3acb5f"
+    },
+    "returns-and-refunds.md#2.4": {
+      "anchor": "returns-and-refunds.md#2.4",
+      "segment_id": "5d00bd2a-1ed2-4206-b910-5e01e8d4b6b3",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 4,
+      "content_sha256": "c80d5c652a3acb5f"
+    },
+    "returns-and-refunds.md#3": {
+      "anchor": "returns-and-refunds.md#3",
+      "segment_id": "5b4eb9e9-2757-4cfd-b107-cb8ceb545bc9",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 5,
+      "content_sha256": "6166163bd33f9908"
+    },
+    "returns-and-refunds.md#3.1": {
+      "anchor": "returns-and-refunds.md#3.1",
+      "segment_id": "5b4eb9e9-2757-4cfd-b107-cb8ceb545bc9",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 5,
+      "content_sha256": "6166163bd33f9908"
+    },
+    "returns-and-refunds.md#3.2": {
+      "anchor": "returns-and-refunds.md#3.2",
+      "segment_id": "5b4eb9e9-2757-4cfd-b107-cb8ceb545bc9",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 5,
+      "content_sha256": "6166163bd33f9908"
+    },
+    "returns-and-refunds.md#3.3": {
+      "anchor": "returns-and-refunds.md#3.3",
+      "segment_id": "5b4eb9e9-2757-4cfd-b107-cb8ceb545bc9",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 5,
+      "content_sha256": "6166163bd33f9908"
+    },
+    "returns-and-refunds.md#3.4": {
+      "anchor": "returns-and-refunds.md#3.4",
+      "segment_id": "5b4eb9e9-2757-4cfd-b107-cb8ceb545bc9",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 5,
+      "content_sha256": "6166163bd33f9908"
+    },
+    "returns-and-refunds.md#4": {
+      "anchor": "returns-and-refunds.md#4",
+      "segment_id": "087c361a-5a00-413d-a82d-bcc87a5812a9",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 6,
+      "content_sha256": "e5b2b64e418fecfc"
+    },
+    "returns-and-refunds.md#4.0": {
+      "anchor": "returns-and-refunds.md#4.0",
+      "segment_id": "087c361a-5a00-413d-a82d-bcc87a5812a9",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 6,
+      "content_sha256": "e5b2b64e418fecfc"
+    },
+    "returns-and-refunds.md#4.1": {
+      "anchor": "returns-and-refunds.md#4.1",
+      "segment_id": "087c361a-5a00-413d-a82d-bcc87a5812a9",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 6,
+      "content_sha256": "e5b2b64e418fecfc"
+    },
+    "returns-and-refunds.md#4.2": {
+      "anchor": "returns-and-refunds.md#4.2",
+      "segment_id": "087c361a-5a00-413d-a82d-bcc87a5812a9",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 6,
+      "content_sha256": "e5b2b64e418fecfc"
+    },
+    "returns-and-refunds.md#4.3": {
+      "anchor": "returns-and-refunds.md#4.3",
+      "segment_id": "087c361a-5a00-413d-a82d-bcc87a5812a9",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 6,
+      "content_sha256": "e5b2b64e418fecfc"
+    },
+    "returns-and-refunds.md#4.4": {
+      "anchor": "returns-and-refunds.md#4.4",
+      "segment_id": "087c361a-5a00-413d-a82d-bcc87a5812a9",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 6,
+      "content_sha256": "e5b2b64e418fecfc"
+    },
+    "returns-and-refunds.md#5": {
+      "anchor": "returns-and-refunds.md#5",
+      "segment_id": "57ba941a-563a-4012-8c6b-407ad9cc17d0",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 7,
+      "content_sha256": "e87fa0408151fd2f"
+    },
+    "returns-and-refunds.md#5.1": {
+      "anchor": "returns-and-refunds.md#5.1",
+      "segment_id": "57ba941a-563a-4012-8c6b-407ad9cc17d0",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 7,
+      "content_sha256": "e87fa0408151fd2f"
+    },
+    "returns-and-refunds.md#5.2": {
+      "anchor": "returns-and-refunds.md#5.2",
+      "segment_id": "57ba941a-563a-4012-8c6b-407ad9cc17d0",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 7,
+      "content_sha256": "e87fa0408151fd2f"
+    },
+    "returns-and-refunds.md#5.3": {
+      "anchor": "returns-and-refunds.md#5.3",
+      "segment_id": "57ba941a-563a-4012-8c6b-407ad9cc17d0",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 7,
+      "content_sha256": "e87fa0408151fd2f"
+    },
+    "returns-and-refunds.md#5.4": {
+      "anchor": "returns-and-refunds.md#5.4",
+      "segment_id": "57ba941a-563a-4012-8c6b-407ad9cc17d0",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 7,
+      "content_sha256": "e87fa0408151fd2f"
+    },
+    "returns-and-refunds.md#6": {
+      "anchor": "returns-and-refunds.md#6",
+      "segment_id": "d8060c8c-b3e4-4d9c-99d0-0bf02ef43f75",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 8,
+      "content_sha256": "40eed1afd0d1068d"
+    },
+    "returns-and-refunds.md#6.1": {
+      "anchor": "returns-and-refunds.md#6.1",
+      "segment_id": "d8060c8c-b3e4-4d9c-99d0-0bf02ef43f75",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 8,
+      "content_sha256": "40eed1afd0d1068d"
+    },
+    "returns-and-refunds.md#6.2": {
+      "anchor": "returns-and-refunds.md#6.2",
+      "segment_id": "d8060c8c-b3e4-4d9c-99d0-0bf02ef43f75",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 8,
+      "content_sha256": "40eed1afd0d1068d"
+    },
+    "returns-and-refunds.md#7": {
+      "anchor": "returns-and-refunds.md#7",
+      "segment_id": "9baa7649-b946-446c-9dee-1fc6197b98d5",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 9,
+      "content_sha256": "c2e104437a97ab08"
+    },
+    "returns-and-refunds.md#7.1": {
+      "anchor": "returns-and-refunds.md#7.1",
+      "segment_id": "9baa7649-b946-446c-9dee-1fc6197b98d5",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 9,
+      "content_sha256": "c2e104437a97ab08"
+    },
+    "returns-and-refunds.md#7.2": {
+      "anchor": "returns-and-refunds.md#7.2",
+      "segment_id": "9baa7649-b946-446c-9dee-1fc6197b98d5",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 9,
+      "content_sha256": "c2e104437a97ab08"
+    },
+    "returns-and-refunds.md#7.3": {
+      "anchor": "returns-and-refunds.md#7.3",
+      "segment_id": "9baa7649-b946-446c-9dee-1fc6197b98d5",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 9,
+      "content_sha256": "c2e104437a97ab08"
+    },
+    "returns-and-refunds.md#8": {
+      "anchor": "returns-and-refunds.md#8",
+      "segment_id": "a11f2feb-3b12-45b5-a7ce-ccefb855c4aa",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 10,
+      "content_sha256": "a5dd4cc53d35d0bc"
+    },
+    "returns-and-refunds.md#8.1": {
+      "anchor": "returns-and-refunds.md#8.1",
+      "segment_id": "a11f2feb-3b12-45b5-a7ce-ccefb855c4aa",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 10,
+      "content_sha256": "a5dd4cc53d35d0bc"
+    },
+    "returns-and-refunds.md#8.2": {
+      "anchor": "returns-and-refunds.md#8.2",
+      "segment_id": "592bb99f-4bc8-4f46-b3cd-01bf27012bf2",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 11,
+      "content_sha256": "39750f1a990c3314"
+    },
+    "returns-and-refunds.md#appendix-a": {
+      "anchor": "returns-and-refunds.md#appendix-a",
+      "segment_id": "684c737c-bf33-4139-afc2-bf9e59477b8e",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 12,
+      "content_sha256": "2115aa28b7040203"
+    },
+    "returns-and-refunds.md#appendix-a.1": {
+      "anchor": "returns-and-refunds.md#appendix-a.1",
+      "segment_id": "684c737c-bf33-4139-afc2-bf9e59477b8e",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 12,
+      "content_sha256": "2115aa28b7040203"
+    },
+    "returns-and-refunds.md#appendix-a.2": {
+      "anchor": "returns-and-refunds.md#appendix-a.2",
+      "segment_id": "684c737c-bf33-4139-afc2-bf9e59477b8e",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 12,
+      "content_sha256": "2115aa28b7040203"
+    },
+    "returns-and-refunds.md#appendix-a.3": {
+      "anchor": "returns-and-refunds.md#appendix-a.3",
+      "segment_id": "684c737c-bf33-4139-afc2-bf9e59477b8e",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 12,
+      "content_sha256": "2115aa28b7040203"
+    },
+    "returns-and-refunds.md#appendix-a.4": {
+      "anchor": "returns-and-refunds.md#appendix-a.4",
+      "segment_id": "684c737c-bf33-4139-afc2-bf9e59477b8e",
+      "document_id": "1d7536b1-19c2-4d7d-a8e2-f5cbfabdcd19",
+      "document_name": "returns-and-refunds.md",
+      "position": 12,
+      "content_sha256": "2115aa28b7040203"
+    },
+    "shipping-and-delivery.md#1": {
+      "anchor": "shipping-and-delivery.md#1",
+      "segment_id": "fa5be283-2049-496a-9c80-c02c85b0fc79",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 2,
+      "content_sha256": "59fa010b38818628"
+    },
+    "shipping-and-delivery.md#1.1": {
+      "anchor": "shipping-and-delivery.md#1.1",
+      "segment_id": "fa5be283-2049-496a-9c80-c02c85b0fc79",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 2,
+      "content_sha256": "59fa010b38818628"
+    },
+    "shipping-and-delivery.md#1.2": {
+      "anchor": "shipping-and-delivery.md#1.2",
+      "segment_id": "fa5be283-2049-496a-9c80-c02c85b0fc79",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 2,
+      "content_sha256": "59fa010b38818628"
+    },
+    "shipping-and-delivery.md#2": {
+      "anchor": "shipping-and-delivery.md#2",
+      "segment_id": "429c1813-5ada-427a-b786-32decba54d77",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 3,
+      "content_sha256": "5523cc53e31d3a1b"
+    },
+    "shipping-and-delivery.md#2.1": {
+      "anchor": "shipping-and-delivery.md#2.1",
+      "segment_id": "429c1813-5ada-427a-b786-32decba54d77",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 3,
+      "content_sha256": "5523cc53e31d3a1b"
+    },
+    "shipping-and-delivery.md#2.2": {
+      "anchor": "shipping-and-delivery.md#2.2",
+      "segment_id": "429c1813-5ada-427a-b786-32decba54d77",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 3,
+      "content_sha256": "5523cc53e31d3a1b"
+    },
+    "shipping-and-delivery.md#2.3": {
+      "anchor": "shipping-and-delivery.md#2.3",
+      "segment_id": "429c1813-5ada-427a-b786-32decba54d77",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 3,
+      "content_sha256": "5523cc53e31d3a1b"
+    },
+    "shipping-and-delivery.md#2.4": {
+      "anchor": "shipping-and-delivery.md#2.4",
+      "segment_id": "429c1813-5ada-427a-b786-32decba54d77",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 3,
+      "content_sha256": "5523cc53e31d3a1b"
+    },
+    "shipping-and-delivery.md#3": {
+      "anchor": "shipping-and-delivery.md#3",
+      "segment_id": "9abbb4cf-c19a-4f0e-aa9d-a47abb61e283",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 4,
+      "content_sha256": "294af1c93346d068"
+    },
+    "shipping-and-delivery.md#3.1": {
+      "anchor": "shipping-and-delivery.md#3.1",
+      "segment_id": "9abbb4cf-c19a-4f0e-aa9d-a47abb61e283",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 4,
+      "content_sha256": "294af1c93346d068"
+    },
+    "shipping-and-delivery.md#3.2": {
+      "anchor": "shipping-and-delivery.md#3.2",
+      "segment_id": "9abbb4cf-c19a-4f0e-aa9d-a47abb61e283",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 4,
+      "content_sha256": "294af1c93346d068"
+    },
+    "shipping-and-delivery.md#3.3": {
+      "anchor": "shipping-and-delivery.md#3.3",
+      "segment_id": "9abbb4cf-c19a-4f0e-aa9d-a47abb61e283",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 4,
+      "content_sha256": "294af1c93346d068"
+    },
+    "shipping-and-delivery.md#4": {
+      "anchor": "shipping-and-delivery.md#4",
+      "segment_id": "589e63da-175a-430a-b2f9-edb0121d5284",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 5,
+      "content_sha256": "13138f630b2c972e"
+    },
+    "shipping-and-delivery.md#4.0": {
+      "anchor": "shipping-and-delivery.md#4.0",
+      "segment_id": "589e63da-175a-430a-b2f9-edb0121d5284",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 5,
+      "content_sha256": "13138f630b2c972e"
+    },
+    "shipping-and-delivery.md#4.1": {
+      "anchor": "shipping-and-delivery.md#4.1",
+      "segment_id": "589e63da-175a-430a-b2f9-edb0121d5284",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 5,
+      "content_sha256": "13138f630b2c972e"
+    },
+    "shipping-and-delivery.md#4.2": {
+      "anchor": "shipping-and-delivery.md#4.2",
+      "segment_id": "589e63da-175a-430a-b2f9-edb0121d5284",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 5,
+      "content_sha256": "13138f630b2c972e"
+    },
+    "shipping-and-delivery.md#4.3": {
+      "anchor": "shipping-and-delivery.md#4.3",
+      "segment_id": "589e63da-175a-430a-b2f9-edb0121d5284",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 5,
+      "content_sha256": "13138f630b2c972e"
+    },
+    "shipping-and-delivery.md#4.4": {
+      "anchor": "shipping-and-delivery.md#4.4",
+      "segment_id": "589e63da-175a-430a-b2f9-edb0121d5284",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 5,
+      "content_sha256": "13138f630b2c972e"
+    },
+    "shipping-and-delivery.md#4.5": {
+      "anchor": "shipping-and-delivery.md#4.5",
+      "segment_id": "d1a27ca7-743b-4b67-9fc0-a9d01f981791",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 6,
+      "content_sha256": "7d448a732b59df14"
+    },
+    "shipping-and-delivery.md#5": {
+      "anchor": "shipping-and-delivery.md#5",
+      "segment_id": "569cd797-586d-4a2b-92b2-33e9e1ce49af",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 7,
+      "content_sha256": "17d5e735e010be17"
+    },
+    "shipping-and-delivery.md#5.1": {
+      "anchor": "shipping-and-delivery.md#5.1",
+      "segment_id": "569cd797-586d-4a2b-92b2-33e9e1ce49af",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 7,
+      "content_sha256": "17d5e735e010be17"
+    },
+    "shipping-and-delivery.md#5.2": {
+      "anchor": "shipping-and-delivery.md#5.2",
+      "segment_id": "569cd797-586d-4a2b-92b2-33e9e1ce49af",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 7,
+      "content_sha256": "17d5e735e010be17"
+    },
+    "shipping-and-delivery.md#6": {
+      "anchor": "shipping-and-delivery.md#6",
+      "segment_id": "5017ec8a-2383-4e81-8580-becf4231a70e",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 8,
+      "content_sha256": "e55f490db1a83e5c"
+    },
+    "shipping-and-delivery.md#6.1": {
+      "anchor": "shipping-and-delivery.md#6.1",
+      "segment_id": "5017ec8a-2383-4e81-8580-becf4231a70e",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 8,
+      "content_sha256": "e55f490db1a83e5c"
+    },
+    "shipping-and-delivery.md#6.2": {
+      "anchor": "shipping-and-delivery.md#6.2",
+      "segment_id": "5017ec8a-2383-4e81-8580-becf4231a70e",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 8,
+      "content_sha256": "e55f490db1a83e5c"
+    },
+    "shipping-and-delivery.md#6.3": {
+      "anchor": "shipping-and-delivery.md#6.3",
+      "segment_id": "5017ec8a-2383-4e81-8580-becf4231a70e",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 8,
+      "content_sha256": "e55f490db1a83e5c"
+    },
+    "shipping-and-delivery.md#6.4": {
+      "anchor": "shipping-and-delivery.md#6.4",
+      "segment_id": "5017ec8a-2383-4e81-8580-becf4231a70e",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 8,
+      "content_sha256": "e55f490db1a83e5c"
+    },
+    "shipping-and-delivery.md#7": {
+      "anchor": "shipping-and-delivery.md#7",
+      "segment_id": "bbc33bc0-eed1-44f9-8eca-f26a07895f1f",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 9,
+      "content_sha256": "ce816343cd1fe0b0"
+    },
+    "shipping-and-delivery.md#7.1": {
+      "anchor": "shipping-and-delivery.md#7.1",
+      "segment_id": "bbc33bc0-eed1-44f9-8eca-f26a07895f1f",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 9,
+      "content_sha256": "ce816343cd1fe0b0"
+    },
+    "shipping-and-delivery.md#7.2": {
+      "anchor": "shipping-and-delivery.md#7.2",
+      "segment_id": "bbc33bc0-eed1-44f9-8eca-f26a07895f1f",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 9,
+      "content_sha256": "ce816343cd1fe0b0"
+    },
+    "shipping-and-delivery.md#8": {
+      "anchor": "shipping-and-delivery.md#8",
+      "segment_id": "ae11bbf3-4e30-4e3a-a3f8-b991bc775f0a",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 10,
+      "content_sha256": "14bc4e15c7e661c9"
+    },
+    "shipping-and-delivery.md#8.1": {
+      "anchor": "shipping-and-delivery.md#8.1",
+      "segment_id": "ae11bbf3-4e30-4e3a-a3f8-b991bc775f0a",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 10,
+      "content_sha256": "14bc4e15c7e661c9"
+    },
+    "shipping-and-delivery.md#8.2": {
+      "anchor": "shipping-and-delivery.md#8.2",
+      "segment_id": "ae11bbf3-4e30-4e3a-a3f8-b991bc775f0a",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 10,
+      "content_sha256": "14bc4e15c7e661c9"
+    },
+    "shipping-and-delivery.md#appendix-a": {
+      "anchor": "shipping-and-delivery.md#appendix-a",
+      "segment_id": "1b2b565b-e716-46b7-ba44-3ae18b3395fe",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 11,
+      "content_sha256": "b1dc283f678c4751"
+    },
+    "shipping-and-delivery.md#appendix-a.1": {
+      "anchor": "shipping-and-delivery.md#appendix-a.1",
+      "segment_id": "1b2b565b-e716-46b7-ba44-3ae18b3395fe",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 11,
+      "content_sha256": "b1dc283f678c4751"
+    },
+    "shipping-and-delivery.md#appendix-a.2": {
+      "anchor": "shipping-and-delivery.md#appendix-a.2",
+      "segment_id": "1b2b565b-e716-46b7-ba44-3ae18b3395fe",
+      "document_id": "af635ba8-c937-4de7-94e1-66c3c304499e",
+      "document_name": "shipping-and-delivery.md",
+      "position": 11,
+      "content_sha256": "b1dc283f678c4751"
+    },
+    "warranty-policy.md#1": {
+      "anchor": "warranty-policy.md#1",
+      "segment_id": "ac0e3c1f-b565-4a28-958d-26652ae0b0c7",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 2,
+      "content_sha256": "e447eb2441f292de"
+    },
+    "warranty-policy.md#1.1": {
+      "anchor": "warranty-policy.md#1.1",
+      "segment_id": "ac0e3c1f-b565-4a28-958d-26652ae0b0c7",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 2,
+      "content_sha256": "e447eb2441f292de"
+    },
+    "warranty-policy.md#1.2": {
+      "anchor": "warranty-policy.md#1.2",
+      "segment_id": "ac0e3c1f-b565-4a28-958d-26652ae0b0c7",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 2,
+      "content_sha256": "e447eb2441f292de"
+    },
+    "warranty-policy.md#1.3": {
+      "anchor": "warranty-policy.md#1.3",
+      "segment_id": "a3a885f5-223c-41f3-bee6-b637a734cac8",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 3,
+      "content_sha256": "35516e0354342bb7"
+    },
+    "warranty-policy.md#1.4": {
+      "anchor": "warranty-policy.md#1.4",
+      "segment_id": "a3a885f5-223c-41f3-bee6-b637a734cac8",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 3,
+      "content_sha256": "35516e0354342bb7"
+    },
+    "warranty-policy.md#1.5": {
+      "anchor": "warranty-policy.md#1.5",
+      "segment_id": "8a413984-7f98-474d-ab18-48b2c427cd00",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 4,
+      "content_sha256": "16c5293d8ffc5654"
+    },
+    "warranty-policy.md#2": {
+      "anchor": "warranty-policy.md#2",
+      "segment_id": "c5dc328a-7395-4c83-aa50-265bdda9bd3f",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 5,
+      "content_sha256": "9251acf115d03629"
+    },
+    "warranty-policy.md#2.1": {
+      "anchor": "warranty-policy.md#2.1",
+      "segment_id": "c5dc328a-7395-4c83-aa50-265bdda9bd3f",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 5,
+      "content_sha256": "9251acf115d03629"
+    },
+    "warranty-policy.md#2.2": {
+      "anchor": "warranty-policy.md#2.2",
+      "segment_id": "c5dc328a-7395-4c83-aa50-265bdda9bd3f",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 5,
+      "content_sha256": "9251acf115d03629"
+    },
+    "warranty-policy.md#2.3": {
+      "anchor": "warranty-policy.md#2.3",
+      "segment_id": "c5dc328a-7395-4c83-aa50-265bdda9bd3f",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 5,
+      "content_sha256": "9251acf115d03629"
+    },
+    "warranty-policy.md#2.4": {
+      "anchor": "warranty-policy.md#2.4",
+      "segment_id": "830aa5b8-fcbc-4e8f-ac99-780ace5f0359",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 6,
+      "content_sha256": "027538a5603361b7"
+    },
+    "warranty-policy.md#2.5": {
+      "anchor": "warranty-policy.md#2.5",
+      "segment_id": "830aa5b8-fcbc-4e8f-ac99-780ace5f0359",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 6,
+      "content_sha256": "027538a5603361b7"
+    },
+    "warranty-policy.md#3": {
+      "anchor": "warranty-policy.md#3",
+      "segment_id": "bf39a841-dc62-4718-8e96-b0860fa58ed3",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 7,
+      "content_sha256": "fd5f1f7a41d07bce"
+    },
+    "warranty-policy.md#3.1": {
+      "anchor": "warranty-policy.md#3.1",
+      "segment_id": "bf39a841-dc62-4718-8e96-b0860fa58ed3",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 7,
+      "content_sha256": "fd5f1f7a41d07bce"
+    },
+    "warranty-policy.md#3.2": {
+      "anchor": "warranty-policy.md#3.2",
+      "segment_id": "bf39a841-dc62-4718-8e96-b0860fa58ed3",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 7,
+      "content_sha256": "fd5f1f7a41d07bce"
+    },
+    "warranty-policy.md#4": {
+      "anchor": "warranty-policy.md#4",
+      "segment_id": "54666cb9-3e73-48c7-bef0-03f73cc9ab1f",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 8,
+      "content_sha256": "74ad56af65e53af5"
+    },
+    "warranty-policy.md#4.1": {
+      "anchor": "warranty-policy.md#4.1",
+      "segment_id": "54666cb9-3e73-48c7-bef0-03f73cc9ab1f",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 8,
+      "content_sha256": "74ad56af65e53af5"
+    },
+    "warranty-policy.md#4.2": {
+      "anchor": "warranty-policy.md#4.2",
+      "segment_id": "54666cb9-3e73-48c7-bef0-03f73cc9ab1f",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 8,
+      "content_sha256": "74ad56af65e53af5"
+    },
+    "warranty-policy.md#5": {
+      "anchor": "warranty-policy.md#5",
+      "segment_id": "33c63bb3-1d6d-4ab4-a357-f583f9ba4bbb",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 9,
+      "content_sha256": "7c66ed635f433a75"
+    },
+    "warranty-policy.md#5.1": {
+      "anchor": "warranty-policy.md#5.1",
+      "segment_id": "33c63bb3-1d6d-4ab4-a357-f583f9ba4bbb",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 9,
+      "content_sha256": "7c66ed635f433a75"
+    },
+    "warranty-policy.md#5.2": {
+      "anchor": "warranty-policy.md#5.2",
+      "segment_id": "33c63bb3-1d6d-4ab4-a357-f583f9ba4bbb",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 9,
+      "content_sha256": "7c66ed635f433a75"
+    },
+    "warranty-policy.md#5.3": {
+      "anchor": "warranty-policy.md#5.3",
+      "segment_id": "33c63bb3-1d6d-4ab4-a357-f583f9ba4bbb",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 9,
+      "content_sha256": "7c66ed635f433a75"
+    },
+    "warranty-policy.md#5.4": {
+      "anchor": "warranty-policy.md#5.4",
+      "segment_id": "33c63bb3-1d6d-4ab4-a357-f583f9ba4bbb",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 9,
+      "content_sha256": "7c66ed635f433a75"
+    },
+    "warranty-policy.md#6": {
+      "anchor": "warranty-policy.md#6",
+      "segment_id": "a27a4905-8c93-4624-8b35-1c74c76568e0",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 10,
+      "content_sha256": "ea1ad44e2d81a437"
+    },
+    "warranty-policy.md#6.1": {
+      "anchor": "warranty-policy.md#6.1",
+      "segment_id": "a27a4905-8c93-4624-8b35-1c74c76568e0",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 10,
+      "content_sha256": "ea1ad44e2d81a437"
+    },
+    "warranty-policy.md#6.2": {
+      "anchor": "warranty-policy.md#6.2",
+      "segment_id": "a27a4905-8c93-4624-8b35-1c74c76568e0",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 10,
+      "content_sha256": "ea1ad44e2d81a437"
+    },
+    "warranty-policy.md#appendix-a": {
+      "anchor": "warranty-policy.md#appendix-a",
+      "segment_id": "3b09a36a-07e0-4990-b488-a49df08c9364",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 11,
+      "content_sha256": "e1dc62fac224c389"
+    },
+    "warranty-policy.md#appendix-a.1": {
+      "anchor": "warranty-policy.md#appendix-a.1",
+      "segment_id": "3b09a36a-07e0-4990-b488-a49df08c9364",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 11,
+      "content_sha256": "e1dc62fac224c389"
+    },
+    "warranty-policy.md#appendix-a.2": {
+      "anchor": "warranty-policy.md#appendix-a.2",
+      "segment_id": "3b09a36a-07e0-4990-b488-a49df08c9364",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 11,
+      "content_sha256": "e1dc62fac224c389"
+    },
+    "warranty-policy.md#appendix-a.3": {
+      "anchor": "warranty-policy.md#appendix-a.3",
+      "segment_id": "3b09a36a-07e0-4990-b488-a49df08c9364",
+      "document_id": "ebeb3012-8a81-4a1d-82a8-8c8dea562aa4",
+      "document_name": "warranty-policy.md",
+      "position": 11,
+      "content_sha256": "e1dc62fac224c389"
+    }
+  }
+}

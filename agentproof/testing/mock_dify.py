@@ -196,6 +196,8 @@ class MockDifyServer:
           "error": ("code","message",status),  # HTTP səviyyəsində Dify xəta zərfi
           "error_event": ("code","message",status),  # axın ORTASINDA `error` event-i
           "no_message_end": bool,              # `message_end` göndərilmir
+          "no_conversation_id": bool,          # event-lərdə `conversation_id` boş gəlir
+                                               # (çoxnövbəli zəncirin qırılması)
           "truncate": bool,                    # axın yarımçıq kəsilir
           "malformed": bool,                   # parse olunmayan `data:` sətri
           "ping": bool,                        # `ping` event-ləri qarışdırılır
@@ -265,9 +267,15 @@ class MockDifyServer:
         if "error" in spec:
             return _ChatOutcome(http_error=_dify_error(*spec["error"]))
 
+        # Söhbət id-si BURADA həll olunur, `side_effect`-dən ƏVVƏL: real Dify-da
+        # da yeni söhbətin id-si cavab hazırlanarkən mövcuddur. Beləcə skript
+        # tarixçəni id üzrə saxlaya bilir (çoxnövbəli testlər üçün şərtdir).
+        # `request_log` isə GÖNDƏRİLƏN xam dəyəri saxlayır (ilk növbədə "").
+        resolved = {**body, "conversation_id": body.get("conversation_id") or str(uuid.uuid4())}
+
         side_effect = spec.get("side_effect")
         if callable(side_effect):
-            override = side_effect(body)
+            override = side_effect(resolved)
             if isinstance(override, dict):
                 spec.update(override)
 
@@ -275,7 +283,7 @@ class MockDifyServer:
             time.sleep(spec["delay_ms"] / 1000.0)
 
         return _ChatOutcome(
-            events=self._events(query, body, spec),
+            events=self._events(query, resolved, spec),
             truncate=bool(spec.get("truncate")),
             malformed=bool(spec.get("malformed")),
         )
@@ -288,7 +296,9 @@ class MockDifyServer:
         message_id = str(uuid.uuid4())
         task_id = str(uuid.uuid4())
         base = {
-            "conversation_id": conversation_id,
+            # `no_conversation_id`: hədəf id qaytarmır -> adapter çoxnövbəli
+            # zənciri qura bilmir və bunu ADLA bildirməlidir, susmamalıdır.
+            "conversation_id": "" if spec.get("no_conversation_id") else conversation_id,
             "message_id": message_id,
             "task_id": task_id,
             "created_at": int(time.time()),

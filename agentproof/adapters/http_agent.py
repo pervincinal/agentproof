@@ -21,6 +21,25 @@ Axından çıxarılanlar:
 
 Səssiz boş cavab YOXDUR: yarımçıq axın, timeout, transport xətası və boş
 cavab — hamısı `AgentResponse.error` sahəsində ADLA görünür.
+
+ÇOXNÖVBƏLİ SÖHBƏT
+-----------------
+`req.messages` bir neçə istifadəçi növbəsi daşıyırsa, adapter onları BİR
+söhbətdə ardıcıl göndərir: ilk növbə `conversation_id: ""` ilə gedir, cavabdan
+qayıdan `conversation_id` sonrakı bütün növbələrə yazılır. Bu olmasa hər növbə
+ayrı söhbət açardı və `full.jsonl`-dəki 15 çoxnövbəli case tək-növbəli kimi
+ölçülərdi — yəni C1 (kontekst itkisi, P=20) rəqəmi hesabatda görünər, amma
+YALAN olardı (`evals/datasets/COVERAGE.md §7`).
+
+Zəncir qırılarsa qaçış SƏSSİZCƏ davam etmir:
+  * bir növbə xəta qaytarsa, qalan növbələr GÖNDƏRİLMİR (`error` saxlanılır);
+  * ilk növbə `conversation_id` qaytarmasa və daha növbə varsa,
+    `conversation_not_returned` xətası verilir — yeni söhbətlə davam etmək
+    çoxnövbəli case-i gizlicə tək-növbəliyə çevirmək demək olardı.
+
+Dataset-də skriptləşdirilmiş `assistant` növbəsi varsa, o, GÖNDƏRİLMİR (Dify
+söhbət tarixçəsini özü qurur; kənardan assistant mesajı yeritmək mümkün deyil).
+Bu, `raw.dropped_scripted_assistant_turns`-də sayılır — susqun qalmır.
 """
 
 from __future__ import annotations
@@ -131,14 +150,59 @@ class DifyHttpAgent:
             return False
 
     async def invoke(self, req: AgentRequest) -> AgentResponse:
+        """Case-in BÜTÜN istifadəçi növbələrini bir söhbətdə göndərir.
+
+        Tək növbəli case-də davranış əvvəlki ilə eynidir (bir sorğu,
+        `conversation_id: ""`).
+        """
+        user_turns = [
+            str(m.get("content", ""))
+            for m in req.messages
+            if m.get("role") == "user" and str(m.get("content", "")).strip()
+        ]
+        dropped = sum(1 for m in req.messages if m.get("role") not in ("user", None))
+        if not user_turns:
+            user_turns = [req.query]
+
+        # `user` bütün növbələrdə EYNİ olmalıdır — Dify söhbəti son istifadəçiyə
+        # bağlayır. Növbədən növbəyə dəyişsə, zəncir sükutla qırılardı.
+        end_user = f"{self.user}-{req.session_id or uuid.uuid4().hex[:8]}"
+
+        turns: list[AgentResponse] = []
+        conversation_id = ""
+        for index, query in enumerate(user_turns):
+            turn = await self._one_turn(req, query, conversation_id, end_user, index)
+            turns.append(turn)
+            if turn.error:
+                # Zəncir qırıldı: qalan növbələri göndərmək YENİ söhbət açardı
+                # və nəticə çoxnövbəli kimi görünüb tək-növbəli olardı.
+                break
+            new_id = str(turn.raw.get("conversation_id") or "")
+            if new_id:
+                conversation_id = new_id
+            elif index + 1 < len(user_turns):
+                turn.error = "conversation_not_returned"
+                break
+
+        return self._merge(turns, dropped)
+
+    async def _one_turn(
+        self,
+        req: AgentRequest,
+        query: str,
+        conversation_id: str,
+        end_user: str,
+        turn_index: int,
+    ) -> AgentResponse:
         payload = {
             "inputs": req.metadata.get("inputs", {}),
-            "query": req.query,
+            "query": query,
             # Agent Chat `blocking`-i 400 ilə rədd edir — bax modul docstring-i.
             "response_mode": "streaming",
-            # hər case üçün boş: case-lər bir-birini çirkləndirməsin (SETUP.md §7.2)
-            "conversation_id": "",
-            "user": f"{self.user}-{req.session_id or uuid.uuid4().hex[:8]}",
+            # İLK növbədə boş: case-lər bir-birini çirkləndirməsin (SETUP.md §7.2).
+            # Sonrakı növbələrdə əvvəlki cavabdan gələn id — söhbət ZƏNCİRLƏNİR.
+            "conversation_id": conversation_id,
+            "user": end_user,
         }
         state = _StreamState()
         transport_error = ""
@@ -153,7 +217,7 @@ class DifyHttpAgent:
                 ) as r:
                     if r.status_code != 200:
                         raw = await r.aread()
-                        return self._http_error(raw, r.status_code, started)
+                        return self._http_error(raw, r.status_code, started, turn_index)
                     async for line in r.aiter_lines():
                         _consume_line(state, line)
         except httpx.TimeoutException:
@@ -165,16 +229,84 @@ class DifyHttpAgent:
             transport_error = "stream_transport"
 
         latency_ms = int((time.perf_counter() - started) * 1000)
-        return self._finish(state, transport_error, latency_ms)
+        turn = self._finish(state, transport_error, latency_ms)
+        turn.raw["turn_index"] = turn_index
+        turn.raw["sent_conversation_id"] = conversation_id
+        turn.raw["query"] = query
+        return turn
+
+    def _merge(self, turns: list[AgentResponse], dropped: int) -> AgentResponse:
+        """Növbələri BİR cavaba yığır. Semantika `types.AgentResponse.turns`-dədir."""
+        last = turns[-1]
+        if len(turns) == 1 and not dropped:
+            # Tək növbəli case — köhnə davranışın eynisi, heç nə sarılmır.
+            return last
+
+        tool_calls: list[ToolCall] = []
+        retrieved: list[RetrievedChunk] = []
+        seen_chunks: set[str] = set()
+        input_tokens = output_tokens = cached_tokens = 0
+        model = ""
+        for turn in turns:
+            tool_calls.extend(turn.tool_calls)
+            for chunk in turn.retrieved:
+                if chunk.chunk_id and chunk.chunk_id in seen_chunks:
+                    continue
+                seen_chunks.add(chunk.chunk_id)
+                retrieved.append(chunk)
+            if turn.usage:
+                input_tokens += turn.usage.input_tokens
+                output_tokens += turn.usage.output_tokens
+                cached_tokens += turn.usage.cached_tokens
+                model = turn.usage.model or model
+
+        usage = (
+            Usage(
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                cached_tokens=cached_tokens,
+                model=model or self.model,
+            )
+            if any(t.usage for t in turns)
+            else None
+        )
+        conversation_ids = [
+            str(t.raw.get("conversation_id") or "") for t in turns
+        ]
+        return AgentResponse(
+            text=last.text,
+            tool_calls=tool_calls,
+            retrieved=retrieved,
+            usage=usage,
+            latency_ms=sum(t.latency_ms for t in turns),
+            raw={
+                "transport": "sse",
+                "multi_turn": True,
+                "n_turns_sent": len(turns),
+                "conversation_id": conversation_ids[0] if conversation_ids else "",
+                # Zəncirlənmənin SÜBUTU: bütün növbələr eyni söhbətdədirmi?
+                "conversation_ids": conversation_ids,
+                "conversation_chained": (
+                    len(turns) > 1 and len(set(filter(None, conversation_ids))) == 1
+                ),
+                "turn_errors": [t.error for t in turns],
+                "dropped_scripted_assistant_turns": dropped,
+                "message_id": last.raw.get("message_id", ""),
+            },
+            error=next((t.error for t in turns if t.error), None),
+            turns=turns,
+        )
 
     # ------------------------------------------------------------------ daxili
-    def _http_error(self, raw: bytes, status: int, started: float) -> AgentResponse:
+    def _http_error(
+        self, raw: bytes, status: int, started: float, turn_index: int = 0
+    ) -> AgentResponse:
         body = _json_or_text(raw)
         code = str(body.get("code", f"http_{status}"))
         return AgentResponse(
             text="",
             latency_ms=int((time.perf_counter() - started) * 1000),
-            raw=body,
+            raw={**body, "turn_index": turn_index},
             error=code if code in DIFY_INFRA_ERRORS else f"unexpected:{code}",
         )
 

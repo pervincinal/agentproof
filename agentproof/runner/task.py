@@ -9,11 +9,36 @@ from typing import Any, Iterable
 
 from inspect_ai import Task
 from inspect_ai.dataset import MemoryDataset, Sample
+from inspect_ai.model import ChatMessageAssistant, ChatMessageUser
 
 from agentproof.runner.agent import target_agent
+from agentproof.runner.isolation import LanePool, build_lane_pool
 from agentproof.runner.scorer import agentproof_scorer
 from agentproof.runner.stages import Stage, filter_stage
 from agentproof.types import Case
+
+
+def _resolve_gold_anchors(cases: list[Case]) -> list[Case]:
+    """`doc#clause` gold lövbərlərini hədəfin segment id-lərinə çevirir.
+
+    Dataset-də retrieval gold-ları SABİT lövbərlərdir (`returns-and-refunds.md#2.1`),
+    Dify segment UUID-ləri deyil — yenidən indeksləmə bütün UUID-ləri dəyişir və
+    xam UUID saxlayan dataset həmin an səssizcə sınır.
+
+    Çevirmə qatı hədəfə aiddir, harness-ə yox: modul yalnız case-də HƏQİQƏTƏN
+    lövbər olduqda import olunur, ona görə harness lövbərsiz başqa hədəflərdə
+    dəyişmədən işləyir. Modul və ya xəritə yoxdursa — AÇIQ XƏTA, səssiz keçmə yox.
+    """
+    if not any("#" in str(g) for c in cases for g in c.expect.get("gold_chunks", [])):
+        return cases
+    try:
+        from target.corpus.anchors import resolve_cases  # noqa: PLC0415
+    except ImportError as exc:  # pragma: no cover — konfiqurasiya xətası
+        raise ValueError(
+            "dataset `doc#clause` gold lövbərləri işlədir, lakin çevirmə qatı "
+            f"(target/corpus/anchors.py) import olunmadı: {exc}"
+        ) from exc
+    return resolve_cases(cases)
 
 
 def load_cases(dataset_path: str | Path) -> list[Case]:
@@ -30,7 +55,7 @@ def load_cases(dataset_path: str | Path) -> list[Case]:
     dupes = {i for i in ids if ids.count(i) > 1}
     if dupes:
         raise ValueError(f"{dataset_path}: təkrarlanan case id-ləri: {sorted(dupes)}")
-    return cases
+    return _resolve_gold_anchors(cases)
 
 
 def dataset_hash(cases: Iterable[Case]) -> str:
@@ -86,6 +111,25 @@ def select_cases(
     return filter_stage(apply_filter(load_cases(dataset_path), filter_expr), stage)
 
 
+def _sample_input(case: Case) -> str | list[Any]:
+    """Çoxnövbəli case-in BÜTÜN növbələri Sample-a keçir.
+
+    Əvvəllər burada `case.query` (yalnız sonuncu user mesajı) verilirdi — yəni
+    çoxnövbəli (C1 sharded) case sükutla tək-növbəli case-ə çevrilirdi. İndi
+    tam söhbət `state.messages`-a düşür və adapter onu bütöv görür.
+
+    QEYD (`evals/datasets/COVERAGE.md` §7): `dify_http` adapteri hazırda yalnız
+    `req.query`-ni göndərir və `conversation_id`-ni zəncirləmir — yəni C1
+    case-ləri bu adapterlə hələ tam ölçülmür. Bu, adapter boşluğudur, dataset
+    boşluğu deyil; dataset düzgün kodlaşdırılıb.
+    """
+    if isinstance(case.input, str):
+        return case.input
+    return [ChatMessageUser(content=m.get("content", "")) if m.get("role") == "user"
+            else ChatMessageAssistant(content=m.get("content", ""))
+            for m in case.input]
+
+
 def build_task(
     dataset_path: str | Path,
     adapter: str,
@@ -95,6 +139,7 @@ def build_task(
     repeat: int = 1,
     seed: int | None = None,
     reset_url: str | None = None,
+    lanes: LanePool | list[dict[str, Any]] | None = None,
 ) -> tuple[Task, list[Case]]:
     cases = select_cases(dataset_path, filter_expr, stage)
     if not cases:
@@ -102,8 +147,9 @@ def build_task(
             f"{dataset_path}: filter={filter_expr!r} stage={stage!r} heç bir case seçmədi. "
             "Boş qaçış yaşıl nəticə kimi görünməməlidir — `select_cases()` ilə əvvəlcədən yoxla."
         )
+    pool = lanes if isinstance(lanes, LanePool) else build_lane_pool(lanes, reset_url)
     samples = [
-        Sample(input=c.query, id=c.id, target="", metadata=c.to_dict()) for c in cases
+        Sample(input=_sample_input(c), id=c.id, target="", metadata=c.to_dict()) for c in cases
     ]
     task = Task(
         dataset=MemoryDataset(samples, name=Path(dataset_path).stem),
@@ -112,7 +158,7 @@ def build_task(
             adapter_config=adapter_config or {},
             repeat=repeat,
             seed=seed,
-            reset_url=reset_url,
+            lanes=pool,
         ),
         scorer=agentproof_scorer(),
         name="agentproof",
@@ -120,7 +166,11 @@ def build_task(
             "dataset_hash": dataset_hash(cases),
             "stage": stage,
             "adapter": adapter,
-            "isolation": "admin_reset" if reset_url else "none",
+            # Hesabatda GÖRÜNMƏLİDİR: izolyasiya var idimi, neçə lane ilə.
+            # Gizli qalsa, sürətli amma sızmış qaçış yaşıl görünərdi.
+            "isolation": "admin_reset" if pool.isolated else "none",
+            "lanes": pool.size,
+            "lane_sessions": [lane.session or "" for lane in pool.lanes],
         },
     )
     return task, cases

@@ -111,12 +111,32 @@ def render(
 
     out += [
         "---",
-        f"<sub>xərc ${totals.get('cost_usd', 0):.2f} · "
+        f"<sub>model: {model_line(current)} · "
+        f"lane: {totals.get('lanes', 1)} · "
+        f"xərc ${totals.get('cost_usd', 0):.2f} · "
         f"p50 {totals.get('p50_latency_ms', 0) / 1000:.1f}s · "
         f"p95 {totals.get('p95_latency_ms', 0) / 1000:.1f}s · "
         f"qiymət cədvəli {totals.get('price_table_as_of', '?')}</sub>",
     ]
     return "\n".join(out)
+
+
+def model_line(record: RunRecord) -> str:
+    """`usage.model` yoxlanıbmı — hesabatda GİZLƏNMƏMƏLİDİR.
+
+    Yoxlanmamış etiket, xərcin yanlış modelə yazıla biləcəyi deməkdir; bu, boş
+    xərcdən pisdir, çünki rəqəm inandırıcı görünür.
+    """
+    check = record.totals.get("model_check") or {}
+    name = record.model or check.get("actual") or check.get("declared") or "?"
+    status = check.get("status", "")
+    if status == "match":
+        return f"{name} (app konfiqurasiyası ilə yoxlanıldı)"
+    if status == "adopted":
+        return f"{name} (app konfiqurasiyasından götürüldü)"
+    if not status:
+        return f"{name} (YOXLANILMAMIŞ əl etiketi)"
+    return f"{name} (YOXLANILMADI — {check.get('detail', status)})"
 
 
 def render_console(record: RunRecord, delta: RunDelta | None = None) -> str:
@@ -127,8 +147,12 @@ def render_console(record: RunRecord, delta: RunDelta | None = None) -> str:
         f"  keçdi   : {t.get('n_passed', 0)}/{t.get('n_graded', 0)}  ({t.get('pass_rate', 0):.1%})",
         f"  sındı   : {t.get('n_failed', 0)}",
         f"  skipped : {t.get('n_skipped', 0)}  (qiymətləndirilə bilmədi — səssiz keçmə deyil)",
-        f"  xərc    : ${t.get('cost_usd', 0):.4f}  (qiymət cədvəli {t.get('price_table_as_of', '?')})",
+        f"  xərc    : ${t.get('cost_usd', 0):.4f}  "
+        f"(qiymət cədvəli {t.get('price_table_as_of', '?')} · "
+        f"dərəcə tarixi {t.get('priced_on', '?')})",
+        f"  model   : {model_line(record)}",
         f"  gecikmə : p50 {t.get('p50_latency_ms', 0):.0f} ms · p95 {t.get('p95_latency_ms', 0):.0f} ms",
+        f"  növbə   : {t.get('multi_turn_cases', 0)} çoxnövbəli case zəncirləndi",
     ]
     failed = [r for r in record.results if not r.grade.passed and not r.grade.skipped]
     if failed:
