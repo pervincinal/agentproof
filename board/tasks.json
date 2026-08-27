@@ -427,8 +427,8 @@
    "desc": "PLAN.md mərhələ cədvəlində həm hunter (Mərhələ 2, xam), həm writer (Mərhələ 5) sətri gözləyir statusundadır və fayl mövcud deyil. Bu, müştəri hesabatının nüvəsidir. İki mənbədən yığılır: (1) eval qaçışının sınmış case-ləri — yalnız reproduksiya qapısından keçənlər; (2) docs/OPS-FINDINGS.md-dəki quraşdırma tapıntıları: OPS-01 (indeksləmə paralelliyi sabit kodlanıb), OPS-02 (SSRF proxy custom tool-ları bloklayır, yoxlama metodu yanıldıcıdır), OPS-03 (agent tətbiqində top_k səssizcə iqnor edilir, faktiki default 2), OPS-04 xərc (plugin qiyməti 50% şişirdir), OPS-04 (kiçik) PATCH/GET retrieval_model qaytarmır, VALID-01 (bayat bənd retrieval-da 0.038 bal geridə — tələ canlıdır), VALID-02 (tələ embedder-dən asılıdır: rank 2 vs 8). Qeyd: OPS-FINDINGS.md-də İKİ ayrı bənd OPS-04 nömrəsini daşıyır — nömrələmə düzəldilməlidir.",
    "role": "writer",
    "prio": "P1",
-   "status": "backlog",
-   "assignee": null,
+   "status": "review",
+   "assignee": "writer",
    "dod": "FINDINGS.md mövcuddur və: (1) hər eval tapıntısı üçün case id, reproduksiya statusu (3/3), gözlənilən vs faktiki cavab, təsir və uğursuzluq rejimi (FAILURE-TAXONOMY id-si) var; (2) yuxarıdakı 7 OPS/VALID bəndinin hər biri ayrıca bölmə kimi daxildir və OPS-04 təkrar nömrəsi həll olunub; (3) heç bir tapıntı reproduksiya qapısından keçmədən daxil edilməyib, flaky-lər ayrıca siyahıdadır; (4) A-07 triage nəticəsi tətbiq olunub — grader artefaktı tapıntı kimi göstərilməyib; (5) məhdudiyyət reyestrinə istinad var.",
    "links": [
     "docs/OPS-FINDINGS.md",
@@ -437,7 +437,7 @@
     "PLAN.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T21:42:14",
+   "updated": "2026-08-27T23:05:45",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -455,6 +455,72 @@
      "at": "2026-08-27T21:42:14",
      "actor": "main",
      "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T21:45:14",
+     "actor": "writer",
+     "action": "assigned",
+     "detail": "writer"
+    },
+    {
+     "at": "2026-08-27T21:45:14",
+     "actor": "writer",
+     "action": "backlog→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T22:49:45",
+     "actor": "main",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T22:49:45",
+     "actor": "main",
+     "action": "in_progress→todo",
+     "detail": "yeniden basladilir"
+    },
+    {
+     "at": "2026-08-27T22:51:00",
+     "actor": "writer",
+     "action": "assigned",
+     "detail": "writer"
+    },
+    {
+     "at": "2026-08-27T22:51:00",
+     "actor": "writer",
+     "action": "todo→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T22:57:31",
+     "actor": "writer",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T22:59:15",
+     "actor": "writer",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T23:01:39",
+     "actor": "writer",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T23:05:45",
+     "actor": "writer",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T23:05:45",
+     "actor": "writer",
+     "action": "in_progress→review",
      "detail": ""
     }
    ],
@@ -468,6 +534,31 @@
      "at": "2026-08-27T21:42:14",
      "actor": "main",
      "text": "Girish hazirdir: docs/TRIAGE-RUN02.md — 5 tesdiqlenmis REAL-FAILURE (RF-01..RF-06). YALNIZ bunlar derc olunur."
+    },
+    {
+     "at": "2026-08-27T22:49:45",
+     "actor": "main",
+     "text": "Agent kompüter yuxuya getdiyi ucun oldu (API error), fayl yazilmadi. Yeniden qosulur."
+    },
+    {
+     "at": "2026-08-27T22:57:31",
+     "actor": "writer",
+     "text": "FINDINGS.md skeleti + §1 Xulase, §2 Metodologiya, §3 Tesdiqlenmis tapintilar (F-1..F-4 = RF-01..RF-06, RF-01/02/03 birlesdirildi) yazildi ve diske salindi."
+    },
+    {
+     "at": "2026-08-27T22:59:15",
+     "actor": "writer",
+     "text": "§4 Olcmenin oz auditi (29 -> 5/14/10, 3 yalanci yasil, sec-s2-inj01 + bva-b-21 numuneleri) ve §5 Qeyri-determinizm (17.0%) yazildi."
+    },
+    {
+     "at": "2026-08-27T23:01:39",
+     "actor": "writer",
+     "text": "§6 Emeliyyat tapintilari yazildi: OPS-01..05 + VALID-01..03, her biri ayrica bolme. OPS-04 tekrar nomresi hell olundu — xerc bendi OPS-04 qaldi (xarici istinadlar ona baxir), PATCH/GET bendi OPS-05 oldu; docs/OPS-FINDINGS.md-de de duzeldildi + nomreleme qeydi elave edildi."
+    },
+    {
+     "at": "2026-08-27T23:05:45",
+     "actor": "writer",
+     "text": "§7 Judge qati (96.7%, k=0.9497, CAL-15, style_flip_rate 20%, r6j-collision-30kg), §8 Neyi olcmedik (LIMITATIONS istinadi + en vacib 8 istiqameti ile), §9 Flaky/ikimenali case-ler (25 flaky + 2 unstable-fail + olcme etibarsizlari) yazildi. A-07 triage neticesi acig sekilde qeyd olundu. FINDINGS.md = 993 setir, 9 bolme."
     }
    ]
   },
@@ -477,8 +568,8 @@
    "desc": "PLAN.md Mərhələ 5 gözləyir; fayl yoxdur. Layihənin ƏSAS məhsuludur: public tədqiqat həm də $3–6k-lıq audit xidmətinin satış materialıdır. PLAN.md Keyfiyyət qaydaları yazının şərtidir: şişirtmə yoxdur (#3), hədəf layihə alçaldılmır — ton biz sınadıq, budur tapdığımız (#4), nəyi ölçmədiyimiz yazılır (#5), Inspect AI-nin nüvə kimi işlədilməsi metodologiya bölməsində AÇIQ göstərilir (#6 — marketinq çərçivəsi bunu kölgələməməlidir). Metodologiya bölməsinə mütləq düşənlər: SUT claude-sonnet-5 / judge claude-opus-5, 3 seed, top_k=8 qərarı və səbəbi (VALID-02), qaçış tarixi + tətbiq olunan qiymət rejimi ($2/$10 introductory vs $3/$15 standard — OPS-04, əks halda xərc rəqəmləri təkrarlana bilməz).",
    "role": "writer",
    "prio": "P1",
-   "status": "backlog",
-   "assignee": null,
+   "status": "review",
+   "assignee": "writer",
    "dod": "docs/writeup.md hazırdır və: metodologiya bölməsində Inspect AI açıq adlanır; SUT/judge modelləri, seed sayı, top_k=8 və qiymət rejimi + qaçış tarixi yazılıb; judge kalibrasiya faizi və kappa mətndə göstərilib; nəyi ölçmədik bölməsi məhdudiyyət reyestrindən gəlir; hər ədədi iddia FINDINGS.md-dəki konkret case-ə və ya ölçməyə bağlanır; ekstrapolyasiya iddiası yoxdur (COVERAGE §9.9 — rəqəmlər nisbi, mütləq deyil).",
    "links": [
     "PLAN.md",
@@ -487,7 +578,7 @@
     "evals/datasets/COVERAGE.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:12:29",
+   "updated": "2026-08-27T23:36:34",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -500,6 +591,30 @@
      "actor": "po",
      "action": "comment",
      "detail": ""
+    },
+    {
+     "at": "2026-08-27T23:17:18",
+     "actor": "writer",
+     "action": "assigned",
+     "detail": "writer"
+    },
+    {
+     "at": "2026-08-27T23:17:18",
+     "actor": "writer",
+     "action": "backlog→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T23:36:34",
+     "actor": "writer",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T23:36:34",
+     "actor": "writer",
+     "action": "in_progress→review",
+     "detail": ""
     }
    ],
    "comments": [
@@ -507,6 +622,11 @@
      "at": "2026-08-27T19:12:29",
      "actor": "po",
      "text": "Asılılıq: AP-009 (FINDINGS.md) + AP-003 (kalibrasiya faizi mətndə göstərilməlidir)."
+    },
+    {
+     "at": "2026-08-27T23:36:34",
+     "actor": "writer",
+     "text": "docs/writeup.md hazırdır (~1950 söz, İngiliscə). Açılış F-1 (inkar formasında uydurma) ilə. Struktur: açılış · nə etdik · 4 tapıntı (F-1..F-4, hər biri sitat+mexanizm+düzəliş) · 'Half our tests were lying' (29→5/14/10 + 3 yalançı yaşıl, sec-s2-inj01 və bva-b-21 tam açılıb) · qeyri-determinizm 17% · konfiqurasiya lotereyası (VALID-02, default top_k=2) · Metod · Nəyi ölçmədik · son. DoD: Inspect AI açıq adlanıb; SUT claude-sonnet-5 / judge claude-opus-5; 3 seed; top_k=8 + səbəb; qaçış tarixi 2026-08-27 + $2/$10 introductory rejim (OPS-04); kalibrasiya 96.7% / κ=0.9497 / n=30; məhdudiyyətlər LIMITATIONS reyestrindən; ekstrapolyasiya qadağası açıq yazılıb (COVERAGE §9.9). OPS-02-nin müsbət qeydi saxlanılıb. AÇIQ QALAN: repo URL və əlaqə yoxdur (git remote qurulmayıb) — mətnin sonunda [repository link] · [contact] placeholder-ləri var, dərcdən əvvəl doldurulmalıdır. Söz sayı hədəfin (1200-1800) bir qədər üstündədir: DoD-un tələb etdiyi bütün rəqəmlər + 4 tapıntı + iki audit nümunəsi saxlanılıb."
     }
    ]
   },

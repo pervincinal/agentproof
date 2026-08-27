@@ -2,6 +2,11 @@
 
 Bunlar eval qaçışından deyil, sistemi qurarkən aşkarlandı. Hesabatın "operational reliability" bölməsinə aiddir.
 
+> **Nömrələmə qeydi (2026-08-27, writer/AP-009).** Bu sənəddə əvvəllər İKİ ayrı
+> bənd `OPS-04` nömrəsini daşıyırdı. Xərc bəndi `OPS-04` olaraq qaldı (xarici
+> istinadlar — `LIMITATIONS.md` LIM-E08, `pricing/models.yaml`, `test_budget.py`,
+> `board/tasks.json` — məhz ona baxır); `PATCH`/`GET` bəndi **`OPS-05`** oldu.
+
 ## OPS-01 — İndeksləmə paralelliyi sabit kodlanıb, konfiqurasiya açarı yoxdur
 
 **Sistem:** Dify 1.17.0
@@ -83,16 +88,6 @@ Həllin işləməsi `include` sırasından asılıdır: `squid.conf.template`-d�
 
 **Təsir:** ölçmə etibarlılığı üçün yüksək, istismar üçün orta.
 
-## OPS-04 (kiçik) — `PATCH`/`GET /v1/datasets/{id}` yazılan `retrieval_model`-i geri qaytarmır
-
-**Sistem:** Dify 1.17.0 · **Tarix:** 2026-08-27
-
-Yazma əməliyyatı işləyir və qalıcıdır (`api/controllers/service_api/dataset/dataset.py:675` → `update_data["retrieval_model"]`; postgres-də təsdiqləndi). Amma cavab modelində (`api/fields/dataset_fields.py`, `DatasetDetailResponse`) `retrieval_model` sahəsi deklarasiya olunmayıb — yalnız `retrieval_model_dict` var. Ona görə həm `PATCH` cavabı, həm də ardınca gələn `GET` `retrieval_model: null` qaytarır.
-
-**Nəticə:** yazını API cavabı ilə yoxlayan çağırıcı əməliyyatın uğursuz olduğu qənaətinə gəlir. Yeganə etibarlı yoxlama nöqtəsi baza və ya UI-dır.
-
-**Təsir:** aşağı. Funksional pozuntu yoxdur, amma skriptlə qurulan setup-ı məhz bu cür detallar "qeyri-sabit" göstərir.
-
 ## OPS-04 — Xərc hesabatı yanlışdır (keçid dövrü qiyməti)
 
 **Sistem:** Dify 1.17.0 + `langgenius/anthropic` 0.3.28
@@ -115,6 +110,16 @@ pricing: {input: '3.00', output: '15.00'}
 3. Proqnoz: 450 sorğu → **~$8.8** (31 avqusta qədər) / **~$13.2** (sonra).
 
 **Ümumi dərs:** platformanın `total_price` sahəsinə güvənmək olmaz — qiymət cədvəlləri plugin içində sabit yazılır və model qiymətləri dəyişəndə gecikir. Bu, müştəri auditlərində də keçərlidir: xərc iddiası platformanın öz hesabından deyil, müstəqil cədvəldən gəlməlidir.
+
+## OPS-05 (kiçik) — `PATCH`/`GET /v1/datasets/{id}` yazılan `retrieval_model`-i geri qaytarmır
+
+**Sistem:** Dify 1.17.0 · **Tarix:** 2026-08-27
+
+Yazma əməliyyatı işləyir və qalıcıdır (`api/controllers/service_api/dataset/dataset.py:675` → `update_data["retrieval_model"]`; postgres-də təsdiqləndi). Amma cavab modelində (`api/fields/dataset_fields.py`, `DatasetDetailResponse`) `retrieval_model` sahəsi deklarasiya olunmayıb — yalnız `retrieval_model_dict` var. Ona görə həm `PATCH` cavabı, həm də ardınca gələn `GET` `retrieval_model: null` qaytarır.
+
+**Nəticə:** yazını API cavabı ilə yoxlayan çağırıcı əməliyyatın uğursuz olduğu qənaətinə gəlir. Yeganə etibarlı yoxlama nöqtəsi baza və ya UI-dır.
+
+**Təsir:** aşağı. Funksional pozuntu yoxdur, amma skriptlə qurulan setup-ı məhz bu cür detallar "qeyri-sabit" göstərir.
 
 ## VALID-02 — Bayat bənd tələsi EMBEDDER-DƏN ASILIDIR (ölçülmüş)
 
