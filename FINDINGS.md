@@ -4,7 +4,8 @@
 2026-08-27T14:44:48+00:00 · **Oxucu:** mühəndis / CTO
 **Mənbələr:** `docs/TRIAGE-RUN02.md` · `docs/GRADER-AUDIT.md` ·
 `docs/OPS-FINDINGS.md` · `docs/JUDGE-CALIBRATION.md` · `docs/LIMITATIONS.md` ·
-`docs/FAILURE-TAXONOMY.md` · `evals/datasets/COVERAGE.md`
+`docs/FAILURE-TAXONOMY.md` · `docs/ARCHITECTURE.md` · `evals/datasets/COVERAGE.md`
+**Düzəliş:** bu sənəd 2026-08-28-də bir dəfə düzəldilib (F-3-ün mexanizmi) — §10.
 
 ## 1. Xülasə
 
@@ -36,9 +37,18 @@ eval dəsti tapdığı uğursuzluqların yarısından çoxunu səhv hesab edir.*
 | 29-un təsnifatı | **5 real · 14 grader boşluğu · 10 ikimənalı** | `TRIAGE-RUN02.md` |
 | Auditin üzə çıxardığı yalançı yaşıl | **3** (→ RF-06) | `TRIAGE-RUN02.md`, `GRADER-AUDIT.md#A-11/A-18` |
 | Dərc olunan tapıntı | **5 təsdiqlənmiş (RF-01…RF-05) + RF-06** → kök səbəbə görə **4 fərqli tapıntı** | §3 |
+| Bilik bazasını **bir dəfə də çağırmayan** case | **33 / 147 = 22.4%** | `RunRecord` iz analizi · `ARCHITECTURE.md#FP-20` |
 | Judge kalibrasiyası | uyğunluq **96.7%**, κ = **0.9497**, n = 30 | `evals/calibration/report.json` |
 | Qaçış xərci | **$11.34** ($2/$10 introductory rejimi ilə) | `totals.cost_usd` |
 | Gecikmə | p50 **19.98 s** · p95 **78.58 s** | `totals` |
+
+Tapıntıların ikisi — F-3 və F-4 — eyni memarlıq kökündən çıxır və bu, cədvəlin
+22.4% sətrində görünür: `agent-chat` rejimində retrieval **məcburi deyil**,
+model bilik bazasını tool kimi çağırmalıdır və çağırmamaq seçimi heç bir yerdə
+bloklanmır. 147 case-in 33-ü (22.4%) bilik bazasına heç toxunmadı. F-4-də bu,
+tam şəkildə baş verir (0 çağırış → «bu mənim səlahiyyətimdən kənardır»);
+F-3-də isə çağırış olur, amma sorğu kontekstdəki fakta bağlanmadığı üçün üstün
+qayda gətirilmir. Mexanizm təhlili: `docs/ARCHITECTURE.md §5.5, §6`.
 
 > **Nə DEYİLƏ BİLMƏZ.** Bu rəqəmlər bir konfiqurasiya, bir model, bir embedder
 > və süni korpus üçün etibarlıdır. Mütləq mənada ekstrapolyasiya (“production-da
@@ -273,19 +283,28 @@ məhz bu zərəri ölçmək üçün əkilmişdi və sistem tələyə düşdü.
 
 ### F-3 (RF-05) — Beynəlxalq sifarişə domestik zədə-bildirişi son tarixi tətbiq olunur
 
+> **Bu bölmə 2026-08-28-də düzəldilib.** İlk redaksiyada mexanizm «eyni mövzuda
+> iki qüvvədə olan bənd, model səhvini seçdi» kimi yazılmışdı. Qaçış artefaktı
+> bunu təkzib edir: ikinci bənd **kontekstdə deyildi**. Nə dəyişdi və nə
+> dəyişmədi — §10.
+
 | Sahə | Dəyər |
 |---|---|
-| **Uğursuzluq rejimi** | **G2** (dataset tag) — şərt təhrifi / seqment seçimi; mexanizm etibarilə **R6**-nın konflikt istiqaməti: eyni mövzuda iki qüvvədə olan bənd |
+| **Uğursuzluq rejimi** | Təzahür **G2** (dataset tag) — şərt təhrifi / seqment seçimi. **Mexanizm isə R2** — düzgün sənəd top-K-dan kənarda qalır (`FAILURE-TAXONOMY.md §3`). R6 (konflikt/bayat bənd) **deyil**: konflikt üçün hər iki bənd kontekstdə olmalıdır, olmayıb |
 | **Ciddilik** | **MEDIUM** |
 | **Case** | `pw-11-en-damage_complaint-international-current-t5` (5 növbəli) |
-| **Reproduksiya** | **3/3** |
+| **Reproduksiya** | **3/3** verdikt səviyyəsində, eyni səbəblə (`reproduction.json`: `stable-fail`, `reason_variants` = tək element, `tapılmayan ifadə(lər): ['14']`) |
+| **İz (trace) sübutu** | `RunRecord`-da saxlanan qaçış — `reports/full-run-02/VmH7QgPBAE7PwcMo6Xwz7Q.json`, `attempt = 3`. Qalan iki cəhd üçün yalnız verdikt qeydə alınıb (bax aşağıdakı «dürüst hədd») |
 
 **Kanonik dəyər.** `CANONICAL.yaml#intl_transit_damage_report_days = **14**`.
 `international-shipping.md` §6.1 bunu birbaşa yazır: *«The transit-damage
 reporting deadline for international orders is **14 calendar days** from
 delivery, **rather than the 7 days** in returns-and-refunds.md §5.1»*.
 `FIXTURES.yaml#ORD-10018` → `destination_country: **GE**`, yəni beynəlxalq.
-`precedence_ladder` rank 3 = international.
+Diqqət: **14 günlük hədd yalnız §6.1-dən çıxarıla bilər.** `returns-and-refunds.md`
+§8 precedence ladder-i **qaytarma pəncərəsini** tənzimləyir və orada «zədəli/
+qüsurlu» rank **2**, «Azərbaycandan kənar çatdırılma» rank **3**-dür — yəni
+ladder tək başına oxunanda domestik zədə bəndini **üstün** göstərir.
 
 **Sorğu (son növbə):**
 ```
@@ -304,6 +323,96 @@ delivery, **rather than the 7 days** in returns-and-refunds.md §5.1»*.
 **Gözlənilən davranış.** **14 gün** — beynəlxalq qayda domestik qaydanı əvəz
 edir; §6.1 bunu ismarıcın öz mətnində açıq deyir.
 
+---
+
+#### Mexanizm — artefaktdan oxunmuş
+
+Bu, **seçim uğursuzluğu deyil, retrieval uğursuzluğudur.** Model iki qayda
+arasında səhv seçim etmədi; ona **yalnız bir qayda verildi**.
+
+Növbə üzrə iz (`VmH7QgPBAE7PwcMo6Xwz7Q.json` → `results[case].response.turns`):
+
+| Növbə | Tool çağırışları | Qeydə alınan bənd |
+|---|---|---:|
+| 1 | — | **0** |
+| 2 | — | **0** |
+| 3 | — | **0** |
+| 4 | `lookup_order` | **0** |
+| 5 | `check_return_eligibility`, `dataset_1623dd7e…` | **8** |
+
+5-ci növbədə gətirilən 8 bəndin sənəd bölgüsü:
+
+```
+1  returns-and-refunds.md          0.5928  "1.5 A return is a request to send goods back…"
+2  returns-and-refunds.md          0.5716  "5. Items damaged … 5.1 Damage visible on arrival…"   ← 7 gün
+3  returns-and-refunds.md          0.5633  "8. Precedence ladder 8.1 …"
+4  promotions-and-price-match.md   0.5566  "2. Return window for promotional items…"
+5  promotions-and-price-match.md   0.5498  "2.4 The restocking fee …"
+6  promotions-and-price-match.md   0.5448  "4. Clearance and Final Sale…"
+7  returns-and-refunds.md          0.5377  "6. Items that cannot be returned…"
+8  warranty-policy.md              0.5331  "1. Scope and relationship to returns…"
+
+sənəd bölgüsü:  returns-and-refunds ×4 · promotions-and-price-match ×3 · warranty-policy ×1
+international-shipping.md:  0 bənd  ← 14 günlük §6.1 buradadır
+```
+
+**Yəni §6.1 modelə heç vaxt çatmadı** — nə 5-ci növbədə (8 bəndin heç biri
+`international-shipping.md`-dən deyil), nə də əvvəlki dörd növbədə (retrieval
+ümumiyyətlə baş vermədi).
+
+**Model sifarişin beynəlxalq olduğunu bilirdi.** 4-cü növbədə `lookup_order`
+`destination_country: "GE"` qaytardı və model bunu öz mətnində təkrarladı:
+
+> «I found order ORD-10018. It's showing **destination country GE (Georgia)**,
+> delivered on 2026-08-10…»
+
+**Bir növbə sonra həmin fakt retrieval sorğusuna düşmədi.** Sorğu artefaktda
+hərfbəhərf qeydə alınıb (`turns[4].tool_calls[1].arguments`):
+
+```json
+{"query": "damaged item return window policy"}
+```
+
+Nə «international», nə «GE», nə «Georgia», nə də hər hansı seqment termini.
+Model ölkəni bir növbə əvvəl özü yazmışdı; sorğuya isə yalnız istifadəçinin
+mövzusu düşdü. Bu, mexanizmin ən birbaşa sübutudur: **fakt sistemdə var idi,
+retrieval-a ötürülmədi.**
+
+**Dörd həlqə** (memarlıq təhlili: `docs/ARCHITECTURE.md §6`, FP-04 · FP-20 · §3):
+
+1. **Retrieval sorğusunu model yazır.** Bilik tool-unun yeganə parametri
+   sərbəst mətn `query`-dir; sorğu istifadəçinin son ismarıcından qurulur.
+2. **Kontekstdəki strukturlu fakt sorğuya qoşulmur.** Dify-da tool nəticəsini
+   retrieval sorğusuna və ya filtrinə bağlayan mexanizm yoxdur;
+   `metadata_filtering_mode` canlı dəyəri `disabled`-dır və aktiv olsaydı belə
+   sənəd metadatasına görə işləyir, tool cavabına görə yox.
+3. **Rerank yoxdur.** Xam vektor oxşarlığı «damage + 22 days» sorğusunu domestik
+   zədə bəndinə yaxın sayır; beynəlxalq bənd 8-liyə girmir. Ballar bir-birinə
+   çox yaxındır (0.533–0.593) — sıralama kövrəkdir.
+4. **Kontekstə düşən yeganə meta-qayda əks istiqamətə işarə edir.** Model §8
+   precedence ladder bəndini 3-cü mövqedə **aldı**, lakin ladder qaytarma
+   pəncərəsi üçündür və zədəni (rank 2) beynəlxalqdən (rank 3) yuxarı qoyur.
+   Zədə-bildirişi son tarixinin beynəlxalq istisnası **yalnız** §6.1-də var —
+   və məhz o bənd gəlmədi. Yəni kontekstdə modeli 14 günə apara biləcək heç nə
+   yox idi: nə qaydanın özü, nə də onun mövcudluğuna işarə.
+
+Əlavə qat: `agent-chat` rejimində retrieval **məcburi deyil** — model bilik
+bazasını tool kimi çağırmalıdır (müqayisə: `chat` app-da kontekst hər mesajda
+avtomatik prepend olunur, `chat/app_runner.py:161-196`). Bu case-də ilk dörd
+növbədə heç bir retrieval yoxdur; qaçış miqyasında **147 case-in 33-ü (22.4%)
+bilik bazasını bir dəfə də çağırmadı** (`ARCHITECTURE.md#FP-20`). Eyni struktur
+F-4-ün əsas səbəbidir — yəni F-3 və F-4 ayrı simptomların **eyni memarlıq
+kökündən** çıxan iki görünüşüdür.
+
+**Dürüst hədd.** Verdikt 3/3 təkrarlanır və hər üç cəhddə eyni səbəb qeydə
+alınıb, lakin **iz səviyyəsində** yuxarıdakı bölgü bir qaçışa aiddir
+(`attempt = 3`); `reproduction.json` əvvəlki iki cəhd üçün retrieval izini
+saxlamır. Yəni «hər üç cəhddə də §6.1 gəlmədi» ifadəsi **ölçülmüş deyil** —
+ölçülmüş olan budur: qeydə alınmış qaçışda gəlmədi, və hər üç cəhdin verdikti
+eyni səbəblə eynidir.
+
+---
+
 **Niyə bu, ciddiliyi MEDIUM olan, amma metodoloji baxımdan ən maraqlı tapıntıdır.**
 Yekun verdikt **təsadüfən düzgündür**: 22 gün həm 7-dən, həm 14-dən böyükdür,
 ona görə «gecdir» nəticəsi hər iki qayda ilə eynidir. Yəni nəticəyə baxan
@@ -314,17 +423,38 @@ verilmiş yanlış son tarix presedent yaradır.
 
 **Biznes təsiri.** Beynəlxalq seqmentdə sistematik olaraq yanlış son tarix
 bildirilir. Zərər verdiktdə yox, sənədləşdirilmiş əsaslandırmadadır — audit və
-şikayət prosedurunda məhz o sitat oxunur.
+şikayət prosedurunda məhz o sitat oxunur. Mexanizm retrieval qatında olduğuna
+görə təsir bu case ilə məhdud deyil: sifariş seqmentindən (ölkə, üzvlük,
+kampaniya) asılı olan **hər** siyasət sualı eyni yolla sınır — sadəcə
+əksəriyyətində verdikt də səhv çıxacaq və bu qədər səssiz olmayacaq.
 
-**Təklif olunan düzəliş.**
-1. Retrieval-ı **sifariş metadatası ilə şərtləndirmək**: `destination_country`
-   məlumdursa, seqmentə aid siyasət bəndi kontekstə məcburi əlavə olunmalıdır.
-2. Korpusda **iki istiqamətli çarpaz istinad**: domestik §5.1 bəndinin öz
-   mətnində «beynəlxalq sifarişlər üçün bax §6.1» qeydi olmalıdır. Hazırda
-   istinad yalnız §6.1 → §5.1 istiqamətindədir, yəni domestik bənd tək
-   qaytarılanda agent üstün qaydanın mövcudluğundan xəbərsizdir.
-3. `precedence_ladder`-i prompt-a mətn kimi əlavə etmək kifayət deyil — sınaq
-   göstərir ki, model ladder-i tətbiq etmək üçün əvvəlcə seqmenti tanımalıdır.
+**Təklif olunan düzəliş.** Sıra vacibdir: ilk bənd mexanizmi bağlayır, qalanları
+onu möhkəmləndirir.
+
+1. **Retrieval sorğusunu sifariş metadatası ilə şərtləndirmək.** `lookup_order`
+   `destination_country` qaytardığı andan etibarən həmin fakt retrieval yoluna
+   keçməlidir — sorğu genişləndirməsi ilə (sorğuya «international shipping»
+   seqment terminini əlavə etmək), yaxud metadata filtri ilə (sənəd səviyyəsində
+   `segment: international` etiketi + `metadata_filtering_mode` aktiv). Hazırda
+   model faktı **bilir**, sistem isə onu retrieval-a **ötürmür**; bağlanmalı olan
+   boşluq budur.
+2. **Seqmentə aid bəndi kontekstə məcburi əlavə etmək.** Sifariş beynəlxalqdirsə,
+   `international-shipping.md`-in müvafiq bəndi sıralamadan asılı olmayaraq
+   kontekstə qoyulmalıdır — semantik oxşarlığa etibar etmək kifayət etmir, çünki
+   ballar arasındakı fərq (0.533–0.593) qərar verəcək qədər böyük deyil.
+3. **Rerank və provenans.** Rerank domestik və beynəlxalq bəndləri sorğu
+   niyyətinə görə ayıra bilər. Provenans isə ayrıca dəyər verir: hazırda bəndlər
+   prompt-a **mənbəsiz mətn** kimi gəlir — nə sənəd adı, nə bal. Hansı bəndin
+   hansı sənəddən gəldiyi göründükdə sənədlərarası üstünlük qaydaları
+   ümumiyyətlə tətbiq oluna bilən hala düşür; hazırda düşmür.
+4. **Korpusda iki istiqamətli çarpaz istinad** (`§5.1` mətnində «beynəlxalq
+   sifarişlər üçün bax §6.1»). Bu, **tək başına kifayət deyil** — yalnız modelə
+   üstün qaydanın **mövcudluğunu** bildirir, qaydanın özünü yox; ondan sonra
+   model ikinci retrieval çağırışı etməlidir və bunu edəcəyinə zəmanət yoxdur.
+   Ucuz olduğu üçün dəyərlidir, mexanizmi bağladığı üçün yox.
+5. `precedence_ladder`-i prompt-a mətn kimi əlavə etmək **problemi həll etmir**:
+   bu case-də ladder onsuz da kontekstdə idi (mövqe 3) və işə yaramadı, çünki
+   tətbiq ediləcək ikinci bənd yox idi.
 
 ---
 
@@ -374,6 +504,15 @@ Bu case-lər tam qaçışda **keçmişdi**. `account_locked` assertion-ı çılp
 sətrini axtarırdı; imtina mətnindəki «locked out» sözü onu təmin edirdi. Yəni
 ölçmə imtinanı düzgün cavab kimi qeyd edirdi. Tapıntı yalnız grader auditindən
 sonra göründü (§4).
+
+**Memarlıq kökü — və bunun tək case olmadığı.** `agent-chat` rejimində bilik
+bazası adi tooldur; model onu çağırmaya bilər və çağırmayanda heç bir qat
+müdaxilə etmir — cavab 200 ilə qayıdır, `retriever_resources` boş olur, xəbərdarlıq
+verilmir (`ARCHITECTURE.md#FP-20`). Bu case-də model **heç bir tool çağırmadı**
+(0 çağırış, 0 bənd), halbuki §1.2 indekslənmiş korpusdadır. Qaçış miqyasında
+**33/147 case (22.4%)** bilik bazasına heç toxunmadı — yəni bu, tək hadisə deyil,
+davranış səthidir. `chat` app rejimində eyni sual üçün §1.2 prompt-a avtomatik
+düşərdi (`chat/app_runner.py:161-196`) və model onu görmədən imtina edə bilməzdi.
 
 **Biznes təsiri.** Səssiz churn — müştəri şikayət etmir, sadəcə gedir; həm də
 metriklərdə bu, «təhlükəsizlik uğuru» kimi görünür. Təhlükəsizlik mövzusunda
@@ -903,7 +1042,20 @@ embedder seçildiyi üçün bu ayrım mümkün deyil (VALID-02: rank 2 vs 8). Ba
 platformaya, modelə və ya embedder-ə köçürülməsi **sübut edilməyib**; hər tapıntı
 öz konfiqurasiyası ilə birlikdə sitat gətirilməlidir.
 
-### 8.9 Bu hesabatdan çıxarıla BİLMƏYƏN nəticələr
+### 8.9 Çoxlu retrieval çağırışında bənd siyahısı natamamdır — **↓ GİZLƏDİR** (`LIM-I09`)
+
+Dify gətirilmiş bəndlərin təkrarını `segment_id`-yə görə deyil,
+**`(dataset_id, document_id)`** cütünə görə atır
+(`ARCHITECTURE.md#FP-11`). Nəticədə model ikinci çağırışda eyni sənədin başqa
+bəndlərini alsa, həmin bəndlər cavabın metadatasına düşmür. Qaçışda ≥2 bilik
+bazası çağırışı olan **18 case-in 17-si** az sayır (8–12 bənd, 16 olmalı idi;
+üç çağırışlı tək case-də 10, 24 olmalı idi), **4 case-də isə ikinci çağırışın
+bütün nəticəsi görünməzdir**. `retrieval_hit_at_k` və `precision_at_k` məhz bu
+sahəni oxuyur, ona görə **bizim retrieval metriklərimiz aşağı sayır** — bu,
+hədəfin deyil, ölçmənin qüsurudur. F-3-ün iz sübutuna təsiri yoxdur: oradakı
+8 bənd **tək** çağırışdan gəlir.
+
+### 8.10 Bu hesabatdan çıxarıla BİLMƏYƏN nəticələr
 
 - «Dify pisdir» / «Dify yaxşıdır» — biz platformanı deyil, **bir konfiqurasiyanı**
   ölçdük; tapıntıların bir hissəsi (məsələn §8.1) birbaşa **bizim öz
@@ -991,3 +1143,37 @@ Bunlar agentin davranışı haqqında deyil, **bizim dəstimizin qüsuru** haqq�
 5. **`RunRecord`-a retrieval bloku** (`embedder`, `top_k`, `search_method`,
    `rerank`) əlavə edilsin — hazırda reproduksiya xarici sənədə güvənir
    (`LIM-E06`), DSL isə hələ `top_k: 4` yazır (VALID-03).
+
+---
+
+## 10. Düzəliş qeydi
+
+Bu sənəd dərc olunduqdan sonra bir dəfə düzəldilib. Düzəliş gizlədilmir: səhv
+mətn nə idi, nə ilə əvəz olundu və hansı sübutla — hamısı aşağıdadır.
+
+### C-01 · 2026-08-28 — F-3-ün mexanizmi (§3, F-3)
+
+| Sahə | Dəyər |
+|---|---|
+| **Nə səhv idi** | F-3-ün uğursuzluq mexanizmi «eyni mövzuda iki qüvvədə olan bənd, model səhvini seçdi» — yəni **R6**-nın konflikt istiqaməti, **qayda seçimi uğursuzluğu** kimi təsvir olunmuşdu |
+| **Nə doğrudur** | Bu, **retrieval uğursuzluğudur** (**R2** — düzgün sənəd top-K-dan kənarda qalır). Model iki qayda arasında səhv seçim etmədi; ona yalnız bir qayda verildi |
+| **Sübut** | `reports/full-run-02/VmH7QgPBAE7PwcMo6Xwz7Q.json`, case `pw-11-en-damage_complaint-international-current-t5`: növbə 1–4 `retrieved = 0`; növbə 5 `retrieved = 8` → `returns-and-refunds.md ×4`, `promotions-and-price-match.md ×3`, `warranty-policy.md ×1`. `international-shipping.md` **0 bənd**. Yəni §6.1 (14 günlük pəncərə) modelin kontekstinə heç vaxt daxil olmadı. Retrieval sorğusu da hərfbəhərf qeydə alınıb: `{"query": "damaged item return window policy"}` — modelin bir növbə əvvəl özünün yazdığı «destination country GE» faktı sorğuya düşməyib |
+| **Necə aşkarlandı** | Memarlıq təhlili (`docs/ARCHITECTURE.md §6`, AP-014) tapıntıların hər biri üçün qaçış artefaktından tool izini və retrieval bölgüsünü çıxardı; F-3-də iz FINDINGS-in yazdığı mexanizmlə uyğun gəlmədi |
+| **Nə DƏYİŞMƏDİ** | Tapıntının özü, ciddiliyi (MEDIUM), reproduksiyası (3/3), sitatlar, «yekun verdikt təsadüfən düzgündür və hər outcome-səviyyəli ölçmə onu yaşıl işarələyir» arqumenti — bunların hamısı ilk redaksiyada düzgün idi və olduğu kimi qalır |
+| **Nə DƏYİŞDİ** | (a) mexanizmin təsviri; (b) uğursuzluq rejimi kodu G2/R6 → təzahür G2 · mexanizm R2; (c) **təklif olunan düzəlişin prioriteti** — «hər iki istiqamətdə çarpaz istinad» birinci bənd idi, indi 4-cü bənddir və açıq şəkildə «tək başına kifayət deyil» qeydi ilə gəlir; birinci bənd retrieval sorğusunun sifariş metadatası ilə şərtləndirilməsidir |
+| **Toxunulan fayllar** | `FINDINGS.md` §1 (xülasə + FP-20 sətri), §3 (F-3), §10 · `docs/writeup.md` (F-3 və F-4 abzasları) |
+| **Eyni gündə əlavə olunan, lakin düzəliş OLMAYAN** | `LIM-I09` / §8.9 — yeni **ölçmə məhdudiyyəti** (`retriever_resources` dedup). Bu, yazılmış bir şeyin düzəlişi deyil, əvvəl bilinməyən bir həddin qeydə alınmasıdır; ayrıca göstərilir ki, iki hal qarışmasın |
+
+**Niyə bu düzəliş tapıntını gücləndirir, zəiflətmir.** «Model səhv qayda seçdi»
+prompt səviyyəsində düzəldilə bilən bir problemdir. «Sistem düzgün qaydanı
+modelə heç vaxt göstərmir» isə memarlıq problemidir: retrieval sorğusu modelin
+yazdığı bir sətir mətndir və kontekstdəki strukturlu faktlarla (sifarişin
+ölkəsi) heç bir əlaqəsi yoxdur. Bu quruluş oxucunun öz RAG sistemində
+böyük ehtimalla eynilə mövcuddur.
+
+**Metodoloji nəticə (özümüzə).** Səhv təsvir ona görə yarandı ki, ilk redaksiya
+**cavab mətnindən** mexanizm çıxardı — cavabda iki qayda müqayisə olunurmuş kimi
+görünürdü. İz (hansı tool çağırıldı, nə gətirildi) yalnız sonra oxundu. Qayda:
+**uğursuzluq mexanizmi cavab mətnindən deyil, izdən oxunmalıdır**; cavab mətni
+yalnız simptomu göstərir. Bu, §4-də ölçmə aləti üçün çıxardığımız nəticənin
+eynisidir, sadəcə bir qat yuxarıda.

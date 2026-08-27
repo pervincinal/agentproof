@@ -166,6 +166,49 @@ qarışdırmaq — grader səhvini hədəfin səhvi kimi göstərmək — uydurm
   `agentproof/graders/aggregate/consistency.py` ·
   `evals/datasets/pilot-consistency.jsonl`.
 
+### LIM-I09 · `retriever_resources` sənəd səviyyəsində dedup edir — **↓ GİZLƏDİR**
+
+- **Nə ölçülmədi.** Birdən çox bilik-bazası çağırışı olan case-lərdə **faktiki**
+  gətirilən bənd dəsti. Dify təkrarları `segment_id`-yə görə deyil,
+  **`(dataset_id, document_id)`** cütünə görə atır
+  (`api/core/app/task_pipeline/message_cycle_manager.py:195-206`). Yəni model
+  ikinci çağırışda **eyni sənədin başqa bəndlərini** alsa, həmin bəndlər
+  cavabın metadatasından tamamilə düşür: model onları görür, biz görmürük.
+- **Ölçü** (`reports/full-run-02`, 147 case, `RunRecord` iz analizi):
+
+  | KB çağırışı | Case | Qeydə alınan bənd | Gözlənilən (8 × çağırış) |
+  |---:|---:|---|---:|
+  | 0 | 33 | 0 | 0 |
+  | 1 | 96 | 8 | 8 |
+  | 2 | 17 | 8 (×4) · 9 (×6) · 10 (×3) · 11 (×1) · 12 (×2) · 16 (×1) | 16 |
+  | 3 | 1 | 10 | 24 |
+
+  ≥2 çağırışı olan **18 case-in 17-si** (147-dən 11.6%) az sayır. **4 case-də**
+  iki çağırışdan sonra cəmi **8** bənd qalıb — yəni ikinci çağırışın **bütün
+  nəticəsi görünməzdir**: `g1-gap03-warranty-transfer`,
+  `pw-13-en-gap_question-standard-superseded-t3`, `t1-guard-ord10053-not-delivered`,
+  `t1-w03-no-confirmation`.
+- **Niyə.** Hədəf platformanın metadata qatının davranışıdır. Adapter yalnız
+  dedup olunmuş siyahını alır — bunu bizim tərəfdə düzəltmək mümkün deyil.
+- **İstiqamət.** **↓ GİZLƏDİR.** `retrieval_hit_at_k` və `precision_at_k`
+  məhz bu sahəni oxuyur (`graders/deterministic/retrieval.py:13, 39-41, 75-77`
+  → `response.retrieved[:k]`). Gold bənd yalnız ikinci çağırışda gəlibsə,
+  `hit@k` onu **miss** sayır. Yəni retrieval metriklərimiz həqiqi retrieval
+  keyfiyyətindən **aşağı** göstərir. Bu, hədəfin deyil, **bizim ölçmənin**
+  qüsurudur və tapıntı kimi dərc edilə bilməz.
+- **F-3-ə təsiri: yoxdur.** F-3-ün iz sübutu (§3) **tək** KB çağırışından
+  gəlir — 8 bəndin hamısı bir çağırışın nəticəsidir, ona görə orada dedup
+  itkisi mümkün deyil. `international-shipping.md`-in olmaması ölçmə artefaktı
+  deyil.
+- **Azaltma.** Ya (a) ≥2 KB çağırışı olan case-lər retrieval metriklərində
+  `skipped` sayılsın, ya da (b) bənd siyahısı `retriever_resources`-dan yox,
+  tool çağırışının öz cavabından çıxarılsın. Hər ikisi ayrıca tapşırıq tələb
+  edir; hazırda **heç biri tətbiq olunmayıb**.
+- **Mənbə.** `docs/ARCHITECTURE.md#FP-11` ·
+  `reports/full-run-02/VmH7QgPBAE7PwcMo6Xwz7Q.json` ·
+  `message_cycle_manager.py:195-206` ·
+  `agentproof/graders/deterministic/retrieval.py`.
+
 ### Bağlanmış məhdudiyyətlər (silinmir — auditdə görünməlidir)
 
 | ID | Nə idi | Necə bağlandı | Təsdiq |
@@ -644,7 +687,7 @@ Hesabatın hər iddiası hansı məhdudiyyətlərlə birlikdə oxunmalıdır:
 | «Sistem injection-a davamlıdır/deyil» | LIM-C15 — 4 payload; red-team nəticəsi deyil |
 | «Cavablar sabitdir / qeyri-determinizm X%» | LIM-E03 (temperature bağlana bilmir) · LIM-E05 (N=3) · LIM-I08 (consistency ölçüsü köhnə) · LIM-M03 |
 | «Xərc $W/case» | LIM-E08 (qiymət rejimi + tarix) · LIM-E09 (mock, yüksüz sistem) |
-| «Retrieval hit@k = V» | LIM-E02 (embedder) · LIM-C09 + LIM-C10 (korpus kiçik və təmiz → alt hədd) |
+| «Retrieval hit@k = V» | LIM-E02 (embedder) · LIM-C09 + LIM-C10 (korpus kiçik və təmiz → alt hədd) · **LIM-I09** (çoxlu çağırışda bəndlər dedup olunur → aşağı sayır) |
 | «Judge verdikti: justified/unjustified/wrong» | LIM-I03 — kalibrasiya qapısı keçilməyib; **dərc edilə bilməz** |
 | «Reqressiya yoxdur» | LIM-M02 — baseline yoxdur |
 | «Çoxnövbəli söhbətdə N-ci növbədə sınır» | LIM-C04 — deqradasiya əyrisi ölçülmür |
@@ -676,6 +719,7 @@ Qısa cədvəl — auditin oxucusuna birbaşa ünvanlanır.
 | 15 | «Sistemdə demoqrafik yanlılıq yoxdur» | LIM-C16 | Ədalətlilik bu versiyada ölçülmür |
 | 16 | «Sistem çoxkirayəçili mühitdə təhlükəsizdir» | LIM-C06 | Quraşdırma tək kirayəçidir |
 | 17 | «Agent istinadları düzgün verir» | LIM-C07 | Hədəf strukturlaşdırılmış istinad qaytarmır |
+| 18 | «Retrieval hit@k dəqiq ölçülüb» | LIM-I09 | ≥2 KB çağırışı olan 18 case-in 17-sində bənd siyahısı natamamdır |
 
 ---
 

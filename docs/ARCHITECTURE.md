@@ -630,9 +630,24 @@ writer-in sahəsidir; bu qeyd AP-014-dən çıxan giriş məlumatıdır, düzəl
 3. **Rerank yoxdur (FP-04).** Xam vektor oxşarlığı "damage + 22 days" sorğusunu
    domestik zədə bəndinə yaxın sayır; beynəlxalq bənd 8-liyə girmir.
 4. **Provenans yoxdur (§3, `:244`).** Model §8 precedence ladder bəndini
-   **aldı** (mövqe 3) — yəni "beynəlxalq domestikdən üstündür" qaydası
-   kontekstdə idi. Amma ladder-i tətbiq etmək üçün lazım olan beynəlxalq bənd
-   yox idi, və hansı bəndin hansı sənəddən gəldiyini göstərən heç nə yox idi.
+   **aldı** (mövqe 3), amma bu, kömək etmədi — və əslində **əks istiqamətə**
+   işarə etdi.
+
+   > **Düzəliş (2026-08-28).** Bu bənd əvvəl ladder-in "beynəlxalq domestikdən
+   > üstündür" qaydasını kontekstə gətirdiyini yazırdı. Korpus bunu təsdiq
+   > etmir. `returns-and-refunds.md` §8.1 açıq deyir ki, ladder **qaytarma
+   > pəncərəsini** müəyyən edir — zədə bildirişi müddətini yox. Həmin cədvəldə
+   > zədə **rank 2**, beynəlxalq təyinat **rank 3**-dür, yəni hərfi oxunuşda
+   > domestik zədə bəndi üstündür. Beynəlxalq göndərişlər üçün 14 günlük
+   > zədə-bildirişi istisnası **yalnız** `international-shipping.md` §6.1-dədir
+   > və o bənd kontekstə düşməyib.
+   >
+   > Nəticə tapıntını **gücləndirir**: modelin kontekstinə düşən yeganə
+   > meta-qayda onu domestik bəndə yönəldirdi. `FINDINGS.md` F-3 və
+   > `docs/writeup.md` dəqiq versiya ilə yazılıb.
+
+   Ladder-i düzgün tətbiq etmək üçün lazım olan beynəlxalq bənd yox idi, və
+   hansı bəndin hansı sənəddən gəldiyini göstərən heç nə yox idi.
 
 **Bir cümlə ilə:** agent app-ında retrieval **modelin yazdığı bir sətir mətnə**
 söykənir və kontekstdəki strukturlu faktlarla (sifariş ölkəsi) heç bir əlaqəsi

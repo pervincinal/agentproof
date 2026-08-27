@@ -1,5 +1,5 @@
 {
- "seq": 22,
+ "seq": 23,
  "tasks": [
   {
    "id": "AP-001",
@@ -293,8 +293,8 @@
    "desc": "Yeganə mövcud sabitlik ölçüsü reports/pilot/consistency-dədir və KÖHNƏDİR: mode=key_facts ilə agreement 0.67 verib (3 cavab eyni qərarı verdi, grader ifadə fərqini qeyri-sabitlik saydı). Bundan sonra case mode=verdict-ə keçirilib (evals/datasets/pilot-consistency.jsonl) amma yenidən qaçırılmayıb. consistency.py hər halda numbers və normalized səth metriklərini evidence.surface-də hesablayır və onlar 1.0 vermir — hesabatda bu fərqin necə təqdim olunacağı QƏRAR TƏLƏB EDİR (bal verdict-dən gəlir, səth göstərici olaraq qalır). Bu, pass^k / qeyri-determinizm iddiasının yeganə dayağıdır (COVERAGE.md §9.5).",
    "role": "harness-eng",
    "prio": "P0",
-   "status": "backlog",
-   "assignee": null,
+   "status": "in_progress",
+   "assignee": "dataset-eng",
    "dod": "pilot-consistency.jsonl --repeat 3 ilə canlı hədəfə qarşı yenidən qaçırılıb; verdict rejimində agreement rəqəmi və evidence.surface (numbers_agreement, normalized_agreement) RunRecord-dadır; hesabatda hansı rəqəmin sabitlik iddiası kimi göstəriləcəyi (verdict) və səth metriklərinin niyə aşağı olduğu bir abzasla yazılıb; qərar consistency.py modul sənədinə və ya COVERAGE.md-yə köçürülüb.",
    "links": [
     "evals/datasets/pilot-consistency.jsonl",
@@ -302,7 +302,7 @@
     "reports/pilot/consistency/"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:12:29",
+   "updated": "2026-08-28T00:43:18",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -314,6 +314,18 @@
      "at": "2026-08-27T19:12:29",
      "actor": "po",
      "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:43:18",
+     "actor": "dataset-eng",
+     "action": "assigned",
+     "detail": "dataset-eng"
+    },
+    {
+     "at": "2026-08-28T00:43:18",
+     "actor": "dataset-eng",
+     "action": "backlog→in_progress",
      "detail": ""
     }
    ],
@@ -678,7 +690,7 @@
    "desc": "PLAN.md Mərhələ 4 gözləyir; .github qovluğu ümumiyyətlə yoxdur. docs/STACK.md §8.6 və §-planı bunu tələb edir: --stage cheap hər PR-da (hədəf < 4 dəq, 6 dəqiqə qaydası), --stage judge ayrıca job kimi yalnız evals/** və ya hədəf konfiqi dəyişəndə, ya da nightly. Kalibrasiya qapısı da CI-da bloklamalıdır (uyğunluq < 85% → qırmızı). Təkrar istifadə üçün infrastrukturdur: hər müştəri auditində eyni boru xətti işlədiləcək.",
    "role": "harness-eng",
    "prio": "P2",
-   "status": "in_progress",
+   "status": "review",
    "assignee": "harness-eng",
    "dod": "Workflow mövcuddur və: (1) pytest + cheap mərhələ hər PR-da qaçır; (2) judge mərhələsi ayrıca job-dur və yalnız göstərilən şərtlərdə işə düşür; (3) kalibrasiya qapısı --fail-under-threshold ilə bloklayır; (4) PR şərhi report/pr_comment.py ilə yazılır və judge kalibrasiya bölməsi məcburidir; (5) anchors.py verify addımı var (xəritə köhnəlibsə qırmızı); (6) ən azı bir dəfə real qaçışda yaşıl olduğu göstərilib.",
    "links": [
@@ -688,7 +700,7 @@
     "target/corpus/anchors.py"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-28T00:05:29",
+   "updated": "2026-08-28T00:30:18",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -707,9 +719,27 @@
      "actor": "harness-eng",
      "action": "todo→in_progress",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:30:18",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:30:18",
+     "actor": "harness-eng",
+     "action": "in_progress→review",
+     "detail": ""
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-08-28T00:30:18",
+     "actor": "harness-eng",
+     "text": "İki mərhələli .github/workflows/evals.yml yazıldı + testləri (agentproof/tests/test_ci_gates.py, 36 test).\n\nMƏRHƏLƏ 1 'checks' — hər PR/push, ubuntu-latest, SECRET OXUMUR (fork PR-da da işləyir; pull_request_target işlədilmir):\n  1) memarlıq qaydası ayrıca addım (graders/ inspect_ai import etmir) — pozulanda qırmızının səbəbi job siyahısında görünsün\n  2) pytest (hazırda 733 yaşıl)\n  3) evals/datasets/build_full.py --check — dataset generatorla sinxrondur\n  4) evals/ci_gates.py calibration — ŞƏBƏKƏSİZ kalibrasiya qapısı: commit edilmiş report.json üzərində uyğunluq>=85% VƏ kappa>=0.70; hesabat YOXDURSA da bloklayır; dry-run qəbul edilmir. Real repoda yaşıl: uyğunluq 96.7%, kappa 0.95, n=30\n  5) evals/run.py --target mock --dataset full.jsonl --stage cheap — açarsız ucdan-uca duman testi (~3 s)\n  6) evals/ci_gates.py artifact — RunRecord bütövdürmü (boş nəticə, itmiş dataset_hash, səbəbsiz uğursuzluq, grader adı yoxdur)\n  7) evals/ci_gates.py baseline — BASELINE YOXDURSA SƏSSİZ KEÇMİR: job xülasəsinə 'BASELINE YOXDUR — REQRESSİYA YOXLANILMADI' yazılır (AP-013 bitəndə --require açılır; test_repository_baselines_directory_is_still_empty bunu xatırladacaq)\n  8) evals/ci_summary.py -> pr-comment.md (judge bölməsi məcburi) -> job summary + PR şərhi (eyni repodan gələn PR-da; fork-da token read-only olduğu üçün continue-on-error)\n  9) agentproof.report.html -> index.html + artefakt yüklənməsi\nLokal tam quru qaçış: 46 s (pip xaric) — 6 dəqiqə qaydasının içində.\n\nMƏRHƏLƏ 2 'live' — YALNIZ workflow_dispatch, runs-on: [self-hosted, agentproof]. Fayl başında açıq yazılıb: hədəf lokaldır (Dify+Ollama+tool servisi), GitHub-hosted runner ora çata bilmir; etiketli runner qeydiyyatdan keçməyibsə job NÖVBƏDƏ QALIR — yəni bu faylın mövcudluğu 'tam qaçış CI-da işləyir' demək DEYİL. Addımlar: anchors.py verify (canlı KB), run_calibration.py --fail-under-threshold (yalnız judge/all), evals/run.py (--baseline varsa --fail-on-regression), reproduce.py --fail-on-flaky, ci_summary, html, artefakt (90 gün).\n\nSECRET HİGİYENASI (testlə qorunur): workflow/job səviyyəsində env yoxdur — secret yalnız onu işlədən addımda; heç bir addım secret echo etmir; set -x yoxdur; workflow_dispatch girişləri run: sətrinə yapışdırılmır, env vasitəsilə bash massivinə düşür (script injection qapadıldı, injection cəhdi ilə yoxlanıldı).\n\nQEYD: paralel agentin 'git add -A' commit-i (93f39a3) faylları yarımçıq halda sweep edib; yekun məzmun iş qovluğundadır, evals.yml modified görünür."
+    }
+   ]
   },
   {
    "id": "AP-012",
@@ -717,7 +747,7 @@
    "desc": "PLAN.md Mərhələ 4 gözləyir; agentproof/report/ altında baseline.py, normalize.py, pr_comment.py var, html.py YOXDUR. docs/STACK.md §8.5: html.py render(RunRecord, RunDelta) -> reports/index.html. STACK §-planında sonuncu sıradadır (JSON olmadan mənasızdır) — JSON artıq hazırdır. Müştəri təhvilinin görünən hissəsidir.",
    "role": "harness-eng",
    "prio": "P2",
-   "status": "in_progress",
+   "status": "review",
    "assignee": "harness-eng",
    "dod": "reports/index.html RunRecord (+ varsa RunDelta) girişindən generasiya olunur; səhifədə: ümumi keçmə faizi, uğursuzluq rejimi üzrə bölgü, skipped case-lər səbəbi ilə, judge kalibrasiya bölməsi (kalibrasiya yoxdursa böyük hərflərlə xəbərdarlıq — JUDGE-CALIBRATION §6), hər sınmış case üçün cavab mətni və grader səbəbi. Xarici CDN asılılığı yoxdur (müştəri datası kənara çıxmır). Ən azı 1 test render-in boş RunRecord-da da xəta vermədiyini yoxlayır.",
    "links": [
@@ -726,7 +756,7 @@
     "agentproof/report/baseline.py"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-28T00:05:29",
+   "updated": "2026-08-28T00:30:57",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -745,9 +775,27 @@
      "actor": "harness-eng",
      "action": "todo→in_progress",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:30:57",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:30:57",
+     "actor": "harness-eng",
+     "action": "in_progress→review",
+     "detail": ""
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-08-28T00:30:57",
+     "actor": "harness-eng",
+     "text": "agentproof/report/html.py yazıldı (render + 'python -m agentproof.report.html <qovluq>' CLI) + 33 test (agentproof/tests/test_html_report.py).\n\n10 BÖLMƏ: 1 xülasə (KPI) · 2 baseline · 3 reproduksiya təsnifatı · 4 judge kalibrasiyası · 5 kateqoriya üzrə keçmə · 6 xərc/gecikmə paylanması · 7 zamanla trend · 8 sınan case-lər TAM giriş/çıxış ilə · 9 skipped · 10 metodologiya və provenans.\n\nSUSMAYAN BÖLMƏLƏR (məlumat yoxdursa bölmə YOX OLMUR, xəbərdarlığa çevrilir):\n  * baseline yoxdur -> 'BASELINE YOXDUR — REQRESSİYA YOXLANILMADI'\n  * reproduksiya yoxdur -> 'REPRODUKSİYA TƏSNİFATI YOXDUR', flaky plitəsi 'ÖLÇÜLMƏDİ'\n  * judge kalibrasiyası MƏCBURİ: işlədilməyibsə bunu deyir, kalibrasiyasızdırsa BÖYÜK HƏRFLƏRLƏ bloklayıcı xəbərdarlıq, kalibrasiyalıdırsa uyğunluq/kappa/n/qapı plitələri. Məntiq təkrarlanmır — graders.calibration.judge_status() və pr_comment.model_line() yenidən istifadə olunur; reproduksiya təsnifatı da yenidən HESABLANMIR, reproduction.json artefaktı oxunur (reproduction.report_from_dict əlavə edildi) ki, hesabatdakı rəqəm qapının verdiyi rəqəmlə eyni olsun.\n\nREPRODUKSİYA: stable-pass/stable-fail/unstable-fail/flaky/incomplete/skipped cədvəli, flaky nisbəti xülasə plitəsində, hədd aşılıbsa qırmızı banner; hər sınmış case-in cəhd-cəhd verdikti.\nTREND: yalnız EYNİ dataset_hash-lı qaçışlar bir xəttə düşür; fərqli dataset 'müqayisə OLUNMUR' kimi işarələnir, <2 qaçışda 'TREND QURULMADI'.\n\nreports/full-run-02 ÜZƏRİNDƏ REAL ÇIXIŞ (766 KB, tək fayl, 0 xarici sorğu, 2 inline SVG):\n  68.7% (101/147) · 46 sındı · 0 skip · $11.34 · p50 20.0s p95 78.6s · flaky 17.0% (25/147, HƏDD AŞILDI)\n  reproduksiya: stable-pass 91 · stable-fail 29 · unstable-fail 2 · flaky 25\n  taksonomiya üzrə (etiketlər docs/FAILURE-TAXONOMY.md-dən parse olunur, əl siyahısı yoxdur):\n    R2 0% (0/2) · R1 22% (2/9) · G1 25% (3/12) · S2 50% · G3 50% · R3 50% · C1 60% · G2 70% (47/67) · R6 71% · L1 80% · G7/S1/T1 100%\n  severity: high 63% (63/100) · medium 80% · grader: precision_at_k və retrieval_hit_at_k 0%\n  judge bölməsi: 'bu qaçışda judge İŞLƏDİLMƏYİB — bütün verdiktlər determinist'\n  46 sınmış case-in hər biri: tam giriş, tam cavab (çoxnövbəlidə növbə-növbə), tool çağırışları, retrieval chunk-ları, grader səbəbi + evidence, 3 cəhdin ayrıca verdikti, gecikmə/xərc/usage\nNəticə commit edildi: reports/full-run-02/index.html (.gitignore-a istisna əlavə olundu), README-də CI və hesabat bölmələri.\n\nTƏHLÜKƏSİZLİK: bütün case məzmunu escape olunur — dataset-də prompt injection yükləri var, escape olmasa hesabatın özü hücum səthi olardı (test bunu yoxlayır). CDN/şrift/piksel/link/fetch yoxdur (test yoxlayır). Açıq/qaranlıq rejim CSS dəyişənləri ilə; JS yalnız süzgəc üçün, skript bloklansa da bütün məlumat görünür (details/summary native).\n\npytest: 733 yaşıl."
+    }
+   ]
   },
   {
    "id": "AP-013",
@@ -794,7 +842,7 @@
    "desc": "PLAN.md Mərhələ 2 analyst sətri gözləyir statusundadır və fayl mövcud deyil. Materialın böyük hissəsi artıq toplanıb, amma səpələnib: OPS-FINDINGS.md-dəki üç kod yolu təhlili (indexing_runner.py:667, ssrf_proxy.py:258 + squid şablonu, dataset_retriever_tool.py:53-55 → dataset_retrieval.py:1312-1331 top_k kölgələnməsi), PLAN.md-dəki agent-chat blocking məhdudiyyəti (app_generator.py:94), target/corpus/TOOLS.md-dəki hücum səthi qeydləri (free-text sahələr — order_notes, damage_report.customer_text — dolayı injection daşıyıcısıdır). Public yazının metodologiya bölməsi bu sənədə söykənəcək.",
    "role": "analyst",
    "prio": "P2",
-   "status": "in_progress",
+   "status": "review",
    "assignee": "analyst",
    "dod": "docs/ARCHITECTURE.md mövcuddur və: hədəfin sorğu yolu (Service API → agent app → dataset retriever → custom tool → SSRF proxy) diaqram və ya nömrəli axınla təsvir olunub; hər addımda müşahidə olunmuş konfiqurasiya kölgələnmələri kod istinadı ilə göstərilib; hücum səthi siyahısı (istifadəçi mətni, order_notes, damage_report, retrieval konteksti) sadalanıb və hansı uğursuzluq rejiminə (FAILURE-TAXONOMY id) bağlandığı yazılıb.",
    "links": [
@@ -804,7 +852,7 @@
     "docs/FAILURE-TAXONOMY.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-28T00:02:31",
+   "updated": "2026-08-28T00:27:33",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -823,9 +871,27 @@
      "actor": "analyst",
      "action": "todo→in_progress",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:27:00",
+     "actor": "analyst",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:27:33",
+     "actor": "analyst",
+     "action": "in_progress→review",
+     "detail": ""
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-08-28T00:27:00",
+     "actor": "analyst",
+     "text": "docs/ARCHITECTURE.md yazildi (771 setir). Butun kod istinadlari islek konteynerden oxundu (docker exec docker-api-1 /app/api/...), konfiqurasiya postgres-den, statistika reports/full-run-02-den.\n\nCIXIS: 7 etibar serhedi (TB-1..7), 22 kovruk noqte (FP-01..22, hamisi fayl:setir), 10 konfiqurasiya telesi (CT-01..10), mermaid axin diaqrami + 13 addimlik nomreli axin.\n\nTESDIQLENEN KOHNE IDDIALAR: indexing_runner.py:667 max_workers=10; agent_chat/app_generator.py:94 blocking redd; dataset_retriever_tool.py:53-55 SINGLE mecburi + dataset_retrieval.py:1315-1331 top_k dataset-den (lokal default 2, modul default :100-104 4); ssrf_proxy.py:258 + squid.conf:12-13 include sirasi; fields/dataset_fields.py:143 retrieval_model cavabda yoxdur.\n\nYENI TAPINTILAR (4):\n1. FP-04 — rerank de dataset-den oxunur (dataset_retriever/dataset_retriever_tool.py:131,154-157). Canli app_model_configs.dataset_configs reranking_enable=true + jina-reranker-v3 yazir, dataset-in retrieval_model-u false -> APP-DEKI RERANKER ISLEMIR. OPS-03-un senedlesdirilmemis ikinci uzu.\n2. FP-06 — base_agent_runner.py:196-200 cilpaq 'except Exception: continue'. Provider hell olunmasa tool modele UMUMIYYETLE teklif olunmur; HTTP 200, xeta yox. IMPORT.md §3 xeberdarliginin kod qarsiligi. En pis hal: escalate_to_human dusur ve eskalasiya olcusu sessizce sifirlanir.\n3. FP-11 [OLCME RISKI] — message_cycle_manager.py:195-206 retriever_resources-u segment_id yox, (dataset_id, document_id) uzre dedup edir. run-02-de olculdu: 18/147 case 2-3 KB cagirisi etdi, amma 8-14 bend qeyde alindi (16-24 olmali idi); 4 case-de ikinci cagirisin BUTUN neticesi gorunmezdir. retrieval_hit_at_k / precision_at_k mehz bu sahni oxuyur -> 12.2% case-de asagi gosterir.\n4. FP-20 — agent-chat-de retrieval MECBURI DEYIL. chat/app_runner.py:161-196 her mesajda retrieve edib context= kimi prompt-a yigir; agent_chat/app_runner.py (79-87/152-160/180-188) context-i HEC VAXT otumrur. Olculdu: 147 case-in 33-u (22.4%) bilik bazasini bir defe de cagirmadi.\n\nF-1..F-4-un HAMISI memarliqla baglandi, her biri run-02 artefakti ile:\n- F-1 (g1-gap07): 2 KB cagirisi, 10 bend (16 olmali idi — FP-11), escalate_to_human YOX. Mexanizm: score_threshold_enabled=false oldugu ucun 'bu movzu KB-de yoxdur' siqnali TEXNIKI OLARAQ MOVCUD DEYIL — model her zaman top_k bend alir. Bu case-de butun bendlerin bali 0.41-0.49, F-2-de birinci bend 0.78 — ferq olculebilendir, amma ballar prompt-a dusmur.\n- F-2 (g1-anomaly-ord10049): qayda da, fakt da kontekstde idi (shipping §4.5 bal 0.7836; get_customer-de hem first_subscribed_at, hem current_period_start). Mexanizm TB-3: tool JSON-u str() kimi otumrulur, sahe semantikasi (TOOLS.md §2) prompt-a dusmur.\n- F-3 (pw-11) — DIQQET, artefakt gozlenilen menzereni deyisir: 5-ci novbede getirilen 8 bendin ICINDE international-shipping.md-den BIR DENE DE BEND YOXDUR (returns ×4, promotions ×3, warranty ×1). 1-4-cu novbelerde retrieval umumiyyetle olmadi. Yeni §6.1 (14 gun) modele HEC VAXT CATMADI. Bu, secim ugursuzlugu deyil, RETRIEVAL ugursuzlugudur. Model 4-cu novbede 'destination country GE (Georgia)' yazmisdi — yeni beynelxalq oldugunu bilirdi, amma Dify-da tool neticesini retrieval sorgusuna qosan mexanizm yoxdur (metadata_filtering_mode canli deyeri: disabled). §8 precedence ladder bendi kontekstde IDI (movqe 3), tetbiq edilecek bend yox idi.\n- F-4 (bva-b-21-lockout-5): tool cagirisi [] — MODEL BILIK BAZASINI UMUMIYYETLE ACMADI. FP-20 saf halda: agent app-da imtina sifir qiymete basa gelir.\n\nQEYD (writer ucun, duzelis deyil): FINDINGS.md F-3-un mexanizmini 'eyni movzuda iki quvvede olan bend' (R6 konflikt istiqameti) kimi yazir. Artefakt gosterir ki, iki bend kontekstde deyildi. FINDINGS.md writer-in sahesidir — bu qeyd giris melumatidir."
+    }
+   ]
   },
   {
    "id": "AP-015",
@@ -833,7 +899,7 @@
    "desc": "evals/datasets/COVERAGE.md §3 və §9.1 açıq elan edir: 27 bayat cütdən yalnız 14-ünün ayrıca case-i var (T-01, T-02, T-03, T-05, T-06, T-07, T-08, T-09, T-13, T-14, T-15, T-20, T-22, T-25); qalan 13-ü (T-04, T-10, T-11, T-12, T-16…T-19, T-21, T-23, T-24, T-26, T-27) birbaşa örtülməyib. Nəticə: stale-answer rate 14 tələ üzərində hesablanır, 27 üzərində yox — yəni hesabatın ən önəmli rəqəmlərindən biri natamam bazadan gəlir. DİQQƏT: dataset dəyişikliyi cari qaçışın müqayisə olunmasını pozur, ona görə tam qaçış və baseline snapshot-undan SONRA edilməlidir.",
    "role": "dataset-eng",
    "prio": "P2",
-   "status": "in_progress",
+   "status": "review",
    "assignee": "dataset-eng",
    "dod": "build_full.py 13 tələnin hər biri üçün case üretir (əl ilə full.jsonl redaktəsi yoxdur); test_dataset_full.py-a bütün 27 tələnin örtüldüyünü yoxlayan test əlavə olunub; COVERAGE.md §3 cədvəli və §9.1 yenilənib; büdcə təsiri (əlavə case × 3 təkrar) hesablanıb və qeyd olunub.",
    "links": [
@@ -843,7 +909,7 @@
     "agentproof/tests/test_dataset_full.py"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-28T00:22:32",
+   "updated": "2026-08-28T00:43:05",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -868,6 +934,18 @@
      "actor": "dataset-eng",
      "action": "backlog→in_progress",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:43:05",
+     "actor": "dataset-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:43:05",
+     "actor": "dataset-eng",
+     "action": "in_progress→review",
+     "detail": ""
     }
    ],
    "comments": [
@@ -875,6 +953,11 @@
      "at": "2026-08-27T19:12:29",
      "actor": "po",
      "text": "Asılılıq: AP-013 — dataset dəyişikliyi baseline sabitlənməmiş edilməməlidir (müqayisə pozulur)."
+    },
+    {
+     "at": "2026-08-28T00:43:05",
+     "actor": "dataset-eng",
+     "text": "13 örtülməmiş tələnin hamısı örtüldü + 2 istiqamət-B case-i = 15 yeni case (150 → 165). Hamısı generatordan (build_full.py) törəyir, full.jsonl əl ilə redaktə edilməyib (--check sinxron). Bölgü: 13 stale-generous (T-04, T-10, T-11, T-12, T-16..T-19, T-21, T-23, T-24, T-26, T-27) + 2 current-generous. Blok nisbəti: stale-generous 11 → 24, current-generous 9 → 11. İki yeni istiqamət-B case-i temporal_applicability-nin indiyədək HEÇ bir case-i olmayan iki qaydasından törəyir: return_window (version_in_force_on_order_date — 2026-05-10-da verilmiş beynəlxalq sifariş üçün düzgün cavab BAYAT 14 gündür, cari 21 deyil) və membership_fee_refund_basis (fee_actually_charged — 39.00 AZN, cari 49.00 deyil). Assertion seçimi A-07/A-13/A-15/A-23 dərslərinə görə: bayat dəyər canlı dəyərlə toqquşmursa contains_none + stale_*() (T-17/T-18/T-21), toqquşursa mövzuya bağlı regex (T-16 '3' = canlı çatdırılma cəhdi; T-19 '30 gün' = ALTI canlı parametr; T-23 '14 gün' = BEŞ canlı parametr), rəqəm deyilsə verdikt (T-04/T-10/T-11/T-12/T-24/T-26/T-27). Hər case test_stale_trap_coverage.py-də İKİ İSTİQAMƏTDƏ + distraktor sətri ilə sübut olunub (63 probe). Probe-lar İKİ YENİ yalançı YAŞIL tapdı: A-24 (cod_available qayda ifadəsini verdikt sanır — bayat 300 AZN limiti ilə RƏDD edən cavab keçirdi) və A-25 (çılpaq DDP iynəsi 'There is no DDP option'-u tuturdu). Hər ikisi düzəldildi, GRADER-AUDIT.md-yə yazıldı; real run-02 cavabları üzərində mövcud case-lərə təsiri SIFIR. COVERAGE.md §1/§3/§8/§9.1 yeniləndi. BÜDCƏ: +45 çağırış, R6 orta xərci $0.0918/case → +$1.38 (introductory $2/$10, 2026-08-31-ə qədər) və +$2.07 (2026-09-01-dən $3/$15); tam qaçış $11.34 → ~$12.7 / ~$19.1. pytest 695 → 798 yaşıl."
     }
    ]
   },
@@ -989,7 +1072,7 @@
    "desc": "PLAN.md cədvəli köhnəlib və yanlış təəssürat yaradır: Mərhələ 3 eval dataset gözləyir yazılıb, halbuki full.jsonl 150 case ilə hazırdır və COVERAGE.md ilə əsaslandırılıb; Mərhələ 4 judge qatı gözləyir yazılıb, halbuki judge.py + calibration.py qurulub və yalnız REAL kalibrasiya qaçışı çatmır. Öz sənədimizin statusu yanlışdırsa, auditdə ilk tutulan şey odur.",
    "role": "analyst",
    "prio": "P3",
-   "status": "in_progress",
+   "status": "review",
    "assignee": "analyst",
    "dod": "PLAN.md cədvəlindəki hər sətir repo faktı ilə yoxlanıb və üç dəqiq statusdan birini daşıyır: bitdi (artefakt yolu ilə), qismən (nəyin çatışdığı bir cümlə ilə), gözləyir. Judge sətri qurulub, kalibrasiya qaçırılmayıb kimi dəqiqləşdirilib. Dəyişiklik commit olunub.",
    "links": [
@@ -998,7 +1081,7 @@
     "docs/JUDGE-CALIBRATION.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-28T00:02:31",
+   "updated": "2026-08-28T00:27:33",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -1017,9 +1100,27 @@
      "actor": "analyst",
      "action": "todo→in_progress",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:27:27",
+     "actor": "analyst",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:27:33",
+     "actor": "analyst",
+     "action": "in_progress→review",
+     "detail": ""
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-08-28T00:27:27",
+     "actor": "analyst",
+     "text": "PLAN.md merhele cedveli repo faktı ile tutusduruldu. Status artiq yalniz uc deyer alir (bitdi / qismen / gozleyir), setirler merhele nomresi uzre siralandi.\n\nDEYISEN 11 SETIR:\n1. M2 analyst — gozleyir -> bitdi (docs/ARCHITECTURE.md, AP-014 bu qacisda yazildi)\n2. M2 hunter 'sinma noqtelerinin ovu' — gozleyir -> bitdi. Cixis yolu duzeldildi: 'FINDINGS.md (xam)' yanlis idi, esl artefakt docs/TRIAGE-RUN02.md + docs/GRADER-AUDIT.md-dir (AP-021: 29 stabil ugursuzluq el ile oxundu -> 5 real / 14 grader bosluğu / 10 ikimenali + 3 yalanci yasil)\n3. M3 eval dataset — gozleyir -> bitdi. Yoxlandi: evals/datasets/full.jsonl-de tam 150 case (serh setirleri cixilmaqla), COVERAGE.md ile esaslandirilib\n4. M3 qiymetlendiriciler — '89 test yasil' -> '11 deterministik grader, 251 grader testi yasil (repo uzre 628)'. Olculdu: pytest agentproof/graders/tests = 251 passed; pytest = 628 passed\n5. M4 judge — gozleyir -> bitdi. evals/calibration/report.json: uygunluq 0.9667, kappa 0.9497, n=30, judge claude-opus-5. Yeni 'qurulub, kalibrasiya qacirilmayib' DEYIL — REAL kalibrasiya qacirilib\n6. M4 HTML+CI — gozleyir -> QISMEN. agentproof/report/html.py ve .github/workflows/evals.yml bu qacis erzinde yarandi (93f39a3), amma AP-011/AP-012 hele in_progress: CI-in real qacisda yasil oldugu gosterilmeyib\n7. M5 hesabat — gozleyir -> bitdi (FINDINGS.md + docs/writeup.md + docs/LIMITATIONS.md)\n8-11. M1 uc setri ve M2 korpus/R1 setirleri artefakt yollari ve olculmus reqemlerle genislendirildi (verify_fixtures.py 1338 assertion, R1 5 vs 25 sorgu, app id 4daef326-...)\n\nCedvelalti qeyd: case-seviyyeli aciq isler siyahisi board-a yonlendirildi — statuslar suretle deyisir (AP-019/AP-020 bu qacis erzinde review-ya kecdi), ona gore PLAN.md-de siyahi saxlamaq yeniden kohnelmeye getirir. Tek heqiqet menbeyi board/tasks.json.\n\nCOMMIT: cedvel 93f39a3-de (basqa agentin genis git add-i) getdi; cedvelalti qeyd f9e9863-de."
+    }
+   ]
   },
   {
    "id": "AP-019",
@@ -1231,6 +1332,46 @@
     }
    ],
    "comments": []
+  },
+  {
+   "id": "AP-023",
+   "title": "F-3-un mexanizmi sehv tesvir olunub — derc olunmus hesabatda duzelis",
+   "desc": "FINDINGS.md F-3 (RF-05) mexanizmi 'eyni movzuda iki quvvede olan bend, model sehv sechdi' (R6 konflikt / sechim ugursuzlugu) kimi yazilib. reports/full-run-02/VmH7QgPBAE7PwcMo6Xwz7Q.json artefakti bunu tekzib edir: case pw-11-en-damage_complaint-international-current-t5, novbe 0-3 retrieved=0, novbe 4 retrieved=8 (returns-and-refunds x4, promotions-and-price-match x3, warranty-policy x1); international-shipping.md YOXDUR. Yeni beynelxalq S6.1 modele hech vaxt chatmayib -> bu retrieval ugursuzlugudur (R2), sechim ugursuzlugu deyil. Netice (aksidental duzgun verdikt) deyismir; mexanizm ve teklif olunan duzelis deyisir. Elave: docs/LIMITATIONS.md-e FP-11 (retriever_resources (dataset_id,document_id) uzre dedup -> retrieval metrikleri asagi sayir) ve FINDINGS.md-e FP-20 rEqemi (33/147 = 22.4% KB-siz cavab). Menbe: docs/ARCHITECTURE.md (analyst, AP-014) — deyishdirilmir, istinad edilir. Repo publicdir.",
+   "role": "writer",
+   "prio": "P0",
+   "status": "review",
+   "assignee": null,
+   "dod": "1) FINDINGS.md F-3 yeniden yazilib: mexanizm R2 retrieval ugursuzlugu, artefakt subutu (novbe-uzre retrieved bolgusu + 8 bendin sened bolgusu) tapintinin ichinde; teklif olunan duzelis retrieval-in sifaris metadatasi ile shertlendirilmesine yonelib. 2) docs/writeup.md F-3 bolmesi eyni sekilde duzelib. 3) FINDINGS.md-de achiq 'Duzelis qeydi' bolmesi var: ne sehv idi, ne vaxt, hansi subutla. 4) docs/LIMITATIONS.md-de FP-11 mehdudiyyeti (istiqamet: ashagi gizledir) qeyde alinib ve iddia->mehdudiyyet xeritesine daxildir. 5) FINDINGS.md-de FP-20 rEqemi (33/147=22.4%) F-3/F-4 ortaq memarliq sebebi kimi gorunur. 6) docs/ARCHITECTURE.md deyishdirilmeyib. 7) Her Eded artefakdan yoxlanilib.",
+   "links": [],
+   "created": "2026-08-28T00:33:55",
+   "updated": "2026-08-28T00:44:13",
+   "history": [
+    {
+     "at": "2026-08-28T00:33:55",
+     "actor": "writer",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:44:13",
+     "actor": "writer",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:44:13",
+     "actor": "writer",
+     "action": "in_progress→review",
+     "detail": "Derc uchun hazirdir; push edilmelidir."
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-08-28T00:44:13",
+     "actor": "writer",
+     "text": "Bitdi. Toxunulan fayllar: FINDINGS.md, docs/writeup.md, docs/LIMITATIONS.md. docs/ARCHITECTURE.md deyishdirilmeyib (git diff = 0).\n\n1) FINDINGS.md F-3 (S3) tam yeniden yazildi. Mexanizm: R2 (duzgun sened top-K-dan kenarda qalir); tezahur G2 olaraq qalir; R6 / sechim ugursuzlugu ifadesi silindi. Artefakt subutu tapintinin ichindedir: novbe-uzre retrieved cedveli (1-4 = 0, 5 = 8), 8 bendin sened+bal bolgusu, international-shipping.md 0 bend. ELAVE SUBUT: retrieval sorgusu artefaktda herfbeherf qeyde alinib — {query: 'damaged item return window policy'} — ne 'international', ne 'GE', ne 'Georgia'; halbuki model olkeni bir novbe evvel ozu yazmisdi. Teklif olunan duzelis yeniden siralandi: 1) sorgunu sifaris metadatasi ile shertlendirmek, 2) seqment bendini mecburi kontekste qoymaq, 3) rerank + provenans, 4) iki istiqametli capraz istinad (achiq 'tek bashina kifayet deyil' qeydi ile), 5) precedence ladder-in problemi hell etmediyi.\n\n2) DEQIQLESHDIRME (analyst uchun, ARCHITECTURE.md-e toxunmadim): S6 F-3 bendi 4 deyir ki, ladder bendi 'beynelxalq domestikden ustundur' qaydasini kontekste getirib. Korpus bunu tesdiq etmir: returns-and-refunds.md S8 ladder QAYTARMA PENCERESI uchundur ve zedeni rank 2, beynelxalqi rank 3 qoyur — herfi oxunusda domestik bendi USTUN gosterir. 14 gunluk zede-bildirishi istisnasi YALNIZ international-shipping.md S6.1-dedir. FINDINGS ve writeup bu deqiq versiya ile yazilib; analyst ARCHITECTURE.md-i ozu duzeltsin.\n\n3) docs/writeup.md F-3 abzasi eyni sekilde yenilendi (+ bir setirlik achiq duzelis qeydi), F-4-e 33/147 = 22.4% elave olundu, 'What we did not measure' bolmesine FP-11 alt-sayma qeydi elave olundu.\n\n4) FINDINGS.md-e S10 'Duzelis qeydi' (C-01) elave olundu: ne sehv idi, ne dogrudur, subut, nece ashkarlandi, NE DEYISHMEDI (netice / ciddilik / 3-3 / aksidental duzgun verdikt arqumenti), ne DEYISHDI. Header-de ve F-3-un bashinda gorunen istinad var.\n\n5) docs/LIMITATIONS.md: LIM-I09 (FP-11) elave olundu — dedup (dataset_id, document_id) uzre; istiqamet: ashagi gizledir. Iddia->mehdudiyyet xeritesine ve 'chixarila BILMEYEN neticeler' cedveline (setir 18) daxil edildi. FINDINGS.md S8.9 kimi guzgulendi (kohne 8.9 -> 8.10).\n\nRE-OLCULMUSH REQEMLER (artefakdan ozum yoxladim): zero-KB 33/147 = 22.4% (tesdiq). >=2 KB chagirishi: 18 case (12.2%); onlarin 17-si az sayir (8/9/10/11/12 bend, 16 olmali idi; 3 chagirishli tek case 10, 24 olmali idi); 1 case tam 16 qeyd edib. 2 chagirish + cemi 8 bend = 4 case: g1-gap03-warranty-transfer, pw-13-en-gap_question-standard-superseded-t3, t1-guard-ord10053-not-delivered, t1-w03-no-confirmation. Analyst-in '8-14 bend' araligini '8-16' kimi deqiqleshdirdim.\n\nDURUSTLUK HEDDI (F-3-de achiq yazilib): iz seviyyesinde bolgu bir qacisha aiddir (attempt = 3); reproduction.json evvelki iki cehd uchun retrieval izi saxlamir. Verdikt seviyyesinde 3/3, eyni sebeble."
+    }
+   ]
   }
  ]
 }
