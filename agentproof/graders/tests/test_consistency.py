@@ -326,3 +326,91 @@ def _make_resp(text: str):
     from agentproof.types import AgentResponse
 
     return AgentResponse(text=text)
+
+
+# ===========================================================================
+# AP-006 — `mode=verdict` CANLI qaçışı (2026-08-27) və A-26 reqressiyası
+# ===========================================================================
+# Köhnə 0.67 rəqəmi `mode=key_facts`-dan gəlirdi və case artıq `verdict`-ə
+# keçirilmişdi, amma REAL hədəfə qarşı yenidən qaçırılmamışdı. AP-006 onu
+# qaçırdı — və qaçış DƏRHAL yeni bir grader qüsuru tapdı (A-26): `rule`
+# slotunun cue siyahısı 2026-08-26 pilotunun SÖZLƏRİ üzərində qurulmuşdu.
+#
+# Bu bloku iki şey qoruyur:
+#   (a) düzəlişdən ƏVVƏLKİ qaçışın cavabları indi 1.00 verir (əhatə bərpa
+#       olundu) — amma yalnız `rule` slotu dəyişdi, `term` slotu toxunulmadı;
+#   (b) bilərəkdən SINAN mutasiya: bir cavabda müddət 18 aya dəyişsə, bal
+#       düşməlidir — yəni siyahının genişlənməsi grader-i kor etmədi.
+AP006_FIXTURE = Path(__file__).parent / "fixtures" / "ap006_t07_consistency_verdict.json"
+
+
+def _ap006(run: str, make_response):
+    data = json.loads(AP006_FIXTURE.read_text(encoding="utf-8"))
+    return data, [make_response(text=r["text"]) for r in data["runs"][run]["responses"]]
+
+
+def test_ap006_fixture_is_the_real_live_run(make_response):
+    data, responses = _ap006("run1", make_response)
+    assert len(responses) == 3
+    assert data["runs"]["run1"]["run_id"] == "AbmeRfQfdgNLf8jGA7SwJz"
+    assert data["runs"]["run2"]["run_id"] == "kad8MmLsEqJxRN8i72392X"
+    assert data["_scores"]["run1_declared_spec"] == pytest.approx(2 / 3)
+
+
+@pytest.mark.parametrize("run", ["run1", "run2"])
+def test_ap006_live_answers_are_verdict_stable(run, make_response):
+    """SÜBUT (A-26 düzəlişindən sonra): hər iki canlı qaçışda 3/3 eyni qərar."""
+    _, responses = _ap006(run, make_response)
+    result = _grade(_pilot_case(), responses)
+    assert result.passed
+    assert result.score == 1.0
+    assert result.evidence["majority_signature"] == [
+        ["rule", ["aurora_brand", "superseded_18m"]],
+        ["term", ["24 month"]],
+    ]
+
+
+def test_ap006_regression_rule_slot_accepts_version_wording(make_response):
+    """A-26-nın DƏQİQ halı: «the 2025 v3.0 changes» = «superseded» ilə eyni qayda.
+
+    run1-in 2-ci cavabı `superseded` sözünü ÜMUMİYYƏTLƏ işlətmir. Köhnə cue
+    siyahısı ona görə `rule` slotunu yarımçıq oxuyurdu və 0.67 verirdi.
+    """
+    data, _ = _ap006("run1", make_response)
+    second = data["runs"]["run1"]["responses"][1]["text"]
+    assert "superseded" not in second.lower(), "fiksasiya dəyişib — test mənasız yaşıl olardı"
+    assert "v3.0" in second.lower()
+    result = _grade(_pilot_case(), [make_response(text=second)] * 2)
+    assert result.evidence["majority_signature"] == [
+        ["rule", ["aurora_brand", "superseded_18m"]],
+        ["term", ["24 month"]],
+    ]
+
+
+def test_ap006_grader_still_fails_on_a_real_term_change(make_response):
+    """BİLƏRƏKDƏN SINAN: genişlənmiş cue siyahısı `term` slotunu kor etmədi."""
+    data, _ = _ap006("run2", make_response)
+    texts = [r["text"] for r in data["runs"]["run2"]["responses"]]
+    mutated = texts[0].replace("**24-month warranty**", "**18-month warranty**")
+    assert mutated != texts[0], "mutasiya tətbiq olunmadı — test mənasız yaşıl olardı"
+    result = _grade(
+        _pilot_case(),
+        [make_response(text=texts[1]), make_response(text=texts[2]), make_response(text=mutated)],
+    )
+    assert not result.passed
+    assert result.score == pytest.approx(2 / 3)
+
+
+def test_ap006_surface_metrics_are_reported_but_never_the_score(make_response):
+    """Qərar: BAL verdict-dən gəlir, `numbers`/`normalized` GÖSTƏRİCİ qalır.
+
+    run2-də səth metrikləri 0.33-dür (üçüncü cavab əlavə rəqəmlər saxlayır),
+    verdict isə 1.00. Əgər səth rəqəmi hesabata sabitlik iddiası kimi düşsəydi,
+    biz agenti qeyri-sabit elan edərdik — halbuki hər üç cavab eyni qərarı verir.
+    """
+    _, responses = _ap006("run2", make_response)
+    result = _grade(_pilot_case(), responses)
+    surface = result.evidence["surface"]
+    assert result.score == 1.0
+    assert surface["numbers_agreement"] < result.score
+    assert surface["normalized_agreement"] < result.score

@@ -55,7 +55,7 @@ Built on [Inspect AI](https://github.com/UKGovernmentBEIS/inspect_ai)
 
 ```bash
 python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python -m pytest              # 547 tests
+.venv/bin/python -m pytest              # 733 tests
 ```
 
 Standing up the target system (Dify + Ollama + the mock tool service) is
@@ -67,7 +67,38 @@ at the token prices in effect on the run date.
 .venv/bin/python evals/run.py --target dify_http \
   --dataset evals/datasets/full.jsonl --stage cheap --repeat 3
 .venv/bin/python evals/reproduce.py reports/<run-id>
+.venv/bin/python -m agentproof.report.html reports/<run-id> \
+  --dataset evals/datasets/full.jsonl        # -> reports/<run-id>/index.html
 ```
+
+A rendered example is committed at
+[`reports/full-run-02/index.html`](reports/full-run-02/index.html): one static
+file, no CDN, no external request — the client's data never leaves the page.
+
+## Continuous integration
+
+[`.github/workflows/evals.yml`](.github/workflows/evals.yml) has two stages, and
+only one of them can run on GitHub's own runners.
+
+**1 · Every pull request — no API key required.** Unit and integration tests,
+the architecture rule (`graders/` must not import `inspect_ai`), the dataset
+generator check, the offline judge-calibration gate (agreement ≥ 85%, κ ≥ 0.70),
+and a keyless end-to-end smoke run against the in-process `mock` adapter, ending
+in an HTML report and a PR comment. It reads no secrets, so it works on
+fork pull requests too. Target: under four minutes.
+
+**2 · Manual (`workflow_dispatch`) — real target, self-hosted runner.** The
+target system is local (Dify + Ollama + the mock tool service), so a
+GitHub-hosted runner cannot reach it. This job is labelled
+`runs-on: [self-hosted, agentproof]` and **queues indefinitely until such a
+runner is registered on the machine that hosts the stack** — the presence of
+this workflow is not evidence that full runs happen in CI. Secrets
+(`ANTHROPIC_API_KEY`, `DIFY_API_KEY`) are scoped to the individual steps that
+need them; no step echoes them and no step enables shell tracing.
+
+Regression gating is **not active yet**: `evals/baselines/` is empty, so
+`evals/ci_gates.py baseline` prints `BASELINE YOXDUR — REQRESSİYA YOXLANILMADI`
+into the job summary rather than letting a green check imply "no regression".
 
 ## House rules
 

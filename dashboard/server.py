@@ -4,7 +4,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-LOG = Path("/tmp/fullrun2.log")
+LOG = Path("/tmp/fullrun3.log")
 PORT = 8777
 
 

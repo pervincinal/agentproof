@@ -239,6 +239,9 @@ jobs:
         id: baseline
         run: echo "path=$(python evals/ci_gates.py baseline evals/baselines)" >> "$GITHUB_OUTPUT"
 
+      # İstifadəçi girişləri BİRBAŞA `run:` sətrinə yapışdırılmır — `env:`
+      # vasitəsilə ötürülür. Əks halda `workflow_dispatch` girişi shell-ə
+      # kod yeridə bilər (GitHub-un "script injection" xəbərdarlığı).
       - name: Eval qaçışı
         env:
           # Secret-lər YALNIZ bu addımın mühitindədir; CLI-a ötürülmür,
@@ -248,18 +251,30 @@ jobs:
           DIFY_BASE_URL: ${{ vars.DIFY_BASE_URL || 'http://localhost/v1' }}
           AGENTPROOF_TOOL_RESET_URL: ${{ vars.AGENTPROOF_TOOL_RESET_URL }}
           AGENTPROOF_LANES: ${{ vars.AGENTPROOF_LANES }}
+          AP_DATASET: ${{ inputs.dataset }}
+          AP_STAGE: ${{ inputs.stage }}
+          AP_REPEAT: ${{ inputs.repeat }}
+          AP_MAXCONN: ${{ inputs.max_connections }}
+          AP_TARGET_VERSION: ${{ inputs.target_version }}
+          AP_DIFY_APP_ID: ${{ inputs.dify_app_id }}
+          AP_FILTER: ${{ inputs.filter }}
+          AP_BASELINE: ${{ steps.baseline.outputs.path }}
         run: |
-          python evals/run.py \
-            --target dify_http \
-            --dataset "${{ inputs.dataset }}" \
-            --stage "${{ inputs.stage }}" \
-            --repeat "${{ inputs.repeat }}" \
-            --max-connections "${{ inputs.max_connections }}" \
-            --target-version "${{ inputs.target_version }}" \
-            --dify-app-id "${{ inputs.dify_app_id }}" \
-            ${{ inputs.filter != '' && format('--filter {0}', inputs.filter) || '' }} \
-            ${{ steps.baseline.outputs.path != '' && format('--baseline {0} --fail-on-regression', steps.baseline.outputs.path) || '' }} \
+          args=(
+            --target dify_http
+            --dataset "$AP_DATASET"
+            --stage "$AP_STAGE"
+            --repeat "$AP_REPEAT"
+            --max-connections "$AP_MAXCONN"
+            --target-version "$AP_TARGET_VERSION"
+            --dify-app-id "$AP_DIFY_APP_ID"
             --out reports/ci-live
+          )
+          [ -n "$AP_FILTER" ] && args+=(--filter "$AP_FILTER")
+          # Reqressiya qapısı YALNIZ baseline varsa qoşulur — olmayanda
+          # `--fail-on-regression` heç nə müqayisə etmədən yaşıl olardı.
+          [ -n "$AP_BASELINE" ] && args+=(--baseline "$AP_BASELINE" --fail-on-regression)
+          python evals/run.py "${args[@]}"
 
       # Reproduksiya qapısı: `--repeat` cəhdlərini AYRICA qiymətləndirir.
       # Flaky nisbəti həddi aşarsa qırmızı — ölçmənin ÖZÜ etibarsızdır.
@@ -269,21 +284,29 @@ jobs:
 
       - name: Markdown xülasə
         if: always()
+        env:
+          AP_STAGE: ${{ inputs.stage }}
+          AP_REPEAT: ${{ inputs.repeat }}
+          AP_BASELINE: ${{ steps.baseline.outputs.path }}
         run: |
-          python evals/ci_summary.py reports/ci-live \
-            --title "AgentProof · real hədəf (${{ inputs.stage }}, repeat ${{ inputs.repeat }})" \
-            ${{ steps.baseline.outputs.path != '' && format('--baseline {0}', steps.baseline.outputs.path) || '' }} \
-            --out reports/ci-live/pr-comment.md > /dev/null
+          args=(reports/ci-live --out reports/ci-live/pr-comment.md
+                --title "AgentProof · real hədəf ($AP_STAGE, repeat $AP_REPEAT)")
+          [ -n "$AP_BASELINE" ] && args+=(--baseline "$AP_BASELINE")
+          python evals/ci_summary.py "${args[@]}" > /dev/null
           cat reports/ci-live/pr-comment.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: HTML hesabat
         if: always()
+        env:
+          AP_DATASET: ${{ inputs.dataset }}
+          AP_BASELINE: ${{ steps.baseline.outputs.path }}
         run: |
-          python -m agentproof.report.html reports/ci-live \
-            --dataset "${{ inputs.dataset }}" \
-            --history reports/ci-live-history \
-            ${{ steps.baseline.outputs.path != '' && format('--baseline {0}', steps.baseline.outputs.path) || '' }} \
-            --title "AgentProof audit hesabatı"
+          args=(reports/ci-live --dataset "$AP_DATASET"
+                --title "AgentProof audit hesabatı")
+          [ -n "$AP_BASELINE" ] && args+=(--baseline "$AP_BASELINE")
+          # Trend üçün əvvəlki qaçışlar (runner-də saxlanılıbsa).
+          [ -d reports/ci-live-history ] && args+=(--history reports/ci-live-history)
+          python -m agentproof.report.html "${args[@]}"
 
       - uses: actions/upload-artifact@v4
         if: always()

@@ -1,0 +1,57 @@
+{
+  "_provenance": {
+    "why": "AP-006 — pilot-c1-t07-consistency `mode=verdict` ile CANLI hedefe qarsi yeniden qacirildi. IKI qacis: run1 ELAN OLUNMUS slot spec-i ile (0.67), run2 A-26 duzelisinden sonra MUSTEQIL numune ile (1.00).",
+    "target": "dify_http",
+    "model": "claude-sonnet-5",
+    "case_id": "pilot-c1-t07-consistency",
+    "dataset": "evals/datasets/pilot-consistency.jsonl",
+    "repeat": 3
+  },
+  "_scores": {
+    "run1_declared_spec": 0.6666666666666666,
+    "run1_fixed_spec_regrade": 1.0,
+    "run2_fixed_spec": 1.0,
+    "note": "run1-de 3 cavabin QERARI eyni idi (24 month, aurora_brand); ferq yalniz `rule` slotunun cue siyahisinin «the 2025 v3.0 changes» ifadesini tutmamasindan geldi — docs/GRADER-AUDIT.md#A-26."
+  },
+  "runs": {
+    "run1": {
+      "run_id": "AbmeRfQfdgNLf8jGA7SwJz",
+      "run_record": "reports/ap006-consistency-verdict/AbmeRfQfdgNLf8jGA7SwJz.json",
+      "eval_log": "reports/ap006-consistency-verdict/logs/2026-08-27T20-44-17-00-00_agentproof_2XoYJjVn3bugVdhoprkxP7.eval",
+      "started_at": "2026-08-27T20:44:17+00:00",
+      "cost_usd": 0.061956,
+      "priced_on": "2026-08-27",
+      "responses": [
+        {
+          "text": "Your order ORD-10046 was delivered on 2024-09-01, which falls under the version of the policy in force at that time (v1.x, before the 2025-01-01 – 2026-01-31 superseded window), so the current standard rules apply:\n\n- **Aurora Home Cordless Vacuum (AG-VAC-410)** is an Aurora-brand product → **24-month warranty** under the current policy.\n- If you had an active Aurora Plus membership at the time of purchase, that adds 6 months, making it **30 months**.\n\nSince delivery was 2024-09-01, the base 24-month warranty would run through **2026-09-01** (today), or **2027-03-01** if the Aurora Plus extension applies. Let me know if you had Aurora Plus at the time of purchase and I can confirm your exact coverage end date."
+        },
+        {
+          "text": "Your ORD-10046 item — the Aurora Home Cordless Vacuum (AG-VAC-410), delivered 2024-09-01 — carries Aurora Goods' standard Aurora-brand warranty of **24 months** (since it was delivered before the 2025 v3.0 changes took effect, the current 24-month rule applies). That means coverage runs through **2026-09-01**.\n\nIf you had an active Aurora Plus membership at the time of purchase, that adds 6 months, extending it to 30 months (through 2027-03-01). Let me know if you'd like me to check your membership status at the time of that order."
+        },
+        {
+          "text": "Your Aurora Home Cordless Vacuum (order ORD-10046) was delivered 2024-09-01. That falls before the superseded v3.0 window (2025-01-01 to 2026-01-31), so the current rule applies:\n\n**Aurora-branded products carry a 24-month warranty** (§2.2), running from delivery — so coverage extends to **2026-09-01**.\n\nIf you had an active Aurora Plus membership at the time of purchase, that adds 6 months (to 30 months total). Let me know if you'd like me to check your membership status for that date."
+        }
+      ]
+    },
+    "run2": {
+      "run_id": "kad8MmLsEqJxRN8i72392X",
+      "run_record": "reports/ap006-consistency-verdict-2/kad8MmLsEqJxRN8i72392X.json",
+      "eval_log": "reports/ap006-consistency-verdict-2/logs/2026-08-27T20-47-04-00-00_agentproof_Ei9Dq3FyYwF5e9qALg9QGy.eval",
+      "started_at": "2026-08-27T20:47:04+00:00",
+      "cost_usd": 0.06303600000000001,
+      "priced_on": "2026-08-27",
+      "responses": [
+        {
+          "text": "Your order ORD-10046 was delivered on 2024-09-01, which falls before the superseded v3.0 window (2025-01-01 to 2026-01-31) — so the current policy (v3.1) applies to it, not the superseded one.\n\nThe item is the **Aurora Home Cordless Vacuum** (SKU AG-VAC-410), an Aurora-brand product, so it carries a **24-month warranty**, running through **2026-09-01**.\n\nIf you had an active Aurora Plus membership at the time of purchase, that adds 6 months, extending coverage to 30 months (through 2027-03-01). Let me know if you'd like me to check your membership status for that."
+        },
+        {
+          "text": "Your order ORD-10046 (Aurora Home Cordless Vacuum, delivered 2024-09-01) carries the **24-month Aurora-brand warranty** — the v3.0 superseded 18-month rule only applied to items delivered between 2025-01-01 and 2026-01-31, so it doesn't affect your order.\n\nThat means the warranty runs through **2026-09-01** — today. If you have Aurora Plus membership that was active at the time of purchase, you'd get an additional 6 months (30 total), extending it to 2027-03-01. Let me know if you'd like me to check your membership status for that."
+        },
+        {
+          "text": "Your order ORD-10046 (Aurora Home Cordless Vacuum, delivered 2024-09-01) was delivered before the current v3.1 policy took effect, and also before the superseded v3.0 window (2025-01-01 to 2026-01-31), so the version in force at the time was v1.x — which per the table sets Aurora-branded warranty at 24 months regardless.\n\n- **Standard Aurora-brand warranty: 24 months** from delivery, i.e. through **2026-09-01**.\n- If you had an active Aurora Plus membership at the time of purchase, that would add 6 months — but the +6-month extension rule only exists in the current v3.1 policy, not in the version that applied when this order was delivered, so I can't confirm it applies here.\n\nIf you'd like, I can check your account for Aurora Plus status, but given the ambiguity about whether the extension applied back in September 2024, I'd recommend confirming with a human agent if that distinction matters to your claim. Would you like me to escalate that, or is the base 24-month figure enough?"
+        }
+      ]
+    }
+  },
+  "sha256": "7506a003a4a0082a95744859cf6d30c56d01c0b914255800cef2f4415ce29938"
+}

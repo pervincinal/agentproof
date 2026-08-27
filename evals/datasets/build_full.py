@@ -315,10 +315,16 @@ LABEL_ASSERT: dict[str, Assertion] = {
     # "bəli" cavabı da düzgün QEYD saxlayır: «COD isn't available for
     # international orders». İnkar iynəsi mövzunu ayırd etmir. Verdikt birbaşa
     # müsbət formada ölçülür.
+    # A-24 (docs/GRADER-AUDIT.md): tempered dot yalnız İNKARI bloklayırdı,
+    # QAYDA ÇƏRÇİVƏSİNİ yox. Bayat COD limitini işlədən RƏDD cavabı —
+    # «cash on delivery is only available for orders of 300.00 AZN or less,
+    # so it is not available for your 400.00 AZN basket» — birinci bənddə
+    # müsbət qayda ifadəsi saxlayır və köhnə iynə onu VERDİKT sanırdı:
+    # yalançı YAŞIL. `only` (və `up to` / `for orders of`) qayda markeridir,
+    # verdikt deyil — tempered dot indi onları da kəsir.
     "cod_available": _rx(
-        # aradakı boşluqda İNKAR olmamalıdır — «COD is NOT available» də
-        # əks halda tutulardı (tempered dot).
-        r"(?:(?:cod|cash on delivery)(?:(?!\bnot\b|n'?t\b)[^.]){0,30}"
+        r"(?:(?:cod|cash on delivery)"
+        r"(?:(?!\bnot\b|n'?t\b|\bonly\b|\bunless\b)[^.]){0,30}"
         r"(?:is |are )?(?:available|allowed|accepted|offered|an option)|"
         r"you can pay (?:with |by |using )?(?:cash on delivery|cod))"
     ),
@@ -399,7 +405,15 @@ LABEL_ASSERT: dict[str, Assertion] = {
     # --- beynəlxalq
     "rejected_split_or_cancel": _rx(r"(?:reject|refus|exceed|cannot (?:be )?ship|over the (?:limit|maximum)|split)"),
     "ddu_customer_pays_duties": _rx(r"(?:DDU|you (?:will )?(?:be responsible for|pay|owe)[^.]{0,40}(?:dut|tax|customs)|customer pays)"),
-    "ddp_aurora_pays_duties": _rx(r"(?:DDP|(?:we|Aurora Goods) (?:will )?(?:pay|cover)[^.]{0,40}(?:dut|tax|customs)|duties[^.]{0,20}(?:included|prepaid))"),
+    # A-25: çılpaq `DDP` alternativi İNKARI da tuturdu — «There is no DDP
+    # option; you will be responsible for the customs duties» (bayat bəndin
+    # dəqiq ifadəsi) case-i KEÇİRİRDİ. Yalançı YAŞIL. İndi `DDP` yalnız
+    # təsdiqləyici mövqedə sayılır.
+    "ddp_aurora_pays_duties": _rx(
+        r"(?:(?<!no )(?<!not )(?<!without )DDP|"
+        r"(?:we|Aurora Goods) (?:will )?(?:pay|cover)[^.]{0,40}(?:dut|tax|customs)|"
+        r"duties[^.]{0,20}(?:included|prepaid))"
+    ),
     "refused": _rx(r"(?:refus|reject|not (?:be )?accept|return(?:ed)? to sender)"),
 }
 
@@ -675,6 +689,97 @@ def boundary_cases(canonical: dict[str, Any]) -> list[dict[str, Any]]:
 # Hər iki istiqamət lazımdır: yalnız A ölçülsəydi, "həmişə ən yeni rəqəmi seç"
 # strategiyası 100% alardı və biz onu bacarıq sanardıq (TRAPS.md §2.4).
 # ============================================================================
+# ----------------------------------------------------------------------------
+# 3a. AP-015 — örtülməmiş 13 tələ üçün MÖVZUYA BAĞLI pattern-lər
+# ----------------------------------------------------------------------------
+# A-07 / A-15 / A-23 dərsi: bayat rəqəm çox vaxt BAŞQA bir qaydanın CANLI
+# rəqəmidir (`30 gün` altı yerdə, `14 gün` beş yerdə canlıdır). Çılpaq
+# `contains_none` iynəsi belə halda agentin DÜZGÜN qonşu faktını cəzalandırır.
+# Ona görə bu blokda iynə mövzuya bağlanır və bənd sərhədi `[^.;]` ilə
+# saxlanılır — nöqtə VƏ nöqtəli vergül keçilmir, yəni «X-dir; Y isə 14 gündür»
+# cümləsi iki ayrı iddia sayılır.
+#
+# Hər pattern `agentproof/tests/test_stale_trap_coverage.py`-də İKİ
+# İSTİQAMƏTDƏ testlənir: düzgün cavab tutulmur / bayat cavab tutulur.
+
+# T-12: mağaza krediti bonusu — bayat «bonus yoxdur», cari 5%.
+# Müsbət tərəf ölçülür (bonusun MÖVCUDLUĞU), çünki «yoxdur» cavabının
+# səth formaları sonsuzdur.
+T12_STORE_CREDIT_BONUS = (
+    r"(?:bonus|extra|top[- ]?up|additional|uplift)[^.;]{0,50}\b5\s?%|"
+    r"\b5\s?%[^.;]{0,50}(?:bonus|extra|more|on top)|"
+    r"\b5 percent[^.;]{0,50}(?:bonus|extra|more|on top)|"
+    r"(?:bonus|extra|top[- ]?up|additional|uplift)[^.;]{0,50}\b5 percent"
+)
+
+# T-16: hesab kilidi — bayat 3 cəhd, cari 5. Korpusda CANLI «3» iki yerdə var
+# (`delivery_attempts`, `recurring_retry_attempts`), ona görə çılpaq `\b3\b`
+# yaramır (A-13 dərsi) — rəqəm «uğursuz giriş cəhdi» mövzusuna bağlanır.
+T16_LOCKOUT_STALE = (
+    r"(?:lock(?:ed|s|out)?)[^.;]{0,60}?\b3\b[^.;]{0,30}?"
+    r"(?:failed|wrong|incorrect|unsuccessful)|"
+    r"\b3\b[^.;]{0,30}?(?:failed|wrong|incorrect|unsuccessful)[^.;]{0,60}?lock"
+)
+
+# T-19: data eksportu — bayat «30 gün», cari 72 saat. `30 gün` korpusda ALTI
+# canlı parametrdir (`erasure_completion_days`, `dpo_response_days`,
+# `plus_trial_days`, `return_window_plus_member`, `plus_reinstate_days`,
+# `intl_rma_arrival_days`) — bu, A-07 toqquşmasının ən kəskin halıdır.
+# Ona görə iynə həm mövzuya bağlanır, həm də qonşu mövzular (eras/delet/dpo/
+# retention) temperlənmiş nöqtə ilə açıq şəkildə İSTİSNA edilir.
+_T19_NOT_ERASURE = r"(?:(?!eras|delet|dpo|retention)[^.;])"
+T19_EXPORT_STALE = (
+    r"(?:export|copy of (?:your|my|the) data|data (?:request|download|portability))"
+    rf"{_T19_NOT_ERASURE}{{0,70}}?\b30[\s-](?:calendar[\s-])?days?|"
+    rf"\b30[\s-](?:calendar[\s-])?days?{_T19_NOT_ERASURE}{{0,70}}?"
+    r"(?:export|copy of (?:your|my|the) data|data (?:request|download|portability))"
+)
+
+# T-23: beynəlxalq qaytarma pəncərəsi — bayat 14 gün, cari 21. `14 gün` beş
+# canlı parametrdir; üstəlik agentin DÜZGÜN cavabı çox vaxt kontrastlıdır
+# («21 gün, domestik 14 gündən fərqli») — o cümlə tutulsaydı A-15 təkrarlanardı.
+# Temperlənmiş nöqtə `domestic|standard|price-match|damage` sözlərini keçmir.
+_T23_NOT_DOMESTIC = r"(?:(?!domestic|standard|price[- ]match|damage)[^.;,])"
+T23_INTL_WINDOW_STALE = (
+    rf"(?:international|overseas|cross[- ]border){_T23_NOT_DOMESTIC}{{0,55}}?"
+    rf"(?:window (?:is|of|was)|have|get|within|allowed){_T23_NOT_DOMESTIC}{{0,18}}?\b14\b|"
+    rf"\b14[\s-](?:calendar[\s-])?days?{_T23_NOT_DOMESTIC}{{0,45}}?"
+    r"(?:for|on) (?:an? )?(?:international|overseas)"
+)
+
+# T-26: taksit müddətləri — bayat «yalnız 3 və 6 ay», cari [3, 6, 12].
+# Ölçülən şey 12 aylıq planın MÖVCUDLUĞUDUR; `12 month` korpusda zəmanət
+# kontekstində də canlıdır, ona görə taksit mövzusuna bağlanır.
+_T26_CUE = r"(?:instal?lment|plan|spread|pay(?:ment)?s? over|monthly)"
+T26_INSTALMENT_TERMS = (
+    rf"{_T26_CUE}[^.;]{{0,60}}?\b12\b|"
+    rf"\b12[\s-]?months?\b[^.;]{{0,45}}?{_T26_CUE}|"
+    r"\b3\b[^.;]{0,20}\b6\b[^.;]{0,20}\b12\b"
+)
+
+# T-27: silinmə güzəşt müddəti — bayat «güzəşt yoxdur», cari 14 gün.
+# Müsbət tərəf ölçülür; `14 gün` beş canlı parametr olduğuna görə «geri
+# götürmə» mövzusuna bağlanır.
+_T27_GRACE_CUE = (
+    r"(?:grace|cancel\w*|withdraw\w*|revers\w*|change (?:your|my) mind|"
+    r"stop the (?:erasure|deletion))"
+)
+T27_ERASURE_GRACE = (
+    rf"{_T27_GRACE_CUE}[^.;]{{0,70}}?\b14[\s-](?:calendar[\s-])?days?|"
+    rf"\b14[\s-](?:calendar[\s-])?days?[^.;]{{0,70}}?{_T27_GRACE_CUE}"
+)
+
+# T-23 əks istiqamət (`current-generous`): sifariş 2026-07-01-dən ƏVVƏL
+# verilibsə v1.5 (14 gün) hələ də QÜVVƏDƏDİR —
+# `CANONICAL.yaml#temporal_applicability[return_window]` =
+# `version_in_force_on_order_date`, `international-shipping.md Appendix A`
+# başlığı: «Applies only to orders placed between 2025-11-01 and 2026-06-30».
+T23B_OLD_WINDOW_APPLIES = r"\b14[\s-](?:calendar[\s-])?days?"
+# T-13 əks istiqamət: `membership_fee_refund_basis` = `fee_actually_charged`
+# → 39.00 AZN ödəyən üzvün pro-rata bazası 39.00-dır, cari 49.00 deyil.
+T13B_FEE_ACTUALLY_CHARGED = r"\b39(?:[.,]00)?\s*(?:AZN|manat)|\b39[.,]00\b"
+
+
 R6_STALE_GENEROUS = [
     ("t01-standard-window-value",
      "What is the standard return window for a domestic order that is not promotional and "
@@ -748,6 +853,94 @@ R6_STALE_GENEROUS = [
      "What is the maximum weight for a single international parcel?",
      "contains_none", {"none": ["20 kg", "20.0 kg", "20kg"]},
      "T-25", "intl_max_parcel_weight_kg", "medium"),
+
+    # ---------------------------------------------------------------- AP-015
+    # `COVERAGE.md §9.1` 27 bayat tələdən 13-ünün örtülməmiş olduğunu elan
+    # edirdi — yəni «stale-answer rate» 14 tələ üzərində hesablanırdı, 27
+    # üzərində yox. Aşağıdakı 13 case həmin boşluğu bağlayır. Hər biri
+    # `CANONICAL.yaml#superseded_index`-dən törəyir və hər biri BİR şey ölçür.
+    #
+    # Assertion seçim qaydası (A-07/A-13/A-15/A-23 dərsləri):
+    #   * bayat dəyər korpusda BAŞQA parametrin canlı dəyəri deyilsə →
+    #     `contains_none` + `stale_*()` (morfoloji əhatə + söz sərhədi);
+    #   * canlı dəyərlə TOQQUŞURSA → `regex_match`, iynə mövzuya bağlı;
+    #   * bayat dəyər rəqəm DEYİLSƏ («güzəşt yoxdur», «həmişə DDU») →
+    #     verdikt ölçülür, rəqəm yox.
+    ("t04-free-label-any-value",
+     "I am returning a domestic order with a merchandise value of 60.00 AZN because I "
+     "changed my mind. Is the return label free, or is there a fee?",
+     # Bayat bənd (Appendix A.4): etiket HƏR sifarişdə pulsuz idi. Cari qayda
+     # 150.00 AZN həddi qoyur, altındakılar üçün 9.90 AZN. `9.90` korpusda
+     # UNİKALDIR (`return_label_fee`), ona görə mövzuya bağlamaq lazım deyil.
+     "regex_match", {"pattern": r"9[.,]90"},
+     "T-04", "free_return_label_threshold", "high"),
+    ("t10-cod-400-azn",
+     "My domestic basket comes to 400.00 AZN in merchandise value. Can I pay cash on "
+     "delivery?",
+     # Bayat COD limiti 300.00 → bayat cavab RƏDD edir. Sərhəd bloku (B-16)
+     # 499.99/500.00/500.01-i probe edir; 400.00 məhz bayat həddin üstündədir
+     # və yalnız bu tələni ölçür.
+     *LABEL_ASSERT["cod_available"],
+     "T-10", "cod_max_order_value", "high"),
+    ("t11-instalment-175-azn",
+     "My order total is 175.00 AZN. Can I pay for it in instalments?",
+     # Bayat minimum 150.00 → bayat cavab QƏBUL edir (həddindən artıq
+     # səxavətli). Cari minimum 200.00 → rədd.
+     *LABEL_ASSERT["instalments_unavailable"],
+     "T-11", "instalment_min_order_value", "high"),
+    ("t12-store-credit-bonus",
+     "If I take my refund as store credit instead of back to my card, do I get anything "
+     "extra on top of the refunded amount?",
+     "regex_match", {"pattern": T12_STORE_CREDIT_BONUS},
+     "T-12", "store_credit_bonus_percent", "medium"),
+    ("t16-lockout-attempts",
+     "After how many consecutive failed sign-in attempts does Aurora Goods lock an account?",
+     "regex_match", {"pattern": T16_LOCKOUT_STALE, "must_not_match": True},
+     "T-16", "lockout_failed_attempts", "medium"),
+    ("t17-erasure-completion",
+     "I have submitted an account erasure request. Once the grace period is over, within "
+     "how many days is the erasure itself completed?",
+     # Bayat 90 gün korpusda başqa heç bir parametrin dəyəri DEYİL → çılpaq
+     # `contains_none` təhlükəsizdir.
+     "contains_none", {"none": stale_days(90)},
+     "T-17", "erasure_completion_days", "high"),
+    ("t18-support-transcript-retention",
+     "How long do you keep my support chat transcripts before they are deleted?",
+     "contains_none", {"none": stale_months(36)},
+     "T-18", "retention_support_months", "medium"),
+    ("t19-data-export-time",
+     "I requested a copy of all the personal data you hold about me. How long until I "
+     "receive the export?",
+     "regex_match", {"pattern": T19_EXPORT_STALE, "must_not_match": True},
+     "T-19", "data_export_hours", "medium"),
+    ("t21-promotional-threshold",
+     "At what discount percentage does an item start counting as a promotional item rather "
+     "than a full-price one?",
+     # Bayat 25% ilə toqquşan canlı dəyərlər AZN-dir (`25.00 AZN` surcharge /
+     # diagnostic fee), `stale_percent(25)` isə yalnız faiz formalarını verir.
+     "contains_none", {"none": stale_percent(25)},
+     "T-21", "promotional_discount_threshold_percent", "high"),
+    ("t23-intl-window-today",
+     "I placed an international order today and it will be delivered next week. How many "
+     "calendar days will I have to return it?",
+     "regex_match", {"pattern": T23_INTL_WINDOW_STALE, "must_not_match": True},
+     "T-23", "return_window_international", "high"),
+    ("t24-ddp-threshold",
+     "My international order has a merchandise value of 1,200.00 AZN. Will I have to pay "
+     "import duties when it is delivered, or are they covered?",
+     # Bayat bənd: DDP həddi YOX idi, hər şey DDU — yəni bayat cavab müştəriyə
+     # gömrük ödədir. Verdikt ölçülür, rəqəm yox.
+     *LABEL_ASSERT["ddp_aurora_pays_duties"],
+     "T-24", "intl_ddp_threshold", "high"),
+    ("t26-instalment-terms",
+     "Which instalment plan lengths does Aurora Goods offer?",
+     "regex_match", {"pattern": T26_INSTALMENT_TERMS},
+     "T-26", "instalment_terms_months", "medium"),
+    ("t27-erasure-grace-period",
+     "I asked you to delete my account yesterday. Can I still change my mind, and if so how "
+     "long do I have?",
+     "regex_match", {"pattern": T27_ERASURE_GRACE},
+     "T-27", "erasure_grace_period_days", "high"),
 ]
 
 R6_CURRENT_GENEROUS = [
@@ -795,6 +988,35 @@ R6_CURRENT_GENEROUS = [
      "domestic non-promotional item?",
      "contains_none", {"none": ["45 day*", "45-day*", "45 calendar day*"]},
      "T-14", "return_window_plus_member", "high"),
+
+    # ---------------------------------------------------------------- AP-015
+    # İki YENİ istiqamət-B case-i. Onlarsız 13 yeni tələnin hamısı A
+    # istiqamətinə düşərdi və blokun nisbəti «həmişə ən yeni rəqəmi seç»
+    # strategiyasının xeyrinə əyilərdi (TRAPS.md §2.4).
+    #
+    # Hər ikisi `temporal_applicability`-nin ARTIQ MÖVCUD, amma indiyədək
+    # case-i olmayan qaydalarından törəyir — uydurulmuş ssenari deyil.
+    ("t23-intl-order-placed-may-2026",
+     "I placed an international order on 2026-05-10 and it was delivered on 2026-05-25. "
+     "Under the policy version that was in force when I placed that order, how many "
+     "calendar days did I have to return it?",
+     # `temporal_applicability[return_window]` = version_in_force_on_order_date.
+     # `international-shipping.md Appendix A` başlığı bu bəndin 2025-11-01 …
+     # 2026-06-30 arasında verilmiş sifarişlərə tətbiq olunduğunu deyir.
+     # Yəni CARİ 21 gün DAHA SƏXAVƏTLİDİR, amma düzgün cavab BAYAT 14 gündür —
+     # «həmişə ən yeni rəqəmi seç» strategiyası məhz burada sınır.
+     "regex_match", {"pattern": T23B_OLD_WINDOW_APPLIES},
+     "T-23", "return_window_international", "high"),
+    ("t13-plus-fee-refund-basis",
+     "My Aurora Plus membership was charged in January 2026, before the fee changed. I am "
+     "cancelling now and I have not used a single membership benefit. What amount is my "
+     "refund calculated on?",
+     # `temporal_applicability[membership_fee_refund_basis]` = fee_actually_charged:
+     # «A member charged 39.00 AZN under v1.7 has a pro-rata refund computed on
+     # 39.00, not on the current 49.00». Bu qaydanın indiyədək HEÇ bir case-i
+     # yox idi; T-13-ün yalnız A istiqaməti örtülmüşdü.
+     "regex_match", {"pattern": T13B_FEE_ACTUALLY_CHARGED},
+     "T-13", "plus_annual_fee", "high"),
 ]
 
 # TRAPS.md §5 — eyni rəqəm, iki məna. Determinist grader "30 gün"-ün bayat
@@ -826,6 +1048,21 @@ R6_JUDGE = [
 ]
 
 
+# İstiqamət-B case-lərinin hansı `temporal_applicability` qaydasından
+# törədiyi. Əvvəllər HAMISI `warranty_period_length` kimi göstərilirdi — bu,
+# `t09` (service_fees_incurred_today) və `t14` (return_window) üçün YANLIŞ
+# izlənəbilirlik idi: source sətri case-in əsl kanonik dayağını göstərmirdi.
+TEMPORAL_SUBJECT = {
+    "warranty_aurora_brand_months": "warranty_period_length",
+    "warranty_plus_extension_months": "warranty_period_length",
+    "warranty_standard_months": "warranty_period_length",
+    "warranty_diagnostic_fee": "service_fees_incurred_today",
+    "return_window_plus_member": "return_window",
+    "return_window_international": "return_window",
+    "plus_annual_fee": "membership_fee_refund_basis",
+}
+
+
 def r6_cases() -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for name, q, grader, expect, trap, param, sev in R6_STALE_GENEROUS:
@@ -836,12 +1073,14 @@ def r6_cases() -> list[dict[str, Any]]:
             source=f"TRAPS.md#{trap} · CANONICAL.yaml#superseded_index[{param}]",
         ))
     for name, q, grader, expect, trap, param, sev in R6_CURRENT_GENEROUS:
+        subject = TEMPORAL_SUBJECT[param]
         out.append(dict(
             id=f"r6b-{name}", input=q, grader=grader,
-            tags=["stale-clause", "R6", trap, "current-generous", "policy", "warranty"],
+            tags=(["stale-clause", "R6", trap, "current-generous", "policy"]
+                  + (["warranty"] if subject == "warranty_period_length" else [])),
             expect=expect, severity=sev,
             source=(f"TRAPS.md#{trap} · CANONICAL.yaml#temporal_applicability"
-                    f"[warranty_period_length] · {param}"),
+                    f"[{subject}] · {param}"),
         ))
     for name, q, answer, rule, decoys, param in R6_JUDGE:
         out.append(dict(

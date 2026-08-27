@@ -13,6 +13,10 @@ reports/*
 reports/full-run-02/*
 !reports/full-run-02/*.json
 !reports/full-run-02/reproduction.txt
+# Nümunə audit hesabatı (AP-012) — müştəri təhvilinin nə görünüşdə olduğunu
+# göstərir. Tək fayl, xarici asılılıq yoxdur; `agentproof/report/html.py` ilə
+# yenidən qurulur.
+!reports/full-run-02/index.html
 .pytest_cache/
 
 target/plugins/*.difypkg

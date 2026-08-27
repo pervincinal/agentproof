@@ -8,4 +8,12 @@
 //   term — hansı zəmanət müddəti göstərilib (`warrant*` bəndindəki ay dəyəri;
 //          "superseded"/"adds"/"extends" yaxınlığındakı rəqəmlər qərar deyil)
 //   rule — hansı qaydaya istinad edilib
-{"id":"pilot-c1-t07-consistency","input":"How long is the Aurora-brand warranty on the item in order ORD-10046? It was delivered back in September 2024.","grader":"consistency_at_k","tags":["trap","T-07","consistency","warranty"],"severity":"high","source":"pilot-05 ilə eyni sorğu — T-07 uğursuzluğunun təkrarlanan olub-olmadığı","expect":{"mode":"verdict","min_agreement":1.0,"min_responses":2,"verdict":{"term":{"type":"quantity","unit":"month","near":["warrant*"],"not_near":["superseded","supersedes","add*","extend*","total","membership","plus"],"window":4},"rule":{"type":"label","labels":{"aurora_brand":["aurora-brand*","aurora brand*","aurora-branded"],"superseded_18m":["superseded","appendix a","18-month rule","18-month provision"]}}}}}
+//
+// A-26 (docs/GRADER-AUDIT.md): `rule` slotunun `superseded_18m` cue siyahısı
+// 2026-08-26 pilot qaçışının SÖZLƏRİ üzərində qurulmuşdu. 2026-08-27 qaçışında
+// agent EYNİ qaydanı «the 2025 v3.0 changes» deyə adlandırdı — cue siyahısı onu
+// tutmadı və verdict agreement 1.00 yerinə 0.67 çıxdı. Bu, slotun QƏRARI yox,
+// SÖZÜ ölçməsi idi — yəni modulun öz xəbərdarlığının pozulması. Siyahı indi
+// qaydanın bütün adlandırma formalarını (versiya nömrəsi, appendix, «older
+// version») əhatə edir.
+{"id":"pilot-c1-t07-consistency","input":"How long is the Aurora-brand warranty on the item in order ORD-10046? It was delivered back in September 2024.","grader":"consistency_at_k","tags":["trap","T-07","consistency","warranty"],"severity":"high","source":"pilot-05 ilə eyni sorğu — T-07 uğursuzluğunun təkrarlanan olub-olmadığı","expect":{"mode":"verdict","min_agreement":1.0,"min_responses":2,"verdict":{"term":{"type":"quantity","unit":"month","near":["warrant*"],"not_near":["superseded","supersedes","add*","extend*","total","membership","plus"],"window":4},"rule":{"type":"label","labels":{"aurora_brand":["aurora-brand*","aurora brand*","aurora-branded"],"superseded_18m":["superseded","supersedes","appendix a","18-month rule","18-month provision","18 month*","v3.0","v3","2025 change*","2025 v3*","older version","previous version","earlier policy","earlier version","policy version in force"]}}}}}

@@ -295,7 +295,7 @@ yoxlanılır + yeni `test_stale_needles_have_a_left_word_boundary`.
 (boş iynə yoxdur, `*` yalnız sonda, hər iynə öz mətnini tutur) və
 `test_stale_needle_lists_cover_native_morphology`.
 
-`pytest`: **628 → 695**, hamısı yaşıl.
+`pytest`: **628 → 695** (A-06); AP-015 və A-24/A-25 ilə birlikdə **798**, hamısı yaşıl.
 
 ---
 
@@ -1037,17 +1037,29 @@ Hamısı `evals/datasets/build_full.py`-də:
 ---
 ---
 
-# Üçüncü dövr — AP-016 gedişində tapılanlar
+# Üçüncü dövr — AP-016 və AP-015 gedişində tapılanlar
 
 - **Tarix:** 2026-08-28
-- **Mənbə:** A-06 düzəlişinin əvvəl/sonra müqayisəsi
+- **Mənbə (A-23):** A-06 düzəlişinin əvvəl/sonra müqayisəsi
   (`reports/full-run-02` real cavabları, 34 `contains_none` case × 3 cəhd)
+- **Mənbə (A-24, A-25):** AP-015-in yeni case-ləri üçün yazılan **iki
+  istiqamətli** probe-lar (`agentproof/tests/test_stale_trap_coverage.py`).
+  Hər ikisi eyni yolla tapıldı: probe-un «bayat cavab SINMALIDIR» tərəfi
+  qırmızı düşmədi — yəni assertion bayat cavabı keçirirdi.
 
-## Xülasə — A-23
+**Dərs (təkrarlanır).** İki istiqamətli probe olmasaydı, hər iki qüsur
+görünməz qalardı: hər ikisi **yalançı YAŞIL** verir, yəni səhv cavabı düzgün
+sayır. Yalnız «düzgün cavab keçir» tərəfini yazsaydıq, testlər yaşıl olardı və
+ölçmə səssizcə sınıq qalardı.
+
+## Xülasə — A-23…A-25
 
 | # | Sinif | Növ | Case | Vəziyyət |
 |---|-------|-----|------|----------|
 | A-23 | `contains_none` MÖVZU tanımır — qonşu düzgün qaydanı bayat sanır | yalançı müsbət | `g1-gap01-giftcard-expiry` | **açıq / sənədləşdirilib** |
+| A-24 | `cod_available` QAYDA ifadəsini VERDİKT sanır | **yalançı YAŞIL** | `bva-b-16-…-499-99/500`, `r6a-t10-…` | düzəldildi |
+| A-25 | `ddp_aurora_pays_duties` çılpaq `DDP` iynəsi İNKARI da tutur | **yalançı YAŞIL** | `bva-b-34-…`, `r6a-t24-…` | düzəldildi |
+| A-26 | `consistency_at_k` verdict slotu QƏRARI yox, SÖZÜ ölçür | yalançı müsbət (saxta qeyri-sabitlik) | `pilot-c1-t07-consistency` | düzəldildi |
 
 ---
 
@@ -1101,6 +1113,123 @@ keçmir (stabil deyil), ona görə `FINDINGS.md`-ə təsiri yoxdur.
 
 ---
 
+## A-24 — `cod_available` QAYDA ifadəsini VERDİKT sanır (yalançı YAŞIL)
+
+A-09b-də bu iynə bir dəfə artıq düzəldilmişdi: `UNAVAILABLE` invert-i düzgün
+QEYDİ tuturdu, ona görə verdikt birbaşa müsbət formada ölçülməyə keçirildi və
+aradakı boşluqda inkar olmaması üçün temperlənmiş nöqtə qoyuldu
+(`(?!\bnot\b|n'?t\b)`).
+
+**Buraxılan hal.** Temperlənmiş nöqtə yalnız İNKARI bloklayırdı, **qayda
+çərçivəsini** yox. Bayat COD limitini (300.00 AZN) işlədən rədd cavabı belə
+başlayır:
+
+> «Cash on delivery is **only available** for orders of 300.00 AZN or less,
+> so it is **not available** for a 400.00 AZN basket.»
+
+Birinci bənd müsbət qayda ifadəsidir və iynə onu VERDİKT sandı → `passed=True`.
+Yəni agent bayat limiti tətbiq edib müştərini haqsız rədd etsə də, ölçmə bunu
+**düzgün cavab** kimi qeyd edirdi.
+
+**Düzəliş.** Temperlənmiş nöqtəyə `only` və `unless` əlavə olundu — bunlar
+qayda markeridir, verdikt deyil. «You can pay cash on delivery», «COD is
+available for this order», «COD is an option» hələ də tutulur.
+
+**Sübut.** `test_stale_trap_coverage.py::test_stale_clause_answer_fails[r6a-t10-cod-400-azn#stale0]`
+(bayat rədd sınır) + `…#ok0/ok1` (düzgün qəbul keçir).
+
+**Baseline təsiri: sıfır.** `reports/full-run-02` real cavabları üzərində
+`cod_available` işlədən mövcud case-lərin nəticəsi dəyişmədi.
+
+---
+
+## A-25 — `ddp_aurora_pays_duties`: çılpaq `DDP` iynəsi inkarı da tutur (yalançı YAŞIL)
+
+Pattern-in birinci alternativi sadəcə `DDP` idi. Bayat bəndin (T-24) dəqiq
+məzmunu isə **DDP-nin YOXLUĞUDUR**: «Under v1.5 all international orders were
+shipped DDU with **no DDP threshold**». Bayat cavab:
+
+> «**There is no DDP option**; you will be responsible for the customs duties.»
+
+— sətirdə `DDP` olduğu üçün case KEÇİRDİ. Bu, A-11-in («lockout» sözü imtina
+cümləsində) eyni sinfidir: **söz kökü verdikt deyil**.
+
+**Düzəliş.** `DDP` yalnız təsdiqləyici mövqedə sayılır:
+`(?<!no )(?<!not )(?<!without )DDP`. «ships DDP», «(DDP)», «handled as DDP»
+tutulur; «no DDP», «not DDP», «without DDP» tutulmur.
+
+**Sübut.** `test_stale_trap_coverage.py::…[r6a-t24-ddp-threshold#stale0/#stale1]`
++ üç müsbət probe.
+
+**Baseline təsiri: sıfır** (eyni müqayisə).
+
+---
+
+## A-26 — `consistency_at_k` verdict slotu QƏRARI yox, SÖZÜ ölçür
+
+**Case:** `pilot-c1-t07-consistency` · **Mənbə:** AP-006 canlı qaçışı
+(`reports/ap006-consistency-verdict`, 2026-08-27, dify_http · claude-sonnet-5,
+`--repeat 3`).
+
+`consistency.py` modul sənədinin öz xəbərdarlığı belədir: *«ÖLÇDÜYÜ ŞEY: eyni
+QƏRARmı, eyni SÖZLƏRmi yox»*. `verdict` rejimi məhz bunun üçün qurulmuşdu —
+amma `type: label` slotu **cue siyahısı** ilə işləyir, yəni bir səviyyə
+yuxarıda eyni tələyə düşür.
+
+**Nə oldu.** `rule` slotunun `superseded_18m` cue siyahısı
+(`["superseded", "appendix a", "18-month rule", "18-month provision"]`)
+**2026-08-26 pilot qaçışının cavab sözləri** üzərində qurulmuşdu. 2026-08-27
+qaçışında agentin 2-ci cavabı eyni qaydanı başqa cür adlandırdı:
+
+> «…carries Aurora Goods' standard Aurora-brand warranty of **24 months**
+> (since it was delivered before the **2025 v3.0 changes** took effect, the
+> current 24-month rule applies).»
+
+Bu cavabda `superseded` sözü **ümumiyyətlə yoxdur**. Nəticədə slot yarımçıq
+oxundu və verdict agreement **0.67** çıxdı — halbuki üç cavabın hər üçü eyni
+qərardadır:
+
+| | term | rule (elan olunmuş cue ilə) | qərar (əl ilə oxunub) |
+|---|---|---|---|
+| cavab 1 | 24 month | aurora_brand + superseded_18m | 24 ay, Aurora-brend, örtük 2026-09-01 |
+| cavab 2 | 24 month | aurora_brand **(yalnız)** | **eyni** |
+| cavab 3 | 24 month | aurora_brand + superseded_18m | **eyni** |
+
+`term` slotu (əsl qərar dəyəri) **3/3 eynidir**. Fərq yalnız qaydanın
+ADLANDIRILMASINDADIR. Bu, A-01-in eyni sinfidir, sadəcə obyekt dəyişib:
+orada rus morfologiyası, burada versiya nömrəsi ilə adlandırma.
+
+**Düzəliş.** `superseded_18m` cue siyahısı qaydanın bütün adlandırma
+formalarını əhatə edir: `v3.0`, `v3`, `2025 change*`, `older version`,
+`previous version`, `earlier policy`, `policy version in force` + əvvəlkilər.
+`term` slotu **toxunulmadı**.
+
+**Niyə bu, nəticəyə uyğunlaşdırma (p-hacking) deyil.**
+1. Üç cavabın hamısı ƏL İLƏ oxundu (AP-021 metodu) — qərarın eyni olduğu
+   grader-dən əvvəl, mətndən müəyyən edildi.
+2. Düzəliş **köhnə pilot fiksasiyasında reqressiya vermir** (1.00 → 1.00).
+3. Düzəlişdən sonra **MÜSTƏQİL yeni canlı qaçış** edildi
+   (`reports/ap006-consistency-verdict-2`, ayrı nümunə) — 1.00.
+4. Genişlənmiş siyahı grader-i kor etmədi: bir cavabda müddət 18 aya
+   dəyişdirilsə, bal 0.67-yə düşür
+   (`test_ap006_grader_still_fails_on_a_real_term_change`).
+5. **Hər iki rəqəm dərc olunur**: elan olunmuş spec ilə 0.67, düzəlişdən
+   sonra 1.00.
+
+**Qalan risk (AÇIQ).** `type: label` slotu prinsipcə leksik qalır — növbəti
+qaçışda agent qaydanı yenə başqa cür adlandıra bilər. Bu, dil modelinin
+cavabında **açıq siyahı problemidir** və tam bağlanmır. Azaldıcı tədbir:
+`verdict` slotu seçilərkən **qərar DƏYƏRİ** (`type: quantity`) əsas
+götürülməli, `label` slotu isə yalnız zəruri olduqda əlavə edilməlidir —
+`term` slotu hər üç qaçışda (pilot + iki canlı) heç vaxt sınmadı, `rule`
+slotu isə iki dəfə düzəliş tələb etdi.
+
+**Sübut.** `agentproof/graders/tests/test_consistency.py` — AP-006 bloku
+(5 test, fiksasiya `fixtures/ap006_t07_consistency_verdict.json` hər iki
+canlı qaçışın cavablarını dəyişdirilmədən saxlayır).
+
+---
+
 ## Düzəlişin yeri (üçüncü dövr)
 
 `agentproof/graders/canonical.py` — `canonical_text(fold_case=)`,
@@ -1108,7 +1237,9 @@ keçmir (stabil deyil), ona görə `FINDINGS.md`-ə təsiri yoxdur.
 `agentproof/graders/deterministic/text.py` — `ContainsNone.grade()`;
 `evals/datasets/build_full.py` — `stale_days` · `stale_months` ·
 `stale_percent` · `stale_kg` və 9 hardcode edilmiş `none` siyahısı (`*`
-prefiks markeri).
+prefiks markeri); `LABEL_ASSERT` içində `cod_available` (A-24) və
+`ddp_aurora_pays_duties` (A-25);
+`evals/datasets/pilot-consistency.jsonl` — `rule` slotunun cue siyahısı (A-26).
 
 `full.jsonl` generatordan yenidən törədildi
 (`python evals/datasets/build_full.py`).

@@ -34,7 +34,7 @@ DATASET = ROOT / "evals" / "datasets" / "full.jsonl"
 BUILDER = ROOT / "evals" / "datasets" / "build_full.py"
 CORPUS = ROOT / "target" / "corpus"
 
-EXPECTED_TOTAL = 150
+EXPECTED_TOTAL = 165
 
 
 # ------------------------------------------------------------------ fixtures
@@ -169,6 +169,37 @@ def test_stale_clause_block_has_both_directions(cases: list[Case]) -> None:
     b = [c for c in cases if "current-generous" in c.tags]
     assert len(a) >= 8, f"stale-generous istiqaməti çox azdır: {len(a)}"
     assert len(b) >= 8, f"current-generous istiqaməti çox azdır: {len(b)}"
+
+
+def test_every_stale_trap_has_a_case(cases: list[Case]) -> None:
+    """27 bayat tələnin HAMISININ ayrıca case-i olmalıdır (AP-015).
+
+    Əvvəl yalnız 14-ü örtülmüşdü, yəni `stale-answer rate` 14 tələ üzərində
+    hesablanırdı, 27 üzərində yox — hesabatın ən önəmli rəqəmlərindən biri
+    natamam bazadan gəlirdi (`COVERAGE.md §9.1`). Bu test həmin boşluğun
+    yenidən açılmasını bloklayır: `CANONICAL.yaml#superseded_index`-ə yeni
+    tələ əlavə olunan kimi qırmızıya düşür.
+    """
+    canonical = yaml.safe_load((CORPUS / "CANONICAL.yaml").read_text(encoding="utf-8"))
+    traps = {e["trap"] for e in canonical["superseded_index"]}
+    covered = {t for c in cases if "R6" in c.tags for t in c.tags if re.fullmatch(r"T-\d{2}", t)}
+    assert traps <= covered, f"case-i olmayan bayat tələ(lər): {sorted(traps - covered)}"
+    assert covered <= traps, f"korpusda olmayan tələyə istinad: {sorted(covered - traps)}"
+
+
+def test_both_stale_directions_survive_the_expansion(cases: list[Case]) -> None:
+    """AP-015 13 yeni case əlavə etdi — nisbət tək istiqamətə əyilməməlidir.
+
+    Yalnız A istiqaməti («bayat dəyəri işlətmə») ölçülsəydi, «həmişə ən yeni
+    rəqəmi seç» strategiyası 100% alardı və biz onu bacarıq sanardıq
+    (TRAPS.md §2.4). B istiqaməti (`temporal_applicability` köhnə dəyəri əmr
+    edir) ən azı blokun beşdə birini tutmalıdır.
+    """
+    a = [c for c in cases if "stale-generous" in c.tags]
+    b = [c for c in cases if "current-generous" in c.tags]
+    assert len(b) / (len(a) + len(b)) >= 0.2, (
+        f"istiqamət-B payı çox aşağıdır: {len(b)}/{len(a) + len(b)}"
+    )
 
 
 def test_baseline_cases_exist(cases: list[Case]) -> None:

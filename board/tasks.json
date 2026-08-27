@@ -293,7 +293,7 @@
    "desc": "Yeganə mövcud sabitlik ölçüsü reports/pilot/consistency-dədir və KÖHNƏDİR: mode=key_facts ilə agreement 0.67 verib (3 cavab eyni qərarı verdi, grader ifadə fərqini qeyri-sabitlik saydı). Bundan sonra case mode=verdict-ə keçirilib (evals/datasets/pilot-consistency.jsonl) amma yenidən qaçırılmayıb. consistency.py hər halda numbers və normalized səth metriklərini evidence.surface-də hesablayır və onlar 1.0 vermir — hesabatda bu fərqin necə təqdim olunacağı QƏRAR TƏLƏB EDİR (bal verdict-dən gəlir, səth göstərici olaraq qalır). Bu, pass^k / qeyri-determinizm iddiasının yeganə dayağıdır (COVERAGE.md §9.5).",
    "role": "harness-eng",
    "prio": "P0",
-   "status": "in_progress",
+   "status": "review",
    "assignee": "dataset-eng",
    "dod": "pilot-consistency.jsonl --repeat 3 ilə canlı hədəfə qarşı yenidən qaçırılıb; verdict rejimində agreement rəqəmi və evidence.surface (numbers_agreement, normalized_agreement) RunRecord-dadır; hesabatda hansı rəqəmin sabitlik iddiası kimi göstəriləcəyi (verdict) və səth metriklərinin niyə aşağı olduğu bir abzasla yazılıb; qərar consistency.py modul sənədinə və ya COVERAGE.md-yə köçürülüb.",
    "links": [
@@ -302,7 +302,7 @@
     "reports/pilot/consistency/"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-28T00:43:18",
+   "updated": "2026-08-28T00:53:30",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -327,6 +327,24 @@
      "actor": "dataset-eng",
      "action": "backlog→in_progress",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:52:48",
+     "actor": "dataset-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:52:48",
+     "actor": "dataset-eng",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:53:30",
+     "actor": "dataset-eng",
+     "action": "comment",
+     "detail": ""
     }
    ],
    "comments": [
@@ -334,6 +352,16 @@
      "at": "2026-08-27T19:12:29",
      "actor": "po",
      "text": "Asılılıq: AP-002 — izolyasiya case-ləri seriallaşdırır, iki canlı qaçış paralel gedə bilməz."
+    },
+    {
+     "at": "2026-08-28T00:52:48",
+     "actor": "dataset-eng",
+     "text": "CANLI QAÇIŞ EDİLDİ (dify_http · claude-sonnet-5 · --repeat 3 · yalnız pilot-c1-t07-consistency). İki qaçış, cəmi xərc $0.125 (hədd $3). QAÇIŞ 1 (reports/ap006-consistency-verdict, AbmeRfQfdgNLf8jGA7SwJz): elan olunmuş verdict spec-i ilə agreement 0.67, səth numbers 0.67 / normalized 0.33. Üç cavabı ƏL İLƏ oxudum (AP-021 metodu): hər üçü EYNİ qərardadır (Aurora-brend, 24 ay, örtük 2026-09-01, Plus varsa +6 ay). Fərq yalnız  slotunun cue siyahısından gəldi — 2-ci cavab «superseded» sözünü işlətmir, «the 2025 v3.0 changes» deyir. Bu, A-01 sinfinin bir səviyyə yuxarıda təkrarıdır → GRADER-AUDIT.md#A-26 kimi yazıldı və düzəldildi (cue siyahısına versiya nömrəsi ilə adlandırma formaları əlavə olundu;  slotu TOXUNULMADI). QAÇIŞ 2 (reports/ap006-consistency-verdict-2, kad8MmLsEqJxRN8i72392X) — düzəlişdən sonra MÜSTƏQİL yeni nümunə: verdict agreement 1.00, səth numbers 0.33 / normalized 0.33. HESABAT QƏRARI: sabitlik iddiası = verdict agreement (1.00); numbers/normalized GÖSTƏRİCİ qalır, heç vaxt bal olmur. Səth aşağıdır, çünki cavablar eyni qərara fərqli ƏLAVƏ detallar əlavə edir (superseded pəncərənin tarixləri, v3.1/v1.x, 30 aylıq cəm) — səth rəqəmini dərc etsək eyni qərarı verən agenti qeyri-sabit elan edərdik. Qərar consistency.py modul sənədinə VƏ COVERAGE.md §9.5-ə yazıldı; hər iki rəqəm (0.67 və 1.00) açıq saxlanılır. MƏHDUDİYYƏT açıq yazılıb: 1 case × k=3 — metodu göstərir, populyasiya üzrə pass^k vermir; üstəlik grader SABİTLİYİ ölçür, düzgünlüyü yox və bu case-in kanonik cavabı A-20-yə görə mübahisəlidir. QİYMƏT YOXLANDI: pricing/models.yaml tarixə həssasdır — 2026-08-28 üçün $2/$10 (basis=current), 2026-09-01-dən $3/$15 (basis='after 2026-08-31'); qaçış UTC tarixi 2026-08-27 ilə qiymətləndi, dərəcə eynidir. Reqressiya: test_consistency.py-a AP-006 bloku (5 test) + fixtures/ap006_t07_consistency_verdict.json (hər iki qaçışın cavabları dəyişdirilmədən). pytest 804 yaşıl."
+    },
+    {
+     "at": "2026-08-28T00:53:30",
+     "actor": "dataset-eng",
+     "text": "[DÜZƏLİŞ — əvvəlki şərhdə backtick-lər shell tərəfindən silindi.] Tam mətn:\n\nCANLI QAÇIŞ EDİLDİ (dify_http · claude-sonnet-5 · --repeat 3 · yalnız pilot-c1-t07-consistency). İki qaçış, cəmi xərc $0.125 (hədd $3).\n\nQAÇIŞ 1 — reports/ap006-consistency-verdict (AbmeRfQfdgNLf8jGA7SwJz): ELAN OLUNMUŞ verdict spec-i ilə agreement 0.67; səth numbers_agreement 0.67, normalized_agreement 0.33. Üç cavabı ƏL İLƏ oxudum (AP-021 metodu): hər üçü EYNİ qərardadır — Aurora-brend, 24 ay, örtük 2026-09-01, Aurora Plus varsa +6 ay. Fərq yalnız \"rule\" slotunun cue siyahısından gəldi: 2-ci cavab \"superseded\" sözünü ümumiyyətlə işlətmir, eyni qaydanı \"the 2025 v3.0 changes\" deyə adlandırır. Bu, A-01 sinfinin bir səviyyə yuxarıda təkrarıdır → docs/GRADER-AUDIT.md#A-26 kimi yazıldı və düzəldildi (cue siyahısına v3.0 / older version / policy version in force kimi adlandırma formaları əlavə olundu; \"term\" slotu TOXUNULMADI).\n\nQAÇIŞ 2 — reports/ap006-consistency-verdict-2 (kad8MmLsEqJxRN8i72392X), düzəlişdən sonra MÜSTƏQİL yeni nümunə: verdict agreement 1.00; səth numbers 0.33, normalized 0.33.\n\nHESABAT QƏRARI: sabitlik iddiası = verdict agreement (1.00). \"numbers\" və \"normalized\" GÖSTƏRİCİ qalır və heç vaxt bal olmur. Səth aşağıdır, çünki cavablar eyni qərara fərqli ƏLAVƏ detallar qoşur (superseded pəncərənin tarixləri, v3.1/v1.x versiya nömrələri, 30 aylıq cəm) — səth rəqəmini dərc etsəydik, eyni qərarı verən agenti qeyri-sabit elan edərdik; pilotda (mode=key_facts, 0.67) tam olaraq bu baş vermişdi. Qərar agentproof/graders/aggregate/consistency.py modul sənədinə VƏ evals/datasets/COVERAGE.md §9.5-ə yazıldı; hər iki rəqəm (0.67 və 1.00) açıq saxlanılır.\n\nMƏHDUDİYYƏT (açıq): 1 case × k=3 — metodun işlədiyini göstərir, populyasiya üzrə pass^k qiyməti vermir. Üstəlik grader SABİTLİYİ ölçür, DÜZGÜNLÜYÜ yox, və bu case-in kanonik cavabı A-20-yə görə mübahisəlidir (ORD-10046 korpus ziddiyyəti). Yəni 1.00 = \"agent eyni cavabı təkrarlayır\", \"agent düzgün cavab verir\" DEYİL.\n\nQİYMƏT YOXLANDI: agentproof/pricing/models.yaml tarixə həssasdır və düzgün işləyir — 2026-08-28 üçün $2/$10 (basis=current), 2026-08-31 daxil olmaqla eyni, 2026-09-01-dən $3/$15 (basis=\"after 2026-08-31\"). Qaçış UTC start tarixi 2026-08-27 olduğu üçün priced_on=2026-08-27; dərəcə eynidir ($2/$10), yəni bu qaçışın xərci düzgün hesablanıb.\n\nREQRESSİYA: agentproof/graders/tests/test_consistency.py-a AP-006 bloku (5 test) + agentproof/graders/tests/fixtures/ap006_t07_consistency_verdict.json (hər iki canlı qaçışın 3-3 cavabı dəyişdirilmədən). pytest 804 yaşıl."
     }
    ]
   },
@@ -803,7 +831,7 @@
    "desc": "evals/baselines/ BOŞDUR — heç bir baseline yoxdur, yəni report/baseline.py və --fail-on-regression praktikada işlədilmir. docs/STACK.md M4: 87% faydasız, 91% → 87% və bu 4 case sındı faydalıdır. Əlavə səbəb: docs/GRADER-AUDIT.md A-08 bağlanma qeydi grader davranışını dəyişdi (çılpaq rəqəm iynələri artıq tarixin içindən tutulmur), ona görə baseline məhz A-08-dən SONRAKI qaçışdan götürülməlidir. COVERAGE.md §4-də baseline teqli 39 case var — reqressiyanın ölçüldüyü yer budur.",
    "role": "harness-eng",
    "prio": "P2",
-   "status": "backlog",
+   "status": "in_progress",
    "assignee": null,
    "dod": "evals/baselines/dify@1.17.0.json tam qaçışdan götürülüb; run.py --baseline ... --fail-on-regression ilə qaçırılanda RunDelta çıxarır və reqressiyada qeyri-sıfır exit verir; 39 baseline teqli case-in cari nəticəsi snapshot-da ayrıca görünür; sənədə yazılıb ki, baseline hansı qaçışdan və hansı grader versiyasından götürülüb (A-08 sonrası).",
    "links": [
@@ -813,7 +841,7 @@
     "evals/datasets/COVERAGE.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:12:29",
+   "updated": "2026-08-28T00:57:29",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -826,6 +854,12 @@
      "actor": "po",
      "action": "comment",
      "detail": ""
+    },
+    {
+     "at": "2026-08-28T00:57:29",
+     "actor": "main",
+     "action": "backlog→in_progress",
+     "detail": "full-run-03 qacir (165 case, grader duzelislerinden sonra)"
     }
    ],
    "comments": [

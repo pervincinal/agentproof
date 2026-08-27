@@ -20,6 +20,46 @@ Rejimlər:
   key_facts   — `expect.key_facts` ifadələrinin var/yox vektoru (kanonik)
   numbers     — kanonik kəmiyyət dəsti (SƏTH; tarixlər daxil deyil)
   normalized  — normallaşdırılmış mətnin eyniliyi (ƏN SƏRT SƏTH)
+
+
+QƏRAR — hesabatda HANSI RƏQƏM sabitlik iddiasıdır (AP-006, 2026-08-27)
+======================================================================
+**Sabitlik iddiası `verdict` rejiminin `agreement`-idir. `numbers` və
+`normalized` hesabatda GÖSTƏRİCİ kimi qalır və heç vaxt bal olmur.**
+
+Əsas: canlı qaçış (`reports/ap006-consistency-verdict-2`, `pilot-c1-t07`,
+`--repeat 3`, dify_http · claude-sonnet-5):
+
+    verdict agreement      1.00   ← hesabatda sabitlik iddiası budur
+    numbers_agreement      0.33   ← göstərici
+    normalized_agreement   0.33   ← göstərici
+
+Səth metrikləri niyə aşağıdır — və niyə bu, qeyri-sabitlik DEYİL. Hər üç
+cavab eyni qərarı verdi: Aurora-brend, **24 ay**, örtük 2026-09-01-ə qədər,
+Aurora Plus üzvlüyü olsa **+6 ay**. Fərq yalnız cavabın ƏLAVƏ etdiyi
+detallardadır: biri superseded pəncərənin tarixlərini (2025-01-01 …
+2026-01-31) sadalayır, biri v3.1/v1.x versiya nömrələrini gətirir, biri
+30 aylıq cəmi ayrıca yazır. `numbers` rejimi cavabdakı BÜTÜN kəmiyyətlərin
+DƏSTİNİ müqayisə etdiyi üçün bu əlavələr «fərq» kimi görünür; `normalized`
+isə ümumiyyətlə cümlə quruluşunu müqayisə edir və LLM cavabında praktik
+olaraq heç vaxt 1.00 vermir.
+
+Yəni səth rəqəmini sabitlik iddiası kimi dərc etsəydik, **eyni qərarı verən
+agenti qeyri-sabit elan edərdik** — pilotda tam olaraq bu baş verdi
+(`mode=key_facts`, 0.67). Səth metriklərini SİLMİRİK, çünki onlar ifadə
+sərbəstliyinin miqyasını göstərir və verdict slotunun çox dar seçildiyini
+üzə çıxara bilər; sadəcə onlar **bal deyil**.
+
+Nə iddia ETMİRİK. Bu, 1 case × k=3-dür: metodun işlədiyini göstərir,
+populyasiya üzrə `pass^k` qiyməti vermir. Üstəlik `consistency_at_k`
+SABİTLİYİ ölçür, DÜZGÜNLÜYÜ yox — bu case-in kanonik düzgün cavabı isə
+mübahisəlidir (`docs/GRADER-AUDIT.md#A-20`: ORD-10046 üçün korpus öz-özünə
+ziddir). Ona görə 1.00 «agent düzgün cavab verir» demək deyil; «agent eyni
+cavabı təkrarlayır» deməkdir.
+
+Bu qaçış həm də A-26-nı tapdı: `verdict` slotu da SÖZ siyahısına söykənir,
+yəni A-01 sinfi bir səviyyə yuxarıda təkrarlana bilər. Bax
+`docs/GRADER-AUDIT.md#A-26`.
 """
 
 from __future__ import annotations
