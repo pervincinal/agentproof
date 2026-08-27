@@ -1,0 +1,127 @@
+<!doctype html><html lang="az"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AgentProof · Board</title>
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--line:#252c36;--fg:#e6edf3;--dim:#8b949e;
+--ok:#3fb950;--warn:#d29922;--bad:#f85149;--acc:#58a6ff;--pur:#bc8cff;
+--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line);
+position:sticky;top:0;background:var(--bg);z-index:9;flex-wrap:wrap}
+h1{font-size:16px;margin:0}
+h1 a{color:var(--dim);text-decoration:none;font-weight:400;font-size:13px;margin-left:10px}
+h1 a:hover{color:var(--acc)}
+.tot{color:var(--dim);font-size:12px;font-family:var(--mono)}
+.live{margin-left:auto;font-size:12px;color:var(--dim);font-family:var(--mono)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:6px}
+.cols{display:flex;gap:11px;padding:16px 20px 40px;overflow-x:auto;align-items:flex-start}
+.col{background:var(--panel);border:1px solid var(--line);border-radius:9px;min-width:228px;
+flex:1 0 228px;display:flex;flex-direction:column;max-height:calc(100vh - 110px)}
+.ch{padding:11px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;
+position:sticky;top:0;background:var(--panel);border-radius:9px 9px 0 0}
+.ch b{font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.cnt{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--dim);
+background:#21262d;padding:1px 7px;border-radius:99px}
+.pip{width:8px;height:8px;border-radius:2px}
+.body{padding:9px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
+.t{background:#1c2129;border:1px solid var(--line);border-radius:7px;padding:10px;cursor:pointer;
+transition:border-color .15s,transform .1s}
+.t:hover{border-color:var(--acc)}
+.t.drag{opacity:.4}
+.tt{font-weight:500;margin-bottom:7px;line-height:1.35}
+.tm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;font-family:var(--mono)}
+.id{color:var(--dim)}
+.p{padding:0 5px;border-radius:3px;font-weight:600}
+.P0{background:#f8514922;color:var(--bad)} .P1{background:#d2992222;color:var(--warn)}
+.P2{background:#58a6ff22;color:var(--acc)} .P3{background:#8b949e22;color:var(--dim)}
+.who{margin-left:auto;color:var(--pur)}
+.blk{margin-top:7px;font-size:11px;color:var(--bad);background:#f8514911;padding:5px 7px;border-radius:4px}
+.empty{color:var(--dim);font-size:12px;text-align:center;padding:16px 0}
+dialog{background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:11px;
+padding:0;max-width:640px;width:92vw}
+dialog::backdrop{background:#000a}
+.dh{padding:16px 18px;border-bottom:1px solid var(--line)}
+.dh h3{margin:0 0 6px;font-size:15px}
+.db{padding:16px 18px;max-height:56vh;overflow-y:auto}
+.db h4{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin:16px 0 7px}
+.db h4:first-child{margin-top:0}
+pre{background:#0d1117;border:1px solid var(--line);border-radius:5px;padding:9px;overflow-x:auto;
+font-size:12px;white-space:pre-wrap;margin:0}
+.hist{font-family:var(--mono);font-size:11px;color:var(--dim);line-height:1.7}
+.hist b{color:var(--fg);font-weight:500}
+.df{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:7px;flex-wrap:wrap}
+button{background:#21262d;color:var(--fg);border:1px solid var(--line);border-radius:6px;
+padding:5px 11px;font-size:12px;cursor:pointer;font-family:inherit}
+button:hover{border-color:var(--acc)}
+button.x{margin-left:auto}
+</style></head><body>
+<header>
+  <h1>AgentProof · Board <a href="/">← dashboard</a></h1>
+  <span class="tot" id="tot"></span>
+  <span class="live"><span class="dot"></span><span id="ts">—</span></span>
+</header>
+<div class="cols" id="cols"></div>
+<dialog id="dlg"><div class="dh"><h3 id="d-t"></h3><div class="tm" id="d-m"></div></div>
+<div class="db" id="d-b"></div><div class="df" id="d-f"></div></dialog>
+<script>
+const COLS=[["backlog","Backlog","#8b949e"],["todo","To Do","#58a6ff"],
+ ["in_progress","In Progress","#d29922"],["review","Review","#bc8cff"],
+ ["testing","Testing","#39c5cf"],["blocked","Blocked","#f85149"],["done","Done","#3fb950"]];
+const $=i=>document.getElementById(i); let TASKS=[],cur=null;
+const esc=s=>(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function card(t){
+ const b=t.status==='blocked'?(t.history||[]).slice().reverse().find(h=>h.action.endsWith('blocked')):null;
+ return `<div class="t" draggable="true" data-id="${t.id}">
+  <div class="tt">${esc(t.title)}</div>
+  <div class="tm"><span class="id">${t.id}</span><span class="p ${t.prio}">${t.prio}</span>
+  ${t.role?`<span class="id">${esc(t.role)}</span>`:''}
+  <span class="who">${t.assignee?esc(t.assignee):''}</span></div>
+  ${b&&b.detail?`<div class="blk">⛔ ${esc(b.detail)}</div>`:''}</div>`}
+function render(){
+ $('cols').innerHTML=COLS.map(([k,lbl,c])=>{
+  const ts=TASKS.filter(t=>t.status===k);
+  return `<div class="col" data-st="${k}"><div class="ch"><span class="pip" style="background:${c}"></span>
+   <b>${lbl}</b><span class="cnt">${ts.length}</span></div>
+   <div class="body">${ts.map(card).join('')||'<div class="empty">boş</div>'}</div></div>`}).join('');
+ $('tot').textContent=`${TASKS.length} tapşırıq · ${TASKS.filter(t=>t.status==='done').length} bitib`;
+ document.querySelectorAll('.t').forEach(el=>{
+  el.onclick=()=>open_(el.dataset.id);
+  el.ondragstart=e=>{e.dataTransfer.setData('id',el.dataset.id);el.classList.add('drag')};
+  el.ondragend=()=>el.classList.remove('drag')});
+ document.querySelectorAll('.col').forEach(c=>{
+  c.ondragover=e=>e.preventDefault();
+  c.ondrop=async e=>{e.preventDefault();
+   const id=e.dataTransfer.getData('id'),st=c.dataset.st;
+   if(st==='blocked'){alert('Blocked statusu üçün səbəb lazımdır — kartı açıb agent qeyd etməlidir.');return}
+   await fetch('/api/move',{method:'POST',body:JSON.stringify({id,status:st})});load()}});
+}
+function open_(id){
+ const t=TASKS.find(x=>x.id===id); if(!t)return; cur=t;
+ $('d-t').textContent=t.title;
+ $('d-m').innerHTML=`<span class="id">${t.id}</span><span class="p ${t.prio}">${t.prio}</span>
+  <span class="id">${t.status}</span><span class="who">${t.assignee||'təyin edilməyib'}</span>`;
+ let h='';
+ if(t.desc)h+=`<h4>Təsvir</h4><pre>${esc(t.desc)}</pre>`;
+ if(t.dod)h+=`<h4>Bitmə meyarı (DoD)</h4><pre>${esc(t.dod)}</pre>`;
+ if((t.links||[]).length)h+=`<h4>Fayllar</h4><pre>${t.links.map(esc).join('\n')}</pre>`;
+ if((t.comments||[]).length)h+=`<h4>Şərhlər</h4><div class="hist">${
+   t.comments.map(c=>`<div><b>${esc(c.actor)}</b> · ${c.at}<br>${esc(c.text)}</div>`).join('<br>')}</div>`;
+ h+=`<h4>Tarixçə</h4><div class="hist">${(t.history||[]).map(x=>
+   `<div>${x.at} · <b>${esc(x.actor)}</b> · ${esc(x.action)}${x.detail?' — '+esc(x.detail):''}</div>`).join('')}</div>`;
+ $('d-b').innerHTML=h;
+ $('d-f').innerHTML=COLS.filter(([k])=>k!==t.status&&k!=='blocked')
+   .map(([k,l])=>`<button data-st="${k}">→ ${l}</button>`).join('')+
+   '<button class="x" id="cl">Bağla</button>';
+ $('d-f').querySelectorAll('button[data-st]').forEach(b=>b.onclick=async()=>{
+   await fetch('/api/move',{method:'POST',body:JSON.stringify({id:t.id,status:b.dataset.st})});
+   $('dlg').close();load()});
+ $('cl').onclick=()=>$('dlg').close();
+ $('dlg').showModal();
+}
+async function load(){
+ try{const d=await(await fetch('/api/board',{cache:'no-store'})).json();
+  TASKS=d.tasks||[];render();$('ts').textContent=new Date().toLocaleTimeString('az');
+ }catch(e){$('ts').textContent='bağlantı yoxdur'}}
+load();setInterval(load,4000);
+</script></body></html>

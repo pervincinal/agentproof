@@ -1,0 +1,733 @@
+{
+ "seq": 20,
+ "tasks": [
+  {
+   "id": "AP-001",
+   "title": "Board sinaq tapsirigi",
+   "desc": "CLI-nin islediyini yoxlamaq ucun",
+   "role": "",
+   "prio": "P3",
+   "status": "done",
+   "assignee": null,
+   "dod": "",
+   "links": [],
+   "created": "2026-08-27T19:02:20",
+   "updated": "2026-08-27T19:12:29",
+   "history": [
+    {
+     "at": "2026-08-27T19:02:20",
+     "actor": "setup",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:12:28",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "action": "backlog→done",
+     "detail": "Sınaq tapşırığı — real iş deyil, bağlandı."
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-08-27T19:12:28",
+     "actor": "po",
+     "text": "Sınaq tapşırığı idi — CLI-nin işlədiyini yoxlamaq üçün yaradılmışdı. Real backlog AP-002…AP-018 ilə quruldu, bu bənd bağlanır."
+    }
+   ]
+  },
+  {
+   "id": "AP-002",
+   "title": "Tam qaçışı (150 case × 3 təkrar) bitir və nəticə bütövlüyünü doğrula",
+   "desc": "Hazırda canlı qaçış gedir: evals/run.py --target dify_http --dataset evals/datasets/full.jsonl --stage cheap --repeat 3 --seed 1 --out reports/full-run-02 (PID 49566, 18:44-dən). reports/full-run-01 yarımçıq qaldı, full-run-02 log-unda hələ header.json yoxdur, yəni RunRecord yazılmayıb. Hesabatdakı HƏR rəqəm bu qaçışdan gəlir; qaçış bitmədən heç bir tapıntı iddiası edilə bilməz. Doğrulama PLAN.md Açıq risklər #2 (metadata.usage-da model adı gəlmirsə cost_under case-ləri skipped olur) və VALID-02 top_k=8 qərarı ilə bağlıdır.",
+   "role": "harness-eng",
+   "prio": "P0",
+   "status": "in_progress",
+   "assignee": null,
+   "dod": "reports/full-run-02/<run_id>.json (RunRecord) mövcuddur və: (1) 150 case × 3 təkrar tam icra olunub; (2) skipped case sayı sıfır DEYİLSƏ, hər skip səbəbi kateqoriyalaşdırılıb və sənədə yazılıb (səssiz keçmə yoxdur); (3) qaçışın faktiki top_k dəyəri 8 olduğu dataset konfiqindən təsdiqlənib (VALID-02); (4) xərc rəqəmi pricing/models.yaml-dan hesablanıb, Dify total_price-dan yox (OPS-04); (5) izolyasiya işləyib — RMA_ALREADY_EXISTS xətası ilə sınan case yoxdur.",
+   "links": [
+    "evals/run.py",
+    "evals/datasets/full.jsonl",
+    "reports/full-run-02/",
+    "PLAN.md",
+    "docs/OPS-FINDINGS.md"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:12:08",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-003",
+   "title": "Judge kalibrasiyasını real modellə qaçır (uyğunluq ≥85%, kappa ≥0.70)",
+   "desc": "docs/JUDGE-CALIBRATION.md §4 qapısı hələ ÖLÇÜLMƏYİB. evals/calibration/report.json indi dry-run null modelin nəticəsidir: agreement 0.30, kappa 0.00, judge_model dry-run/constant. Səbəb: ANTHROPIC_API_KEY shell mühitində yoxdur (env-də yoxlanıldı, sıfır). PLAN.md Keyfiyyət qaydası #2: kalibrasiya olunmamış LLM-judge nəticəsi dərc olunmur. Bu tapşırıq bloklanıb — API açarı və ya ant auth login profili tələb olunur (açarı özüm istəmirəm, mühitə verilməlidir).",
+   "role": "grader-eng",
+   "prio": "P0",
+   "status": "in_progress",
+   "assignee": "grader-eng",
+   "dod": "evals/calibration/report.json 30 etiketli nümunə üzərində REAL judge modeli (claude-opus-5) ilə yenidən yazılıb; judge_model sahəsi artıq dry-run deyil; agreement ≥ 0.85 VƏ kappa ≥ 0.70; confusion matrix və sinif üzrə recall hesabatdadır; style_flip_rate ölçülüb; labels_sha256 dəyişməyib (qayda §4.3 — uyğunluq aşağıdırsa RUBRİKA düzəlir, dataset yox). Qapı keçilmirsə: rubrika v2 yazılıb və səbəb sənədləşdirilib.",
+   "links": [
+    "evals/calibration/run_calibration.py",
+    "evals/calibration/labeled.yaml",
+    "evals/calibration/report.json",
+    "agentproof/graders/judge.py",
+    "docs/JUDGE-CALIBRATION.md"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:23:53",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:23:53",
+     "actor": "grader-eng",
+     "action": "assigned",
+     "detail": "grader-eng"
+    },
+    {
+     "at": "2026-08-27T19:23:53",
+     "actor": "grader-eng",
+     "action": "blocked→in_progress",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-004",
+   "title": "requires_justification 3 case-ini --stage judge ilə ölç",
+   "desc": "evals/datasets/COVERAGE.md §3 və §8: 150 case-dən 3-ü (30 gün toqquşması — bayat standart pəncərə ↔ canlı Aurora Plus pəncərəsi) determinist grader ilə prinsipcə ayırd edilə bilmir və judge rubrikasına yönləndirilib. Bu 3 case indiyə qədər HEÇ ÖLÇÜLMƏYİB — cari tam qaçış --stage cheap ilə gedir. Onlarsız R6 (bayat bənd) bloku natamamdır və hesabatda 147/150 rəqəmi izahsız qalır. Asılılıq: kalibrasiya qapısı keçməmiş judge nəticəsi dərc edilə bilməz.",
+   "role": "grader-eng",
+   "prio": "P0",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "reports/-də --stage judge qaçışı var; 3 case üçün verdict (justified / unjustified / wrong), reason və confidence RunRecord-a düşüb; judge cache faylları hesabat artefaktı kimi saxlanılıb; nəticə kalibrasiya rəqəmi (agreement + kappa) ilə birlikdə eyni sənəddə göstərilib.",
+   "links": [
+    "evals/datasets/full.jsonl",
+    "agentproof/graders/judge.py",
+    "agentproof/runner/stages.py",
+    "docs/JUDGE-CALIBRATION.md"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:12:29",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "text": "Asılılıq: AP-003 (kalibrasiya qapısı) keçmədən judge nəticəsi dərc edilə bilməz."
+    }
+   ]
+  },
+  {
+   "id": "AP-005",
+   "title": "A-07 triage: 30 gün ikimənalılığından doğan sınmaları əl ilə oxu",
+   "desc": "docs/GRADER-AUDIT.md A-07 AÇIQ qalıb: contains_none: stale_days(30) işlədən case-lərdə agent tam DÜZGÜN fərqləndirici cümlə qursa (məsələn: siz Aurora Plus üzvü deyilsiniz, ona görə 30 günlük genişləndirilmiş pəncərə tətbiq olunmur) grader bunu bayat dəyər kimi işarələyir. Bu cümlə real qaçışda müşahidə olunub. Audit sənədi birbaşa tələb edir: T-01 bayat dəyər case-lərində sınan hər cavab ƏLLƏ oxunmalıdır. Əks halda stale-answer rate şişik çıxır — yəni uydurma tapıntı dərc edirik (PLAN.md Keyfiyyət qaydası #3).",
+   "role": "grader-eng",
+   "prio": "P0",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "Tam qaçışda contains_none + stale_days(30) işlədən hər sınmış case-in cavab mətni əl ilə oxunub və iki kateqoriyaya bölünüb: (a) həqiqi bayat dəyər, (b) düzgün fərqləndirmə — grader artefaktı. Nəticə cədvəl şəklində GRADER-AUDIT.md-yə A-07 bölməsinə əlavə olunub; düzəldilmiş stale-answer rate (a) əsasında hesablanıb və hesabatda hansı rəqəmin işlədiləcəyi yazılıb. Artefakt sayı 0 deyilsə, grader-səviyyəli proximity assertion üçün ayrıca tapşırıq açılıb.",
+   "links": [
+    "docs/GRADER-AUDIT.md",
+    "agentproof/graders/deterministic/text.py",
+    "agentproof/graders/canonical.py",
+    "evals/datasets/full.jsonl"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:12:29",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "text": "Asılılıq: AP-002 (tam qaçış) bitməlidir — triage qaçışın sınmış case-ləri üzərində aparılır."
+    }
+   ]
+  },
+  {
+   "id": "AP-006",
+   "title": "consistency_at_k-nı verdict rejimində yenidən qaçır və səth sapmasına qərar ver",
+   "desc": "Yeganə mövcud sabitlik ölçüsü reports/pilot/consistency-dədir və KÖHNƏDİR: mode=key_facts ilə agreement 0.67 verib (3 cavab eyni qərarı verdi, grader ifadə fərqini qeyri-sabitlik saydı). Bundan sonra case mode=verdict-ə keçirilib (evals/datasets/pilot-consistency.jsonl) amma yenidən qaçırılmayıb. consistency.py hər halda numbers və normalized səth metriklərini evidence.surface-də hesablayır və onlar 1.0 vermir — hesabatda bu fərqin necə təqdim olunacağı QƏRAR TƏLƏB EDİR (bal verdict-dən gəlir, səth göstərici olaraq qalır). Bu, pass^k / qeyri-determinizm iddiasının yeganə dayağıdır (COVERAGE.md §9.5).",
+   "role": "harness-eng",
+   "prio": "P0",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "pilot-consistency.jsonl --repeat 3 ilə canlı hədəfə qarşı yenidən qaçırılıb; verdict rejimində agreement rəqəmi və evidence.surface (numbers_agreement, normalized_agreement) RunRecord-dadır; hesabatda hansı rəqəmin sabitlik iddiası kimi göstəriləcəyi (verdict) və səth metriklərinin niyə aşağı olduğu bir abzasla yazılıb; qərar consistency.py modul sənədinə və ya COVERAGE.md-yə köçürülüb.",
+   "links": [
+    "evals/datasets/pilot-consistency.jsonl",
+    "agentproof/graders/aggregate/consistency.py",
+    "reports/pilot/consistency/"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:12:29",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "text": "Asılılıq: AP-002 — izolyasiya case-ləri seriallaşdırır, iki canlı qaçış paralel gedə bilməz."
+    }
+   ]
+  },
+  {
+   "id": "AP-007",
+   "title": "Reproduksiya qapısı: 3 təkrar üzrə case-səviyyəli sabitlik hesabatı",
+   "desc": "PLAN.md Keyfiyyət qaydası #1: reproduksiya olunmayan tapıntı hesabata düşmür; bir dəfə baş verib təkrarlanmayan hal ayrıca flaky kimi qeyd olunur. Tam qaçış --repeat 3 ilə gedir, yəni hər case üçün 3 nəticə var, amma bu qaydanı tətbiq edən heç bir alət yoxdur — indi hər tapıntı əl ilə yoxlanmalı olacaq. Alət indi yazıla bilər: reports/full-run-01 log-u nümunə giriş kimi mövcuddur, sonra full-run-02-yə tətbiq olunar.",
+   "role": "hunter",
+   "prio": "P0",
+   "status": "review",
+   "assignee": "harness-eng",
+   "dod": "Skript və ya report/ modulu hər case üçün 3 təkrarın nəticəsini toplayır və case-ləri üç səbətə bölür: hər 3-də sındı (stabil tapıntı), 1-2-də sındı (flaky), heç birində sınmadı. Çıxış maşınoxunan (JSON) + insan üçün cədvəldir; flaky case-lər ayrıca siyahıdadır. FINDINGS.md yazılarkən yalnız stabil səbətdən tapıntı götürüləcəyi DoD kimi qeyd olunub. Ən azı 1 test skriptin sayma məntiqini qoruyur.",
+   "links": [
+    "agentproof/report/normalize.py",
+    "reports/full-run-01/logs/",
+    "PLAN.md"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:24:07",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:14:37",
+     "actor": "harness-eng",
+     "action": "assigned",
+     "detail": "harness-eng"
+    },
+    {
+     "at": "2026-08-27T19:14:37",
+     "actor": "harness-eng",
+     "action": "todo→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:24:02",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:24:07",
+     "actor": "harness-eng",
+     "action": "in_progress→review",
+     "detail": ""
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-08-27T19:24:02",
+     "actor": "harness-eng",
+     "text": "Reproduksiya qapısı hazırdır.\n\nFayllar:\n- agentproof/report/reproduction.py — təsnifat + JSON/mətn çıxışı (inspect_ai import ETMİR, memarlıq testi yaşıl)\n- agentproof/report/normalize.py — YALNIZ əlavə: repeat_responses()/read_repeat_responses() (mövcud normalize_log() toxunulmayıb, gedən qaçış təsirlənmir)\n- evals/reproduce.py — CLI\n- agentproof/tests/test_reproduction.py — 17 test\n- PLAN.md qayda #1 altına tətbiq sətri əlavə olundu (FINDINGS.md yalnız stable-fail səbətindən qidalanır)\n\nTAPINTI (vacib): --repeat 3 RunRecord-da cəhd-səviyyəli verdikt YOXDUR. normalize_log() hər case üçün tək verdikt saxlayır (sonuncu cavabın verdikti, attempt=3). Ona görə əsl mənbə .eval logudur — alət hər cavabı AYRICA yenidən qiymətləndirir (determinist grader-lər; judge/aqreqat açıq şəkildə skipped). RunRecord verilsə və attempt>1 olsa, alət susmur: 'RunRecord təkrarları BİRLƏŞDİRİB ... .eval logu lazımdır' deyib exit 2 qaytarır.\n\nSəbətlər: stable-pass / stable-fail / unstable-fail / flaky / incomplete / skipped. unstable-fail = 3/3 sındı, amma FƏRQLİ səbəblə (tələb 3) — stabil tapıntı sayılmır. Səbəb imzası yalnız boşluq+registr üzrə normallaşdırılır; rəqəm/ifadə silinmir ki, fərqli uğursuzluqlar eyni görünməsin.\n\nFlaky nisbəti (tələb 2): mətn hesabatının 1-ci sətrində VƏ sonunda, JSON-da flaky_rate + flaky_alarm. Məxrəc = təsnif olunmuş case. Heç nə təsnif olunmayıbsa flaky_rate = null (0.0 DEYİL — 0.0 'flaky yoxdur' kimi oxunardı). Hədd 10%, --fail-on-flaky ilə exit 3.\n\nTələb 4: təkrarsız RunRecord → təsnifat aparılmır, 'TƏKRAR YOXDUR ... təsnifat mümkün deyil', findings boş, exit 2. reports/smoke-full RunRecord-unda yoxlanıb.\n\nReal datada sınaq (reports/full-run-01 logu, --repeat 3, 112 case): stable-pass 64 · stable-fail 16 · unstable-fail 2 · flaky 22 · skipped 8 (log yarımçıq/cancelled). FLAKY NİSBƏTİ 21.2% (22/104) — hədd aşılıb, xəbərdarlıq göstərilir. Yəni full-run-01-də tapıntı namizədi 16-dır, 38 deyil.\n\npytest: 547 passed (əvvəl 530). evals/run.py toxunulmayıb; gedən full-run-02 qaçışı işləyir."
+    }
+   ]
+  },
+  {
+   "id": "AP-008",
+   "title": "Məhdudiyyət reyestrini qur — nəyi ölçmədik",
+   "desc": "PLAN.md Keyfiyyət qaydası #5: nəyi ölçmədiyimiz də yazılır; məhdudiyyəti gizlətmək ən tez tutulan şeydir. Məhdudiyyətlər hazırda 5 sənədə səpələnib: COVERAGE.md §9 (9 bənd — 13 örtülməmiş bayat tələ, 21 həddin kəsilmə nöqtəsi, 3-yollu əhatə yoxdur, çoxnövbəli deqradasiya əyrisi yoxdur, R4/R7/G4, tələ sıxlığı real deyil), GRADER-AUDIT.md A-06 və A-07 (qalıq risklər) + canlı qaçış olmadan yoxlanmış 16 pattern, JUDGE-CALIBRATION.md §4.4 (mövqe və dil yanlılığı ölçülmədi), PLAN.md (tək embedder seçimi retrieval xətalarını ayırd etməyə imkan vermir), OPS-FINDINGS VALID-02 (nəticə embedder-dən asılıdır). Bunlar bir yerə yığılmasa, yazıda mütləq biri unudulacaq.",
+   "role": "analyst",
+   "prio": "P1",
+   "status": "review",
+   "assignee": "writer",
+   "dod": "Tək sənəd (docs/LIMITATIONS.md və ya FINDINGS.md-nin bir bölməsi) hər məhdudiyyəti mənbə sənədə istinadla sadalayır; hər bənd üçün bir cümlə ilə yazılıb ki, oxucu bunu necə səhv oxuya bilər. Ən azı bu 15 bənd əhatə olunub: COVERAGE §9-un 9 bəndi, A-06, A-07, kalibrasiyanın 2 ölçülməmiş yanlılığı, tək embedder, VALID-02 embedder asılılığı. Hesabatın hansı iddiasının hansı məhdudiyyətə bağlandığı göstərilib.",
+   "links": [
+    "evals/datasets/COVERAGE.md",
+    "docs/GRADER-AUDIT.md",
+    "docs/JUDGE-CALIBRATION.md",
+    "docs/OPS-FINDINGS.md",
+    "PLAN.md"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:27:28",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:15:16",
+     "actor": "writer",
+     "action": "assigned",
+     "detail": "writer"
+    },
+    {
+     "at": "2026-08-27T19:15:16",
+     "actor": "writer",
+     "action": "todo→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:27:27",
+     "actor": "writer",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:27:28",
+     "actor": "writer",
+     "action": "in_progress→review",
+     "detail": ""
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-08-27T19:27:27",
+     "actor": "writer",
+     "text": "docs/LIMITATIONS.md yazıldı (~680 sətir, 39 məhdudiyyət + 3 bağlanmış).\n\nStruktur: 4 kateqoriya — ölçmə aləti (LIM-I01..I08), əhatə (LIM-C01..C16), mühit/konfiqurasiya (LIM-E01..E10), metodologiya/status (LIM-M01..M05). Hər bənd: nə ölçülmədi · niyə · İSTİQAMƏT (↑ şişirdir / ↓ gizlədir / ↔ iki tərəfli / ⊘ tətbiq olunmur) · azaltma · mənbə istinadı.\n\nDoD-un tələb etdiyi 15 bənd tam örtülüb: COVERAGE §9-un 9 bəndi (C02, C01, C03, C04, I08, C05, C06, C07, C14), A-06 (I01), A-07 (I02), kalibrasiyanın 2 ölçülməmiş yanlılığı (I04 mövqe, I05 dil), tək embedder (E02/E04), VALID-02 embedder asılılığı (E02).\n\nƏlavə olaraq tələb olunan bəndlər: top_k=8 qərarı və istiqaməti (E01), temperature bağlana bilmir (E03), tək model/platforma (E04), süni korpus — üstünlük+zəiflik (C10), judge kalibrasiyası real qaçırılmayıb (I03, AP-003-ə bağlı).\n\n§5 — iddia → məhdudiyyət xəritəsi (14 sətir): hesabatın hansı iddiasının hansı məhdudiyyətə bağlandığı.\n§6 — çıxarıla BİLMƏYƏN 17 nəticə cədvəli.\n\nAşkarlanan ziddiyyət (hesabata təsir edir): konfiqurasiya sənədləri top_k üzrə uyğun gəlmir — DSL (aurora-support-agent.yml:149) və IMPORT.md §1 datasetin retrieval_model-unu top_k:4-ə pin-ləyir, OPS-FINDINGS VALID-02 isə əsas qaçışın top_k=8 ilə getdiyini yazır. [təsdiqlənməyib] işarələnib, AP-002 DoD §3-ə bağlanıb.\n\nİkinci aşkarlanan boşluq: RunRecord (types.py:329-353) embedder və top_k saxlamır — yəni E01/E02-nin hər ikisi qaçış artefaktından yox, xarici sənəddən oxunur. LIM-E06 kimi yazıldı, azaltma təklifi ilə.\n\nÜçüncü: FAILURE-TAXONOMY §11 R4/O1-in bütün testlərin içinə hopdurulduğunu yazır (hər test invariantlıq çevrilmələri + 10 qaçış) — bu icra olunmayıb (dataset R4 variantı saxlamır; PLAN 3 seed). LIM-C05 və LIM-E05-də açıq yazıldı.\n\nQaçış bitəndən sonra yenidən yoxlanmalı bəndlər LIM-M05-də siyahılanıb."
+    }
+   ]
+  },
+  {
+   "id": "AP-009",
+   "title": "FINDINGS.md yaz — tapıntıların tam reyestri",
+   "desc": "PLAN.md mərhələ cədvəlində həm hunter (Mərhələ 2, xam), həm writer (Mərhələ 5) sətri gözləyir statusundadır və fayl mövcud deyil. Bu, müştəri hesabatının nüvəsidir. İki mənbədən yığılır: (1) eval qaçışının sınmış case-ləri — yalnız reproduksiya qapısından keçənlər; (2) docs/OPS-FINDINGS.md-dəki quraşdırma tapıntıları: OPS-01 (indeksləmə paralelliyi sabit kodlanıb), OPS-02 (SSRF proxy custom tool-ları bloklayır, yoxlama metodu yanıldıcıdır), OPS-03 (agent tətbiqində top_k səssizcə iqnor edilir, faktiki default 2), OPS-04 xərc (plugin qiyməti 50% şişirdir), OPS-04 (kiçik) PATCH/GET retrieval_model qaytarmır, VALID-01 (bayat bənd retrieval-da 0.038 bal geridə — tələ canlıdır), VALID-02 (tələ embedder-dən asılıdır: rank 2 vs 8). Qeyd: OPS-FINDINGS.md-də İKİ ayrı bənd OPS-04 nömrəsini daşıyır — nömrələmə düzəldilməlidir.",
+   "role": "writer",
+   "prio": "P1",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "FINDINGS.md mövcuddur və: (1) hər eval tapıntısı üçün case id, reproduksiya statusu (3/3), gözlənilən vs faktiki cavab, təsir və uğursuzluq rejimi (FAILURE-TAXONOMY id-si) var; (2) yuxarıdakı 7 OPS/VALID bəndinin hər biri ayrıca bölmə kimi daxildir və OPS-04 təkrar nömrəsi həll olunub; (3) heç bir tapıntı reproduksiya qapısından keçmədən daxil edilməyib, flaky-lər ayrıca siyahıdadır; (4) A-07 triage nəticəsi tətbiq olunub — grader artefaktı tapıntı kimi göstərilməyib; (5) məhdudiyyət reyestrinə istinad var.",
+   "links": [
+    "docs/OPS-FINDINGS.md",
+    "docs/FAILURE-TAXONOMY.md",
+    "docs/GRADER-AUDIT.md",
+    "PLAN.md"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:12:29",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "text": "Asılılıq: AP-002 (tam qaçış), AP-007 (reproduksiya qapısı), AP-005 (A-07 triage), AP-008 (məhdudiyyət reyestri)."
+    }
+   ]
+  },
+  {
+   "id": "AP-010",
+   "title": "docs/writeup.md yaz — public tədqiqat mətni",
+   "desc": "PLAN.md Mərhələ 5 gözləyir; fayl yoxdur. Layihənin ƏSAS məhsuludur: public tədqiqat həm də $3–6k-lıq audit xidmətinin satış materialıdır. PLAN.md Keyfiyyət qaydaları yazının şərtidir: şişirtmə yoxdur (#3), hədəf layihə alçaldılmır — ton biz sınadıq, budur tapdığımız (#4), nəyi ölçmədiyimiz yazılır (#5), Inspect AI-nin nüvə kimi işlədilməsi metodologiya bölməsində AÇIQ göstərilir (#6 — marketinq çərçivəsi bunu kölgələməməlidir). Metodologiya bölməsinə mütləq düşənlər: SUT claude-sonnet-5 / judge claude-opus-5, 3 seed, top_k=8 qərarı və səbəbi (VALID-02), qaçış tarixi + tətbiq olunan qiymət rejimi ($2/$10 introductory vs $3/$15 standard — OPS-04, əks halda xərc rəqəmləri təkrarlana bilməz).",
+   "role": "writer",
+   "prio": "P1",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "docs/writeup.md hazırdır və: metodologiya bölməsində Inspect AI açıq adlanır; SUT/judge modelləri, seed sayı, top_k=8 və qiymət rejimi + qaçış tarixi yazılıb; judge kalibrasiya faizi və kappa mətndə göstərilib; nəyi ölçmədik bölməsi məhdudiyyət reyestrindən gəlir; hər ədədi iddia FINDINGS.md-dəki konkret case-ə və ya ölçməyə bağlanır; ekstrapolyasiya iddiası yoxdur (COVERAGE §9.9 — rəqəmlər nisbi, mütləq deyil).",
+   "links": [
+    "PLAN.md",
+    "docs/STACK.md",
+    "docs/OPS-FINDINGS.md",
+    "evals/datasets/COVERAGE.md"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:12:29",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "text": "Asılılıq: AP-009 (FINDINGS.md) + AP-003 (kalibrasiya faizi mətndə göstərilməlidir)."
+    }
+   ]
+  },
+  {
+   "id": "AP-011",
+   "title": "CI workflow yaz: .github/workflows/evals.yml (iki mərhələli)",
+   "desc": "PLAN.md Mərhələ 4 gözləyir; .github qovluğu ümumiyyətlə yoxdur. docs/STACK.md §8.6 və §-planı bunu tələb edir: --stage cheap hər PR-da (hədəf < 4 dəq, 6 dəqiqə qaydası), --stage judge ayrıca job kimi yalnız evals/** və ya hədəf konfiqi dəyişəndə, ya da nightly. Kalibrasiya qapısı da CI-da bloklamalıdır (uyğunluq < 85% → qırmızı). Təkrar istifadə üçün infrastrukturdur: hər müştəri auditində eyni boru xətti işlədiləcək.",
+   "role": "harness-eng",
+   "prio": "P2",
+   "status": "todo",
+   "assignee": null,
+   "dod": "Workflow mövcuddur və: (1) pytest + cheap mərhələ hər PR-da qaçır; (2) judge mərhələsi ayrıca job-dur və yalnız göstərilən şərtlərdə işə düşür; (3) kalibrasiya qapısı --fail-under-threshold ilə bloklayır; (4) PR şərhi report/pr_comment.py ilə yazılır və judge kalibrasiya bölməsi məcburidir; (5) anchors.py verify addımı var (xəritə köhnəlibsə qırmızı); (6) ən azı bir dəfə real qaçışda yaşıl olduğu göstərilib.",
+   "links": [
+    "docs/STACK.md",
+    "agentproof/report/pr_comment.py",
+    "evals/calibration/run_calibration.py",
+    "target/corpus/anchors.py"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:12:08",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-012",
+   "title": "report/html.py yaz — statik HTML hesabat",
+   "desc": "PLAN.md Mərhələ 4 gözləyir; agentproof/report/ altında baseline.py, normalize.py, pr_comment.py var, html.py YOXDUR. docs/STACK.md §8.5: html.py render(RunRecord, RunDelta) -> reports/index.html. STACK §-planında sonuncu sıradadır (JSON olmadan mənasızdır) — JSON artıq hazırdır. Müştəri təhvilinin görünən hissəsidir.",
+   "role": "harness-eng",
+   "prio": "P2",
+   "status": "todo",
+   "assignee": null,
+   "dod": "reports/index.html RunRecord (+ varsa RunDelta) girişindən generasiya olunur; səhifədə: ümumi keçmə faizi, uğursuzluq rejimi üzrə bölgü, skipped case-lər səbəbi ilə, judge kalibrasiya bölməsi (kalibrasiya yoxdursa böyük hərflərlə xəbərdarlıq — JUDGE-CALIBRATION §6), hər sınmış case üçün cavab mətni və grader səbəbi. Xarici CDN asılılığı yoxdur (müştəri datası kənara çıxmır). Ən azı 1 test render-in boş RunRecord-da da xəta vermədiyini yoxlayır.",
+   "links": [
+    "docs/STACK.md",
+    "agentproof/report/normalize.py",
+    "agentproof/report/baseline.py"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:12:08",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-013",
+   "title": "İlk baseline snapshot-unu götür və reqressiya qapısını qoş",
+   "desc": "evals/baselines/ BOŞDUR — heç bir baseline yoxdur, yəni report/baseline.py və --fail-on-regression praktikada işlədilmir. docs/STACK.md M4: 87% faydasız, 91% → 87% və bu 4 case sındı faydalıdır. Əlavə səbəb: docs/GRADER-AUDIT.md A-08 bağlanma qeydi grader davranışını dəyişdi (çılpaq rəqəm iynələri artıq tarixin içindən tutulmur), ona görə baseline məhz A-08-dən SONRAKI qaçışdan götürülməlidir. COVERAGE.md §4-də baseline teqli 39 case var — reqressiyanın ölçüldüyü yer budur.",
+   "role": "harness-eng",
+   "prio": "P2",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "evals/baselines/dify@1.17.0.json tam qaçışdan götürülüb; run.py --baseline ... --fail-on-regression ilə qaçırılanda RunDelta çıxarır və reqressiyada qeyri-sıfır exit verir; 39 baseline teqli case-in cari nəticəsi snapshot-da ayrıca görünür; sənədə yazılıb ki, baseline hansı qaçışdan və hansı grader versiyasından götürülüb (A-08 sonrası).",
+   "links": [
+    "agentproof/report/baseline.py",
+    "evals/baselines/",
+    "docs/GRADER-AUDIT.md",
+    "evals/datasets/COVERAGE.md"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:12:29",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "text": "Asılılıq: AP-002 — baseline yalnız tam və A-08 sonrası qaçışdan götürülür."
+    }
+   ]
+  },
+  {
+   "id": "AP-014",
+   "title": "docs/ARCHITECTURE.md yaz — hədəf sistemin təhlili və hücum səthi",
+   "desc": "PLAN.md Mərhələ 2 analyst sətri gözləyir statusundadır və fayl mövcud deyil. Materialın böyük hissəsi artıq toplanıb, amma səpələnib: OPS-FINDINGS.md-dəki üç kod yolu təhlili (indexing_runner.py:667, ssrf_proxy.py:258 + squid şablonu, dataset_retriever_tool.py:53-55 → dataset_retrieval.py:1312-1331 top_k kölgələnməsi), PLAN.md-dəki agent-chat blocking məhdudiyyəti (app_generator.py:94), target/corpus/TOOLS.md-dəki hücum səthi qeydləri (free-text sahələr — order_notes, damage_report.customer_text — dolayı injection daşıyıcısıdır). Public yazının metodologiya bölməsi bu sənədə söykənəcək.",
+   "role": "analyst",
+   "prio": "P2",
+   "status": "todo",
+   "assignee": null,
+   "dod": "docs/ARCHITECTURE.md mövcuddur və: hədəfin sorğu yolu (Service API → agent app → dataset retriever → custom tool → SSRF proxy) diaqram və ya nömrəli axınla təsvir olunub; hər addımda müşahidə olunmuş konfiqurasiya kölgələnmələri kod istinadı ilə göstərilib; hücum səthi siyahısı (istifadəçi mətni, order_notes, damage_report, retrieval konteksti) sadalanıb və hansı uğursuzluq rejiminə (FAILURE-TAXONOMY id) bağlandığı yazılıb.",
+   "links": [
+    "docs/OPS-FINDINGS.md",
+    "target/corpus/TOOLS.md",
+    "PLAN.md",
+    "docs/FAILURE-TAXONOMY.md"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:12:08",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-015",
+   "title": "Örtülməmiş 13 bayat tələ üçün case əlavə et",
+   "desc": "evals/datasets/COVERAGE.md §3 və §9.1 açıq elan edir: 27 bayat cütdən yalnız 14-ünün ayrıca case-i var (T-01, T-02, T-03, T-05, T-06, T-07, T-08, T-09, T-13, T-14, T-15, T-20, T-22, T-25); qalan 13-ü (T-04, T-10, T-11, T-12, T-16…T-19, T-21, T-23, T-24, T-26, T-27) birbaşa örtülməyib. Nəticə: stale-answer rate 14 tələ üzərində hesablanır, 27 üzərində yox — yəni hesabatın ən önəmli rəqəmlərindən biri natamam bazadan gəlir. DİQQƏT: dataset dəyişikliyi cari qaçışın müqayisə olunmasını pozur, ona görə tam qaçış və baseline snapshot-undan SONRA edilməlidir.",
+   "role": "dataset-eng",
+   "prio": "P2",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "build_full.py 13 tələnin hər biri üçün case üretir (əl ilə full.jsonl redaktəsi yoxdur); test_dataset_full.py-a bütün 27 tələnin örtüldüyünü yoxlayan test əlavə olunub; COVERAGE.md §3 cədvəli və §9.1 yenilənib; büdcə təsiri (əlavə case × 3 təkrar) hesablanıb və qeyd olunub.",
+   "links": [
+    "evals/datasets/build_full.py",
+    "evals/datasets/COVERAGE.md",
+    "target/corpus/TRAPS.md",
+    "agentproof/tests/test_dataset_full.py"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:12:29",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "text": "Asılılıq: AP-013 — dataset dəyişikliyi baseline sabitlənməmiş edilməməlidir (müqayisə pozulur)."
+    }
+   ]
+  },
+  {
+   "id": "AP-016",
+   "title": "A-06: contains_none-a söz sərhədi gətir",
+   "desc": "docs/GRADER-AUDIT.md A-06 qalıq risk kimi AÇIQ qalıb: ContainsNone normalize() + in işlədir, yəni alt-sətir axtarışıdır — 30 day iynəsi nəzəri olaraq 130 days içində də tapılar. Praktik risk indi sıfıra yaxındır (CANONICAL.yaml-da üç rəqəmli gün/ay dəyəri yoxdur) və audit bunu şüurlu güzəşt kimi sənədləşdirib. 39 case-in grader-i dəyişəcəyi üçün özü yeni səhv mənbəyidir — ona görə yalnız baseline sabitləndikdən sonra görülməlidir. Yalançı yaşıl deyil, dəqiqlik güzəştidir.",
+   "role": "grader-eng",
+   "prio": "P3",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "ContainsNone rəqəmli iynələr üçün müstəqil token axtarışına keçir (A-08-də olduğu kimi canonical.py üzərindən); 39 case-in nəticəsi dəyişiklikdən əvvəl/sonra müqayisə olunub və fərq sıfırdırsa bu açıq yazılıb, sıfır deyilsə hər fərq izah olunub; GRADER-AUDIT.md A-06 bölməsi bağlandı kimi yenilənib; reqressiya testi əlavə edilib.",
+   "links": [
+    "docs/GRADER-AUDIT.md",
+    "agentproof/graders/deterministic/text.py",
+    "agentproof/graders/canonical.py"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:12:29",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "text": "Asılılıq: AP-013 — 39 case-in grader-i dəyişir, baseline əvvəlcə sabitlənməlidir."
+    }
+   ]
+  },
+  {
+   "id": "AP-017",
+   "title": "Çoxnövbəli deqradasiya əyrisi üçün case-lər (failure-onset turn)",
+   "desc": "evals/datasets/COVERAGE.md §9.4: cari dataset çoxnövbəli sınma FAKTINI verir, amma hansı növbədə sındığını yox. Sənəd tələb olunanı özü yazır: eyni sualın 1/3/5/8 növbəli variantları (~20 case) və adapter dəstəyi. Adapter boşluğu artıq BAĞLANIB (COVERAGE §7 — dify_http indi bütün növbələri bir conversation_id ilə göndərir, test_multi_turn.py ilə qorunur), yəni maneə qalmayıb. Gözəlləşdirmədir: mövcud C1 case-ləri rejimi onsuz da göstərir.",
+   "role": "dataset-eng",
+   "prio": "P3",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "build_full.py eyni sualın 1/3/5/8 növbəli variantlarını üretir; qaçışdan sonra hər sual üçün failure-onset turn hesablana bilir; COVERAGE.md §9.4 yenilənib; büdcə təsiri hesablanıb.",
+   "links": [
+    "evals/datasets/COVERAGE.md",
+    "evals/datasets/build_full.py",
+    "agentproof/tests/test_multi_turn.py"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:12:29",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-08-27T19:12:29",
+     "actor": "po",
+     "text": "Asılılıq: AP-013/AP-015 — büdcə və müqayisə səbəbi ilə əsas qaçışdan sonra."
+    }
+   ]
+  },
+  {
+   "id": "AP-018",
+   "title": "PLAN.md mərhələ cədvəlini repo vəziyyəti ilə uyğunlaşdır",
+   "desc": "PLAN.md cədvəli köhnəlib və yanlış təəssürat yaradır: Mərhələ 3 eval dataset gözləyir yazılıb, halbuki full.jsonl 150 case ilə hazırdır və COVERAGE.md ilə əsaslandırılıb; Mərhələ 4 judge qatı gözləyir yazılıb, halbuki judge.py + calibration.py qurulub və yalnız REAL kalibrasiya qaçışı çatmır. Öz sənədimizin statusu yanlışdırsa, auditdə ilk tutulan şey odur.",
+   "role": "analyst",
+   "prio": "P3",
+   "status": "todo",
+   "assignee": null,
+   "dod": "PLAN.md cədvəlindəki hər sətir repo faktı ilə yoxlanıb və üç dəqiq statusdan birini daşıyır: bitdi (artefakt yolu ilə), qismən (nəyin çatışdığı bir cümlə ilə), gözləyir. Judge sətri qurulub, kalibrasiya qaçırılmayıb kimi dəqiqləşdirilib. Dəyişiklik commit olunub.",
+   "links": [
+    "PLAN.md",
+    "evals/datasets/COVERAGE.md",
+    "docs/JUDGE-CALIBRATION.md"
+   ],
+   "created": "2026-08-27T19:12:08",
+   "updated": "2026-08-27T19:12:08",
+   "history": [
+    {
+     "at": "2026-08-27T19:12:08",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-019",
+   "title": "RunRecord-a embedder ve top_k elave et (qacis artefakti oz-ozunu tesvir etsin)",
+   "desc": "docs/LIMITATIONS.md LIM-E06: RunRecord (agentproof/types.py) embedder adini ve faktiki top_k-ni SAXLAMIR. Yeni hesabatdaki en vacib iki konfiqurasiya parametri qacis artefaktindan deyil, xarici (ve ziddiyyetli) senedden oxunur. VALID-03 gosterdi ki, DSL 4 yazir, faktiki deyer 8-dir. Bele ziddiyyet yeniden bas vererse, hansi reqemin hansi konfiqurasiyaya aid oldugunu SUBUT etmek mumkun olmayacaq.",
+   "role": "harness-eng",
+   "prio": "P0",
+   "status": "todo",
+   "assignee": null,
+   "dod": "RunRecord-da embedding_model, embedding_provider ve effective_top_k sahelori var; deyerler CANLI sistemden oxunur (dataset API-den), senedden yox; kohne RunRecord-lar oxunanda sahe yoxdursa acih 'namelum' qaytarilir, sessizce default verilmir; test: sahelerin yazildigini ve kohne formatin sinmadigini yoxlayan iki test",
+   "links": [
+    "agentproof/types.py",
+    "agentproof/report/normalize.py",
+    "docs/LIMITATIONS.md"
+   ],
+   "created": "2026-08-27T19:29:23",
+   "updated": "2026-08-27T19:29:23",
+   "history": [
+    {
+     "at": "2026-08-27T19:29:23",
+     "actor": "main",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-020",
+   "title": "DSL ve IMPORT.md-de top_k-ni reallıqla uygunlasdir",
+   "desc": "VALID-03: faktiki top_k=8 (canli sistemden olculdu), DSL ve IMPORT.md ise 4 yazir. Bunlar reproduksiya telimatidir — tedqiqati tekrarlayan adam ferqli konfiqurasiya qurar ve neticeler uygun gelmez.",
+   "role": "harness-eng",
+   "prio": "P1",
+   "status": "todo",
+   "assignee": null,
+   "dod": "target/app/aurora-support-agent.yml ve target/app/IMPORT.md faktiki deyeri (8) gosterir; ELAVE OLARAQ senedde acih yazilir ki, agent app-inda dataset-in retrieval_model-u hokm edir, app konfiqi yox — cunki bu, telesi olan davranisdir",
+   "links": [
+    "target/app/aurora-support-agent.yml",
+    "target/app/IMPORT.md",
+    "docs/OPS-FINDINGS.md"
+   ],
+   "created": "2026-08-27T19:29:23",
+   "updated": "2026-08-27T19:29:23",
+   "history": [
+    {
+     "at": "2026-08-27T19:29:23",
+     "actor": "main",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  }
+ ]
+}

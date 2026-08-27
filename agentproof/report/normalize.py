@@ -121,3 +121,30 @@ def normalize_log(
 
 def normalize_path(path: str, target: str, target_version: str = "", model: str = "") -> RunRecord:
     return normalize_log(read_eval_log(path), target, target_version, model)
+
+
+def repeat_responses(log: EvalLog) -> list[tuple[dict[str, Any], list[AgentResponse]]]:
+    """Hər case üçün `(case metadata, BÜTÜN --repeat cavabları)`.
+
+    `normalize_log()` bilərəkdən yalnız SONUNCU cavabı saxlayır — yekun verdikt
+    ona görə verilib. Reproduksiya qapısı (`report/reproduction.py`) isə hər
+    cəhdi AYRICA qiymətləndirməlidir, ona görə tam siyahı buradan çıxarılır.
+
+    Inspect-in log formatını bilən yeganə nöqtə yenə də bu fayldır (R2) —
+    `reproduction.py` `inspect_ai` import etmir.
+    """
+    out: list[tuple[dict[str, Any], list[AgentResponse]]] = []
+    for sample in log.samples or []:
+        meta = dict(sample.metadata or {})
+        score = next(iter(sample.scores.values()), None) if sample.scores else None
+        score_meta: dict[str, Any] = (score.metadata or {}) if score else {}
+        responses = [AgentResponse.from_dict(r) for r in score_meta.get("responses", [])]
+        out.append((meta, responses))
+    return out
+
+
+def read_repeat_responses(
+    log_path: str,
+) -> list[tuple[dict[str, Any], list[AgentResponse]]]:
+    """`.eval` faylını oxuyub `repeat_responses()` qaytarır."""
+    return repeat_responses(read_eval_log(log_path))

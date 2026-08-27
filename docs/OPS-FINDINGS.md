@@ -134,3 +134,22 @@ Sorğu: `"What is the standard return window?"` — bayat bəndin (Appendix A, l
 **Müstəqil tapıntı.** Dify-ın default `top_k` dəyəri **2**-dir. Bu dəyərdə bayat bənd tələsi əksər sorğularda modelə ümumiyyətlə çatmır. Yəni default konfiqurasiya ilə işləyən komanda bu uğursuzluq rejimini **heç vaxt müşahidə etməyəcək** — nə istehsalatda, nə də öz testlərində. Səhv cavab yalnız retrieval sıralaması dəyişəndə (yeni sənəd, yeni embedder versiyası, fərqli ifadəli sual) üzə çıxacaq.
 
 **Hesabat üçün:** oxucuya deyiləsi cümlə — *"sizin sisteminizin bu testi keçməsi embedder-iniz haqqında agentinizdən çox şey deyir; embedder-i dəyişdiyiniz gün bu rejim özü üzə çıxa bilər."*
+
+## VALID-03 — Faktiki `top_k` empirik təsdiqləndi (sənəd ziddiyyəti həll olundu)
+
+`docs/LIMITATIONS.md` düzgün olaraq ziddiyyət tapdı: DSL (`aurora-support-agent.yml`) və `IMPORT.md §1` `top_k: 4` yazır, VALID-02 isə əsas qaçışın `top_k=8` ilə getdiyini iddia edirdi.
+
+**Sənəddən deyil, canlı sistemdən yoxlandı** (2026-08-27, işlək app, `/v1/chat-messages`):
+
+```
+retriever_resources sayi: 8
+  pos=1..7  cari bendler
+  pos=8     BAYAT (Appendix A)   score 0.5267
+NETICE: faktiki top_k = 8
+```
+
+**Nəticə:** agent app-ında **dataset-in `retrieval_model`-u hökm edir**, app konfiqurasiyası və DSL-dəki dəyər YOX. Bu, `get_dataset_tools()`-un davranışı ilə uyğundur (retrieval strategiyası məcburi `SINGLE`-a çevrilir və `top_k` dataset-dən oxunur).
+
+**Əməli nəticə:** bayat bənd tələsi işlək konfiqurasiyada modelə **çatır** (mövqe 8), yəni R6 bloku boş keçmir. `LIMITATIONS.md`-dəki `[təsdiqlənməyib]` işarəsi qaldırıla bilər.
+
+**Sənəd borcu:** DSL və `IMPORT.md` hələ `4` yazır. Bunlar reproduksiya təlimatıdır — düzəldilməlidir, əks halda tədqiqatı təkrarlayan adam fərqli konfiqurasiya qurar və nəticələri uyğun gəlməz.

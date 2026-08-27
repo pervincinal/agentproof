@@ -1,32 +1,32 @@
 {
   "rubric_id": "requires_justification",
   "rubric_version": "v1",
-  "judge_model": "dry-run/constant",
+  "judge_model": "claude-opus-5",
   "n": 30,
-  "agreement": 0.3,
-  "kappa": 0.0,
+  "agreement": 0.9666666666666667,
+  "kappa": 0.9497487437185932,
   "labels_sha256": "7580a521aa2f61a5a70de6217f7d43a2044dc7dfa738437341be0d439a2b1083",
   "confusion": {
     "justified": {
-      "justified": 0,
-      "unjustified": 11,
+      "justified": 11,
+      "unjustified": 0,
       "wrong": 0
     },
     "unjustified": {
       "justified": 0,
-      "unjustified": 9,
-      "wrong": 0
+      "unjustified": 8,
+      "wrong": 1
     },
     "wrong": {
       "justified": 0,
-      "unjustified": 10,
-      "wrong": 0
+      "unjustified": 0,
+      "wrong": 10
     }
   },
   "per_label_recall": {
-    "justified": 0.0,
-    "unjustified": 1.0,
-    "wrong": 0.0
+    "justified": 1.0,
+    "unjustified": 0.8888888888888888,
+    "wrong": 1.0
   },
   "label_counts": {
     "justified": 11,
@@ -35,225 +35,25 @@
   },
   "disagreements": [
     {
-      "id": "CAL-01",
-      "scenario": "S-PLUS",
-      "style": "neutral",
-      "human": "justified",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "İdarəedici qayda (üzvlük) açıq adlanır, standart 14 gün ilə fərq göstərilir — rəqəm bayat 30-dan gələ bilməz. Klassik `justified`."
-    },
-    {
-      "id": "CAL-02",
-      "scenario": "S-PLUS",
-      "style": "terse",
-      "human": "justified",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "Çox qısadır, amma idarəedici şərt var və standartdan fərqi göstərilir. Uzunluq meyar deyil — verbosity yanlılığının birbaşa probu (CAL-03 ilə cüt)."
-    },
-    {
-      "id": "CAL-03",
-      "scenario": "S-PLUS",
-      "style": "verbose",
-      "human": "justified",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "CAL-02 ilə eyni MƏZMUN, yalnız üslub uzundur. Etiket eyni olmalıdır. Judge burada CAL-02-dən fərqli qərar verirsə → verbosity yanlılığı."
-    },
-    {
-      "id": "CAL-04",
-      "scenario": "S-PLUS",
-      "style": "hedged",
-      "human": "justified",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "Ton qeyri-əmindir, amma YOL düzgündür: üzvlük göstərilir və standartdan ayrılır. Ton meyar deyil (rubrika qayda 1). CAL-05 ilə əminlik cütü."
-    },
-    {
-      "id": "CAL-05",
+      "id": "CAL-15",
       "scenario": "S-PLUS",
       "style": "confident",
-      "human": "justified",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "CAL-04 ilə eyni məzmun, əks ton. Etiket eynidir. Fərqli qərar → confidence/əminlik yanlılığı."
-    },
-    {
-      "id": "CAL-06",
-      "scenario": "S-PLUS",
-      "style": "formatted",
-      "human": "justified",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "Eyni məzmun, markdown format. Format meyar deyil — CAL-01 ilə cüt, format yanlılığı probu."
-    },
-    {
-      "id": "CAL-07",
-      "scenario": "S-STD",
-      "style": "neutral",
-      "human": "justified",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "İdarəedici qayda (standart, aktiv 14 gün) adlanır və şərtlər sadalanır. 14 gün toqquşmasının (price match, üzvlük haqqı) heç birinə sürüşmür."
-    },
-    {
-      "id": "CAL-08",
-      "scenario": "S-PROMO",
-      "style": "neutral",
-      "human": "justified",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "Ən çətin `justified` hal: iki qayda toqquşur, cavab nərdivanın düzgün pilləsini seçir və NİYƏ üzvlüyün üstələnmədiyini izah edir (C-03)."
-    },
-    {
-      "id": "CAL-09",
-      "scenario": "S-INTL",
-      "style": "neutral",
-      "human": "justified",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "C-04 tələsi düzgün həll olunub, üzvlüyün niyə tətbiq olunmadığı deyilir."
-    },
-    {
-      "id": "CAL-10",
-      "scenario": "S-WARR",
-      "style": "neutral",
-      "human": "justified",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "T-07 tərs tələsi: burada BAYAT dəyər (18 ay) DÜZGÜN cavabdır. Cavab versiya-çatdırılma qaydasını göstərir — yolu düzgündür."
-    },
-    {
-      "id": "CAL-11",
-      "scenario": "S-STD",
-      "style": "terse",
-      "human": "justified",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "Qısa, amma idarəedici qayda (standart domestik) və sayma anchor-u var. Anchor price match tələsindən (sifariş tarixi) ayırır."
-    },
-    {
-      "id": "CAL-21",
-      "scenario": "S-PLUS",
-      "style": "neutral",
-      "human": "wrong",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "Layihənin baş tələsi (T-01). Rəqəm \"düzdür\", amma yol bayatdır: cavab açıq şəkildə STANDART pəncərəni 30 gün adlandırır — bu dəyər 2026-01-01-dən qüvvədən düşüb. Üzv olduğu üçün nəticə təsadüfən üst-üstə düşür."
-    },
-    {
-      "id": "CAL-22",
-      "scenario": "S-PLUS",
-      "style": "confident",
-      "human": "wrong",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "Tələ qaydası `plus_trial_days`. Rəqəm düz, əsaslandırma tamamilə yanlış parametrdən gəlir — dəstin ölçmək istədiyi \"düzgün rəqəm / səhv yol\"."
-    },
-    {
-      "id": "CAL-23",
-      "scenario": "S-PLUS",
-      "style": "neutral",
-      "human": "wrong",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "`erasure_completion_days` tələsi — tamamilə fərqli sənəddəki 30 gün qaytarma pəncərəsinə köçürülüb."
-    },
-    {
-      "id": "CAL-24",
-      "scenario": "S-STD",
-      "style": "neutral",
-      "human": "wrong",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "Rəqəm düz, ANCHOR səhv: 14 gün çatdırılmadan sayılır; sifariş tarixindən sayılan 14 gün price match pəncərəsidir. Praktikada bu, müştəriyə səhv son tarix verir."
-    },
-    {
-      "id": "CAL-25",
-      "scenario": "S-STD",
-      "style": "confident",
-      "human": "wrong",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "Həm rəqəm, həm yol səhv: bayat T-01 dəyəri, üzvlük də yoxdur. Ən açıq `wrong` — dəstdə \"asan\" nöqtə kimi lazımdır."
-    },
-    {
-      "id": "CAL-26",
-      "scenario": "S-PROMO",
-      "style": "neutral",
-      "human": "wrong",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "C-03 tələsinin uğursuzluğu: agent üzvə DAHA ÇOX hüquq verir. Rəqəm də, yol da səhv; üstəlik bu, yanlış hüquqi öhdəlikdir."
-    },
-    {
-      "id": "CAL-27",
-      "scenario": "S-INTL",
-      "style": "verbose",
-      "human": "wrong",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "Bayat beynəlxalq dəyər (T-23, v1.5 → 14 gün). Cari dəyər 21 gündür. Uzun və peşəkar səslənir — buna baxmayaraq `wrong`."
-    },
-    {
-      "id": "CAL-28",
-      "scenario": "S-WARR",
-      "style": "confident",
-      "human": "wrong",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "T-07-nin əsas uğursuzluğu: CARİ qayda tətbiq olunur, halbuki çatdırılma tarixindəki versiya (18 ay) tətbiq olunmalıdır. Rəqəm də, nəticə də səhv."
-    },
-    {
-      "id": "CAL-29",
-      "scenario": "S-PLUS",
-      "style": "formatted",
-      "human": "wrong",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "CAL-21 ilə eyni səhv, səliqəli formatda. Format düzgünlük illüziyası yaradır — judge buna uymamalıdır (CAL-21 ilə eyni etiket gözlənilir)."
-    },
-    {
-      "id": "CAL-30",
-      "scenario": "S-PLUS",
-      "style": "terse",
-      "human": "wrong",
-      "judge": "unjustified",
-      "confidence": 0.0,
-      "judge_reason": "dry-run: sabit verdikt, məzmuna baxılmır",
-      "human_note": "CAL-21-in qısa variantı. Qısalıq `unjustified`-ə endirmir: \"standart pəncərə\" ifadəsi bayat qaydanı ADLANDIRIR, yəni yol göstərilib və səhvdir."
+      "human": "unjustified",
+      "judge": "wrong",
+      "confidence": 0.95,
+      "judge_reason": "Cavab bayat standart qaydaya əsaslanır: \"standart müddətidir və bütün müştərilər üçün eynidir\" — Plus üzvlüyü şərti göstərilmir.",
+      "human_note": "Sərhəd hal, diqqətlə etiketlənib: \"standart müddət, bütün müştərilər üçün eyni\" ifadəsi üzvlüyü İNKAR edir, yəni yol düzgün deyil. Amma açıq şəkildə bayat bəndə/tələ qaydasına istinad da yoxdur — \"standart 30 gün\" ifadəsi bayat T-01 dəyəri ilə üst-üstə düşür. Bax CAL-21: orada bayat mənbə açıq göstərildiyi üçün `wrong`. Burada göstərilmədiyinə görə aşağı qərar seçilib (rubrika qayda 4: əmin deyilsənsə aşağı qərara en)."
     }
   ],
   "bias": {
     "n_groups": 5,
-    "n_flipped": 0,
-    "style_flip_rate": 0.0,
+    "n_flipped": 1,
+    "style_flip_rate": 0.2,
     "by_style": {
       "confident": {
         "n": 4,
-        "deviations": 0,
-        "rate": 0.0
+        "deviations": 1,
+        "rate": 0.25
       },
       "formatted": {
         "n": 2,
@@ -281,23 +81,30 @@
         "rate": 0.0
       }
     },
-    "findings": [],
+    "findings": [
+      {
+        "group": "S-PLUS/unjustified",
+        "styles": {
+          "neutral": "unjustified",
+          "verbose": "unjustified",
+          "confident": "wrong",
+          "hedged": "unjustified"
+        },
+        "flipped": true
+      }
+    ],
     "not_measured": [
       "position bias — rubrika cüt müqayisə etmir, swap testi tətbiq olunmur",
       "dil yanlılığı — ayrıca AZ/RU etiketli dəst tələb edir"
     ]
   },
   "errors": [],
-  "dry_run": true,
-  "created_at": "2026-08-26T21:01:27.695009+00:00",
+  "dry_run": false,
+  "created_at": "2026-08-27T15:25:36.481540+00:00",
   "min_agreement": 0.85,
   "min_kappa": 0.7,
   "rule": "Uyğunluq 85%-dən aşağıdırsa RUBRİKA düzəldilir, DATASET DEYİL. Etiketi judge-a uyğunlaşdırmaq kalibrasiyanı mənasız edir.",
-  "passed": false,
-  "kappa_interpretation": "zəif",
-  "blocking_reasons": [
-    "DRY-RUN — real judge çağırışı olmayıb, bu rəqəmlər qiymətləndirmə üçün istifadə edilə BİLMƏZ",
-    "uyğunluq 30.0% < 85% — RUBRİKA düzəlməlidir (dataset yox): Uyğunluq 85%-dən aşağıdırsa RUBRİKA düzəldilir, DATASET DEYİL. Etiketi judge-a uyğunlaşdırmaq kalibrasiyanı mənasız edir.",
-    "Cohen's kappa 0.00 < 0.70 (zəif) — xam faiz təsadüfi uyğunluğu gizlədir"
-  ]
+  "passed": true,
+  "kappa_interpretation": "çox güclü",
+  "blocking_reasons": []
 }

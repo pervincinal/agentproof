@@ -24,7 +24,7 @@
 
 ## Keyfiyyət qaydaları (pozulmaz)
 
-1. **Reproduksiya olunmayan tapıntı hesabata düşmür.** Bir dəfə baş verib təkrarlanmayan hal ayrıca "flaky" kimi qeyd olunur.
+1. **Reproduksiya olunmayan tapıntı hesabata düşmür.** Bir dəfə baş verib təkrarlanmayan hal ayrıca "flaky" kimi qeyd olunur. Tətbiqi: `python evals/reproduce.py reports/<qaçış>` — hər case-i `stable-pass / stable-fail / unstable-fail / flaky / incomplete / skipped` səbətlərinə bölür. **FINDINGS.md-ə YALNIZ `stable-fail` səbətindən tapıntı götürülür** (`reproduction.json` → `publishable_case_ids`). Flaky nisbəti hesabatın başında göstərilir; 10%-dən yuxarı olması ölçmənin özünün etibarsız olduğunu bildirir.
 2. **Kalibrasiya olunmamış LLM-judge nəticəsi dərc olunmur.** İnsan etiketi ilə uyğunluq faizi hesabatda açıq göstərilir.
 3. **Şişirtmə yoxdur.** Bir şişirdilmiş iddia bütün hesabatın etibarını öldürür.
 4. **Hədəf layihə alçaldılmır.** Ton: "biz sınadıq, budur tapdığımız".

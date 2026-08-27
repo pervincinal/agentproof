@@ -71,13 +71,20 @@ class Rubric:
 
     @property
     def schema(self) -> dict[str, Any]:
-        """Struktur çıxış sxemi — {verdict, reason, confidence}."""
+        """Struktur çıxış sxemi — {verdict, reason, confidence}.
+
+        Qeyd: `confidence` üçün `minimum`/`maximum` GÖNDƏRİLMİR — Messages API
+        `output_config.format.schema` içində `number` tipində bu açarları qəbul
+        etmir (HTTP 400: "For 'number' type, properties maximum, minimum are not
+        supported"). 0–1 aralığı `JudgeDecision.parse()` içində klemplənir və
+        rubrika mətnində (qayda 6) tələb olunur.
+        """
         return {
             "type": "object",
             "properties": {
                 "verdict": {"type": "string", "enum": list(self.verdicts)},
                 "reason": {"type": "string"},
-                "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                "confidence": {"type": "number"},
             },
             "required": ["verdict", "reason", "confidence"],
             "additionalProperties": False,
