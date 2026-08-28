@@ -192,13 +192,15 @@ agentproof/
 │   └── report/
 │       ├── normalize.py          ← Inspect .eval log → RunRecord (bizim sabit sxem)
 │       ├── baseline.py           ← RunRecord × RunRecord → RunDelta
+│       ├── merge.py              ← qaçış birləşməsi: ən son nəticə qalib, əvvəlki `superseded`
 │       ├── html.py               ← statik hesabat
 │       └── pr_comment.py         ← markdown xülasə
 │
 ├── evals/
 │   ├── run.py                    ← tək giriş nöqtəsi
+│   ├── merge_runs.py             ← bir neçə qaçış → tək RunRecord (baseline istehsalı)
 │   ├── datasets/*.jsonl          ← Dataset Engineer
-│   ├── baselines/<target>@<ver>.json
+│   ├── baselines/<target>@<dataset_hash>-<tarix>.json   ← docs/BASELINE.md
 │   └── labels/judge_calibration.jsonl   ← əl ilə etiketlənmiş 20+ nümunə
 │
 ├── reports/                      ← qaçış çıxışı (git-ignore, artefakt kimi yüklənir)
@@ -315,7 +317,19 @@ html.py:      render(RunRecord, RunDelta) -> reports/index.html
 pr_comment.py: render(RunDelta) -> markdown
               # mütləq rəqəm deyil, DƏYİŞİKLİK:
               # "91% -> 87% · 4 sındı · 1 düzəldi · +$0.42 · p95 +1.3s"
+
+merge.py:     merge_records([RunRecord, ...]) -> RunRecord + MergeOutcome
+              # eyni case_id bir neçə qaçışda varsa ƏN SON götürülür
+              # (meyar started_at; fayl adı və arqument sırası ROL OYNAMIR).
+              # Əvəz olunan nəticə SİLİNMİR: `superseded` kimi sayılır.
+              # Əvəzləmə eyni dataset_hash daxilindədir; sərhədi keçmək
+              # üçün case tərifinin barmaq izi eyni olmalıdır (AP-042).
 ```
+
+**Baseline snapshot-u** — `evals/baselines/<target>@<dataset_hash>-<tarix>.json`.
+Cari snapshot iki qaçışın birləşməsidir (kredit kəsilməsi): hansı qaçışlardan,
+hansı əmrlə, hansı grader versiyasından və nəyi ÖLÇMƏDİYİ **`docs/BASELINE.md`**-də
+yazılıb. Snapshot əl ilə yamanmır — `python evals/merge_runs.py` ilə istehsal olunur.
 
 ### 8.6 `evals/run.py` — tək giriş nöqtəsi
 
@@ -327,7 +341,8 @@ python evals/run.py \
   --stage         cheap|judge|all      # default: all
   --repeat        N                    # qeyri-determinist case-lər üçün
   --seed          N
-  --baseline      evals/baselines/<target>@<ver>.json
+  --baseline      evals/baselines/<target>@<dataset_hash>-<tarix>.json
+                                       # CI-da yolu `ci_gates.py baseline` verir
   --max-connections N                  # rate limit
   --out           reports/<run_id>/
   --fail-on-regression                 # CI üçün

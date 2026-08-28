@@ -609,6 +609,30 @@ def _section_reproduction(repro: repro_mod.ReproductionReport | None) -> str:
         + rows
         + "</tbody></table></div>"
     )
+    # AP-042: bir neçə qaçış birləşibsə, əvəz olunan nəticələr case sayına
+    # DAXİL DEYİL — amma hesabatdan da silinmir.
+    if repro.n_superseded:
+        by_case = len({e.case_id for e in repro.superseded})
+        rows = "".join(
+            "<tr>"
+            f'<td class="cid">{esc(e.case_id)}</td>'
+            f"<td>{esc(e.origin.label)}</td>"
+            f"<td>{esc(e.superseded_by.label)}</td></tr>"
+            for e in repro.superseded
+        )
+        out.append(
+            f'<div class="box ok"><b>Əvəz olunmuş nəticə: {repro.n_superseded}</b> '
+            f"({by_case} case) — eyni case bir neçə qaçışda ölçülüb, yuxarıdakı "
+            "təsnifat ƏN SON qaçışa görədir. Əvvəlki nəticə silinmir:"
+            "<details><summary>siyahı</summary>"
+            '<div class="scroll"><table><thead><tr><th>case</th><th>əvəz olunan qaçış</th>'
+            "<th>əvəz edən qaçış</th></tr></thead><tbody>"
+            + rows
+            + "</tbody></table></div></details></div>"
+        )
+    for warning in repro.warnings:
+        out.append(f'<div class="box warn">Birləşmə xəbərdarlığı: {esc(warning)}</div>')
+
     flaky_cases = repro.by_class(repro_mod.FLAKY)
     if flaky_cases:
         rows = "".join(

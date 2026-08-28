@@ -35,7 +35,9 @@ BASELINE_MISSING = (
     "BASELINE YOXDUR — REQRESSİYA YOXLANILMADI.\n"
     "`{path}` boşdur, ona görə bu qaçışda yalnız MÜTLƏQ rəqəmlər var: hansı\n"
     "case-in SINDIĞI bilinmir. Yaşıl status «reqressiya yoxdur» demək DEYİL —\n"
-    "snapshot götürülənə qədər (AP-013) reqressiya qapısı BAĞLIDIR."
+    "snapshot olmadan reqressiya qapısı BAĞLIDIR.\n"
+    "Snapshot AP-013-də götürülüb; qovluq boşdursa fayl itib və ya silinib.\n"
+    "Yenidən götürmək: docs/BASELINE.md"
 )
 
 
@@ -166,12 +168,35 @@ def cmd_artifact(args: argparse.Namespace) -> int:
 
 
 # -------------------------------------------------------------- baseline qapısı
+def _newest_baseline(files: list[Path]) -> Path:
+    """Ən son ÖLÇÜLMÜŞ baseline — `started_at`-a görə, fayl adına görə YOX.
+
+    AP-042 ilə eyni qayda: sıralama meyarı zamandır. Fayl adı sıralaması
+    "…-2026-09-01" ilə "…-2026-10-01"-i düzgün sıralasa da, ad sxemi
+    dəyişən kimi səssizcə yanlış snapshot seçərdi. Oxuna bilməyən fayl
+    (bozuk JSON) sondan yox, əvvəldən sayılır — o, seçilməməlidir.
+    """
+
+    def moment(path: Path) -> tuple[int, str, str]:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            stamp = str(data.get("started_at") or "")
+        except (ValueError, OSError):
+            return (0, "", path.name)
+        return (1 if stamp else 0, stamp, path.name)
+
+    return sorted(files, key=moment)[-1]
+
+
 def cmd_baseline(args: argparse.Namespace) -> int:
     """Baseline YOXDURSA SƏSSİZ KEÇMİR — açıq şəkildə etiraf olunur.
 
-    Qapı default olaraq qırmızı yandırmır (snapshot hələ götürülməyib, AP-013),
-    amma həm konsola, həm job xülasəsinə yazır ki, yaşıl CI «reqressiya yoxdur»
-    kimi oxunmasın. `--require` verilibsə bloklayır.
+    Qapı özü default olaraq qırmızı yandırmır, amma həm konsola, həm job
+    xülasəsinə yazır ki, yaşıl CI «reqressiya yoxdur» kimi oxunmasın.
+    `--require` verilibsə bloklayır — AP-013-dən sonra CI məhz belə qaçır.
+
+    Bir neçə snapshot varsa ƏN SONUNCUSU seçilir: meyar `started_at`, fayl adı
+    yox (AP-042 ilə eyni qayda).
 
     STDOUT yalnız tapılan baseline yoludur (yoxdursa boş sətir) — workflow onu
     birbaşa oxuyur. Bütün insan mətni stderr-ə gedir ki, yol qarışmasın.
@@ -179,10 +204,16 @@ def cmd_baseline(args: argparse.Namespace) -> int:
     directory = Path(args.directory)
     files = sorted(directory.glob("*.json")) if directory.is_dir() else []
     if files:
+        chosen = _newest_baseline(files)
         listing = ", ".join(f.name for f in files)
-        print(f"Baseline snapshot-ları: {listing}", file=sys.stderr)
-        _emit_summary(f"**Baseline:** `{listing}` — reqressiya qapısı aktiv.")
-        print(files[0])
+        print(
+            f"Baseline snapshot-ları: {listing}\nSeçildi: {chosen.name}", file=sys.stderr
+        )
+        _emit_summary(
+            f"**Baseline:** `{chosen.name}` — reqressiya qapısı aktiv."
+            + (f" (qovluqda {len(files)} snapshot var)" if len(files) > 1 else "")
+        )
+        print(chosen)
         return 0
 
     message = BASELINE_MISSING.format(path=directory)

@@ -142,12 +142,13 @@ jobs:
       - name: Duman testinin artefaktı bütövdürmü
         run: python evals/ci_gates.py artifact reports/ci-smoke
 
-      # -- baseline: YOXDURSA SƏSSİZ KEÇMİR --------------------------------
-      # `evals/baselines/` hazırda boşdur (AP-013). Reqressiya qapısı baseline
-      # olmadan işləyə bilmir; bu addım həmin faktı job xülasəsinə YAZIR ki,
-      # yaşıl CI "reqressiya yoxdur" kimi oxunmasın.
-      - name: Baseline vəziyyəti (reqressiya qapısı qoşulubmu)
-        run: python evals/ci_gates.py baseline evals/baselines
+      # -- baseline: MÖVCUD OLMALIDIR --------------------------------------
+      # AP-013 ilə `evals/baselines/` dolduruldu, ona görə qapı artıq `--require`
+      # ilə qaçır: snapshot təsadüfən silinsə CI QIRMIZI olur. Əvvəllər burada
+      # yalnız xəbərdarlıq yazılırdı, çünki snapshot yox idi və yoxluğun özü
+      # susmamalı idi.
+      - name: Baseline mövcuddur (reqressiya qapısı qoşulub)
+        run: python evals/ci_gates.py baseline evals/baselines --require
 
       # -- hesabat ---------------------------------------------------------
       - name: Markdown xülasə (judge bölməsi məcburidir)
@@ -232,12 +233,16 @@ jobs:
             --fail-under-threshold \
             --cache-dir .cache/judge
 
-      # STDOUT baseline yoludur (yoxdursa boş) — insan mətni stderr-ə və
-      # job xülasəsinə gedir. Baseline olmadan qaçış davam edir, amma
-      # "REQRESSİYA YOXLANILMADI" xəbərdarlığı xülasədə görünür.
+      # STDOUT baseline yoludur — insan mətni stderr-ə və job xülasəsinə gedir.
+      # `--require` ilə: baseline yoxdursa job BURADA dayanır. Baseline-sız
+      # canlı qaçış yalnız mütləq rəqəm verir və "reqressiya yoxdur" kimi
+      # oxunardı (AP-013). Bir neçə snapshot varsa ƏN SONUNCUSU seçilir —
+      # fayl adına yox, `started_at`-a görə.
       - name: Baseline vəziyyəti
         id: baseline
-        run: echo "path=$(python evals/ci_gates.py baseline evals/baselines)" >> "$GITHUB_OUTPUT"
+        run: |
+          python evals/ci_gates.py baseline evals/baselines --require
+          echo "path=$(python evals/ci_gates.py baseline evals/baselines)" >> "$GITHUB_OUTPUT"
 
       # İstifadəçi girişləri BİRBAŞA `run:` sətrinə yapışdırılmır — `env:`
       # vasitəsilə ötürülür. Əks halda `workflow_dispatch` girişi shell-ə

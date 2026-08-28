@@ -10,6 +10,22 @@
     # bir neçə müstəqil qaçışın RunRecord-u da olar
     python evals/reproduce.py reports/runs/a.json reports/runs/b.json
 
+    # yarımçıq qalmış qaçış + onu tamamlayan təkrar qaçış (AP-042)
+    python evals/reproduce.py reports/full-run-03 reports/full-run-03b \
+        --merge-across-datasets
+
+BİRLƏŞMƏ (AP-042). Eyni `case_id` bir neçə qaçışda görünürsə, ƏN SON qaçışın
+(`created` / `started_at`) nəticəsi götürülür; əvvəlki SİLİNMİR — `superseded`
+kimi sayılır və xülasədə görünür. Beləliklə kredit kəsilməsindən sonra
+tamamlanan qaçışda case-lər İKİQAT sayılmır.
+
+  * Qaçışların tarixi eynidirsə (və ya oxunmursa) sıralama yoxdur — nəticələr
+    müstəqil CƏHD kimi qalır. `--as-repeats` bunu həmişə məcbur edir.
+  * Əvəzləmə eyni `dataset_hash` daxilində baş verir. `--merge-across-datasets`
+    sərhədi keçir, AMMA yalnız case tərifinin barmaq izi eyni olduqda.
+    (`dataset_hash` filtrdən SONRAKI case dəstinə görə hesablanır, ona görə
+    `--filter` ilə qaçırılan təkrar qaçışın hash-i həmişə fərqlidir.)
+
 Çıxış: insan üçün mətn (stdout) + maşın üçün JSON (`--out`, default olaraq
 qovluq verilibsə `<qovluq>/reproduction.json`).
 
@@ -29,7 +45,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from agentproof.report import reproduction  # noqa: E402
-from agentproof.report.normalize import read_repeat_responses  # noqa: E402
+from agentproof.report.merge import render_merge_notes  # noqa: E402
+from agentproof.report.normalize import read_repeat_samples  # noqa: E402
 from agentproof.types import RunRecord  # noqa: E402
 
 
@@ -55,7 +72,12 @@ def _expand(paths: list[str]) -> tuple[list[Path], list[Path]]:
     return logs, records
 
 
-def build(paths: list[str]) -> reproduction.ReproductionReport:
+def build(
+    paths: list[str],
+    *,
+    supersede: bool = True,
+    allow_cross_dataset: bool = False,
+) -> reproduction.ReproductionReport:
     logs, records = _expand(paths)
     if not logs and not records:
         raise SystemExit(f"giriş tapılmadı: {', '.join(paths)}")
@@ -63,14 +85,24 @@ def build(paths: list[str]) -> reproduction.ReproductionReport:
         # `.eval` logu üstündür: cəhd-səviyyəli cavablar YALNIZ orada var.
         samples: list = []
         for log in logs:
-            samples += read_repeat_responses(str(log))
+            origin, pairs = read_repeat_samples(str(log))
+            samples += [(meta, responses, origin) for meta, responses in pairs]
         return reproduction.from_log_samples(
-            samples, source=", ".join(str(p) for p in logs)
+            samples,
+            source=", ".join(str(p) for p in logs),
+            supersede=supersede,
+            allow_cross_dataset=allow_cross_dataset,
         )
     loaded = [
         RunRecord.from_dict(json.loads(p.read_text(encoding="utf-8"))) for p in records
     ]
-    return reproduction.from_records(loaded, source=", ".join(str(p) for p in records))
+    return reproduction.from_records(
+        loaded,
+        source=", ".join(str(p) for p in records),
+        sources=[str(p) for p in records],
+        supersede=supersede,
+        allow_cross_dataset=allow_cross_dataset,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -79,9 +111,22 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", default=None, help="JSON çıxış faylı")
     p.add_argument("--fail-on-flaky", action="store_true",
                    help=f"flaky nisbəti {reproduction.FLAKY_ALARM:.0%} keçsə 3 qaytar")
+    p.add_argument("--as-repeats", action="store_true",
+                   help=("əvəzləməni SÖNDÜR: hər qaçış müstəqil cəhd sayılsın "
+                         "(eyni case-i N dəfə qaçırıb reproduksiya ölçmək üçün). "
+                         "Default: eyni case_id-nin ƏN SON qaçışı götürülür"))
+    p.add_argument("--merge-across-datasets", action="store_true",
+                   help=("əvəzləmə fərqli `dataset_hash`-ları da keçsin. YALNIZ case "
+                         "tərifinin barmaq izi eyni olduqda birləşdirir; fərqli olan "
+                         "case heç vaxt birləşmir. `--filter` ilə qaçırılan təkrar "
+                         "qaçış üçün lazımdır (hash filtrdən SONRA hesablanır)"))
     args = p.parse_args(argv)
 
-    report = build(args.paths)
+    report = build(
+        args.paths,
+        supersede=not args.as_repeats,
+        allow_cross_dataset=args.merge_across_datasets,
+    )
 
     out = Path(args.out) if args.out else None
     if out is None:
@@ -95,6 +140,15 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     print(reproduction.render_text(report))
+    if report.superseded:
+        print()
+        print(
+            render_merge_notes(
+                reproduction.MergeOutcome(
+                    superseded=report.superseded, warnings=[]
+                )
+            )
+        )
     if out is not None:
         print(f"\nJSON: {out}")
 

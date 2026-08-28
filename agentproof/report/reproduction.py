@@ -33,6 +33,15 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable, Sequence
 
 from agentproof.graders import registry
+from agentproof.report.merge import (
+    MergeItem,
+    MergeOutcome,
+    RunOrigin,
+    SupersededEntry,
+    fingerprint_case,
+    merge_items,
+    origin_of,
+)
 from agentproof.types import AgentResponse, Case, RunRecord
 
 STABLE_PASS = "stable-pass"
@@ -93,6 +102,13 @@ class CaseVerdict:
     tags: list[str] = field(default_factory=list)
     note: str = ""
 
+    # --- mənşə (AP-042): bu verdikt HANSI qaçışdan gəldi ------------------
+    run_id: str = ""
+    started_at: str = ""
+    dataset_hash: str = ""
+    cross_dataset: bool = False
+    """Eyni `case_id` başqa `dataset_hash` altında da var — birləşdirilmədi."""
+
     @property
     def n_attempts(self) -> int:
         return len(self.attempts)
@@ -141,6 +157,10 @@ class CaseVerdict:
             "n_skipped": self.n_skipped,
             "reason_variants": self.reason_variants,
             "note": self.note,
+            "run_id": self.run_id,
+            "started_at": self.started_at,
+            "dataset_hash": self.dataset_hash,
+            "cross_dataset": self.cross_dataset,
             "attempts": [a.to_dict() for a in self.attempts],
         }
 
@@ -157,7 +177,22 @@ class ReproductionReport:
     notice: str = ""
     source: str = ""
 
+    superseded: list[SupersededEntry] = field(default_factory=list)
+    """Əvəz olunmuş (amma SİLİNMƏMİŞ) nəticələr — AP-042.
+
+    Bunlar `verdicts`-ə DAXİL DEYİL: case bir dəfə sayılır. Amma artefaktdan
+    da atılmır — "bu case iki dəfə ölçüldü, ikincisini götürdük" auditorun
+    görməli olduğu faktdır.
+    """
+
+    warnings: list[str] = field(default_factory=list)
+    """Birləşmə xəbərdarlıqları (fərqli `dataset_hash`, tarixsiz qaçış, ...)."""
+
     # ------------------------------------------------------------- sayğaclar
+    @property
+    def n_superseded(self) -> int:
+        return sum(e.n_items for e in self.superseded)
+
     @property
     def counts(self) -> dict[str, int]:
         out = {k: 0 for k in _ORDER}
@@ -206,6 +241,10 @@ class ReproductionReport:
             "flaky_rate": self.flaky_rate,
             "flaky_alarm": self.flaky_alarm,
             "publishable_case_ids": [v.case_id for v in self.findings],
+            # AP-042: əvəz olunan nəticələr silinmir — sayı və mənşəyi qalır.
+            "n_superseded": self.n_superseded,
+            "superseded": [e.to_dict() for e in self.superseded],
+            "merge_warnings": list(self.warnings),
             "cases": [v.to_dict() for v in self.verdicts],
         }
 
@@ -251,7 +290,11 @@ def classify_attempts(attempts: Sequence[Attempt], expected: int = 0) -> tuple[s
 
 
 def _finish(
-    verdicts: list[CaseVerdict], source: str, classifiable: bool = True, notice: str = ""
+    verdicts: list[CaseVerdict],
+    source: str,
+    classifiable: bool = True,
+    notice: str = "",
+    outcome: MergeOutcome | None = None,
 ) -> ReproductionReport:
     repeats = max((v.n_attempts for v in verdicts), default=0)
     return ReproductionReport(
@@ -260,6 +303,8 @@ def _finish(
         classifiable=classifiable,
         notice=notice,
         source=source,
+        superseded=list(outcome.superseded) if outcome else [],
+        warnings=list(outcome.warnings) if outcome else [],
     )
 
 
@@ -316,17 +361,55 @@ def grade_repeats(case: Case, responses: Sequence[AgentResponse]) -> tuple[list[
 
 
 def from_log_samples(
-    samples: Iterable[tuple[dict[str, Any], Sequence[AgentResponse]]],
+    samples: Iterable[Sequence[Any]],
     source: str = "",
+    *,
+    supersede: bool = True,
+    allow_cross_dataset: bool = False,
 ) -> ReproductionReport:
-    """`normalize.repeat_responses()` çıxışını təsnif edir."""
-    pairs = [(dict(meta), list(responses)) for meta, responses in samples]
-    expected = max((len(r) for _, r in pairs), default=0)
+    """`normalize.repeat_responses()` çıxışını təsnif edir.
+
+    Element ya `(meta, responses)`, ya da `(meta, responses, RunOrigin)` olur.
+    Mənşə verilməyəndə bütün nümunələr eyni (boş) qaçışdan sayılır — tək logu
+    oxuyan köhnə çağırışlar üçün davranış dəyişmir.
+
+    AP-042: bir neçə log birlikdə oxunanda eyni `case_id` İKİ DƏFƏ SAYILMIR —
+    ən son qaçışın nəticəsi götürülür, əvvəlki `superseded` kimi qeyd olunur.
+    """
+    items: list[MergeItem] = []
+    for entry in samples:
+        meta, responses = entry[0], entry[1]
+        origin = entry[2] if len(entry) > 2 else RunOrigin()
+        meta = dict(meta)
+        items.append(
+            MergeItem(
+                case_id=str(meta.get("id", "")),
+                origin=origin,
+                payload=(meta, list(responses)),
+                fingerprint=fingerprint_case(meta),
+            )
+        )
+
+    outcome = merge_items(
+        items, supersede=supersede, allow_cross_dataset=allow_cross_dataset
+    )
+    expected = max(
+        (sum(len(responses) for _, responses in case.items) for case in outcome.cases),
+        default=0,
+    )
 
     verdicts: list[CaseVerdict] = []
-    for meta, responses in pairs:
+    for merged in outcome.cases:
+        meta, _ = merged.items[0]
         case = Case.from_dict(meta)
-        attempts, note = grade_repeats(case, responses)
+        attempts: list[Attempt] = []
+        note = ""
+        for _, responses in merged.items:
+            got, why = grade_repeats(case, responses)
+            if why:
+                note = why
+                break
+            attempts += got
         if note:
             classification = SKIPPED
         else:
@@ -340,6 +423,10 @@ def from_log_samples(
                 severity=case.severity,
                 tags=list(case.tags),
                 note=note,
+                run_id=merged.origin.run_id,
+                started_at=merged.origin.started_at,
+                dataset_hash=merged.dataset_hash,
+                cross_dataset=merged.cross_dataset,
             )
         )
 
@@ -352,12 +439,20 @@ def from_log_samples(
                 "TƏKRAR YOXDUR (hər case üçün ən çoxu 1 cavab var) — təsnifat mümkün "
                 "deyil. `--repeat 3` ilə qaçır; bu nəticələr 'stabil' kimi oxunmamalıdır."
             ),
+            outcome=outcome,
         )
-    return _finish(verdicts, source)
+    return _finish(verdicts, source, outcome=outcome)
 
 
 # ------------------------------------------------ mənbə 2: RunRecord JSON
-def from_records(records: Sequence[RunRecord], source: str = "") -> ReproductionReport:
+def from_records(
+    records: Sequence[RunRecord],
+    source: str = "",
+    *,
+    sources: Sequence[str] = (),
+    supersede: bool = True,
+    allow_cross_dataset: bool = False,
+) -> ReproductionReport:
     """Bir və ya bir neçə RunRecord-u case üzrə birləşdirib təsnif edir.
 
     RunRecord-da hər case üçün BİR verdikt var. Yəni:
@@ -366,16 +461,28 @@ def from_records(records: Sequence[RunRecord], source: str = "") -> Reproduction
       * tək RunRecord, `--repeat 3` → yenə 1 verdikt (`attempt=3`), çünki
         `normalize_log()` cəhdləri birləşdirir. Bu hal SUSMAQLA "stabil"
         sayılmır — açıq şəkildə etiraf olunur və `.eval` logu tələb edilir.
-    """
-    grouped: dict[str, list[Any]] = {}
-    for record in records:
-        for result in record.results:
-            grouped.setdefault(result.case_id, []).append(result)
 
-    expected = max((len(v) for v in grouped.values()), default=0)
+    AP-042 əvəzləməsi: eyni `case_id` bir neçə qaçışda varsa, ƏN SON
+    (`started_at`) qaçışın nəticəsi götürülür və əvvəlkilər `superseded`
+    olur. Qaçışların tarixi EYNİ olanda sıralama yoxdur — onda hamısı cəhd
+    kimi qalır (yuxarıdakı "N müstəqil qaçış" halı). `supersede=False`
+    əvəzləməni tamamilə söndürür.
+    """
+    labels = list(sources) + [""] * max(0, len(records) - len(sources))
+    items = [
+        MergeItem(case_id=result.case_id, origin=origin_of(record, label), payload=result)
+        for record, label in zip(records, labels)
+        for result in record.results
+    ]
+    outcome = merge_items(
+        items, supersede=supersede, allow_cross_dataset=allow_cross_dataset
+    )
+
+    expected = max((len(case.items) for case in outcome.cases), default=0)
     verdicts: list[CaseVerdict] = []
     collapsed: list[str] = []
-    for case_id, results in grouped.items():
+    for merged in outcome.cases:
+        results = merged.items
         attempts = [
             Attempt(
                 passed=r.grade.passed and not r.grade.skipped,
@@ -386,17 +493,21 @@ def from_records(records: Sequence[RunRecord], source: str = "") -> Reproduction
             for r in results
         ]
         if len(results) == 1 and results[0].attempt > 1:
-            collapsed.append(case_id)
+            collapsed.append(merged.case_id)
         classification, note = classify_attempts(attempts, expected=expected)
         verdicts.append(
             CaseVerdict(
-                case_id=case_id,
+                case_id=merged.case_id,
                 classification=classification,
                 attempts=attempts,
                 grader=results[0].grade.grader,
                 severity=results[0].severity,
                 tags=list(results[0].tags),
                 note=note,
+                run_id=merged.origin.run_id,
+                started_at=merged.origin.started_at,
+                dataset_hash=merged.dataset_hash,
+                cross_dataset=merged.cross_dataset,
             )
         )
 
@@ -412,6 +523,7 @@ def from_records(records: Sequence[RunRecord], source: str = "") -> Reproduction
                 "(`python evals/reproduce.py reports/<qaçış>/logs/*.eval`). "
                 "Bu nəticələr 'stabil' kimi oxunmamalıdır."
             ),
+            outcome=outcome,
         )
     if n_attempts < 2:
         return _finish(
@@ -423,8 +535,9 @@ def from_records(records: Sequence[RunRecord], source: str = "") -> Reproduction
                 "`--repeat 3` ilə qaçır və ya bir neçə RunRecord ver; bu nəticələr "
                 "'stabil' kimi oxunmamalıdır."
             ),
+            outcome=outcome,
         )
-    return _finish(verdicts, source)
+    return _finish(verdicts, source, outcome=outcome)
 
 
 # ------------------------------------------- mənbə 3: saxlanmış reproduction.json
@@ -457,12 +570,33 @@ def report_from_dict(data: dict[str, Any]) -> ReproductionReport:
         )
         for c in data.get("cases", [])
     ]
+    superseded = [
+        SupersededEntry(
+            case_id=str(e.get("case_id", "")),
+            origin=_origin_from_dict(e.get("origin")),
+            superseded_by=_origin_from_dict(e.get("superseded_by")),
+            n_items=int(e.get("n_items", 1) or 1),
+        )
+        for e in data.get("superseded", [])
+    ]
     return ReproductionReport(
         verdicts=verdicts,
         repeats=int(data.get("repeats", 0)),
         classifiable=bool(data.get("classification_possible", True)),
         notice=str(data.get("notice", "")),
         source=str(data.get("source", "")),
+        superseded=superseded,
+        warnings=list(data.get("merge_warnings", [])),
+    )
+
+
+def _origin_from_dict(d: Any) -> RunOrigin:
+    d = d or {}
+    return RunOrigin(
+        run_id=str(d.get("run_id", "")),
+        started_at=str(d.get("started_at", "")),
+        dataset_hash=str(d.get("dataset_hash", "")),
+        source=str(d.get("source", "")),
     )
 
 
@@ -485,6 +619,17 @@ def flaky_headline(report: ReproductionReport) -> str:
             f"  ⚠️ HƏDD {FLAKY_ALARM:.0%} AŞILDI — bu qaçışda ölçmənin ÖZÜ etibarsızdır"
         )
     return head
+
+
+def _superseded_suffix(report: ReproductionReport) -> str:
+    n = report.n_superseded
+    return f" · əvəz olunmuş nəticə: {n}" if n else ""
+
+
+def _warning_lines(report: ReproductionReport) -> list[str]:
+    if not report.warnings:
+        return []
+    return ["BİRLƏŞMƏ XƏBƏRDARLIĞI:", *(f"  ! {w}" for w in report.warnings), ""]
 
 
 def _case_lines(verdicts: Sequence[CaseVerdict], limit: int = 20) -> list[str]:
@@ -515,9 +660,11 @@ def render_text(report: ReproductionReport) -> str:
             "TƏSNİFAT APARILMADI.",
             f"  {report.notice}",
             "",
-            f"Case sayı: {len(report.verdicts)} · müşahidə olunan təkrar: {report.repeats}",
+            f"Case sayı: {len(report.verdicts)} · müşahidə olunan təkrar: {report.repeats}"
+            + _superseded_suffix(report),
             "",
             "Heç bir case 'stabil' sayılmır; FINDINGS.md üçün namizəd YOXDUR.",
+            *_warning_lines(report),
         ]
         return "\n".join(out)
 
@@ -525,7 +672,8 @@ def render_text(report: ReproductionReport) -> str:
     out += [
         flaky_headline(report),
         "",
-        f"Təkrar: {report.repeats} · case: {len(report.verdicts)}",
+        f"Təkrar: {report.repeats} · case: {len(report.verdicts)}"
+        + _superseded_suffix(report),
         "",
         f"  stable-pass    {counts[STABLE_PASS]:>4}",
         f"  stable-fail    {counts[STABLE_FAIL]:>4}   <- YALNIZ bu səbət FINDINGS.md-ə düşə bilər",
@@ -533,8 +681,12 @@ def render_text(report: ReproductionReport) -> str:
         f"  flaky          {counts[FLAKY]:>4}   (DƏRC OLUNMUR)",
         f"  incomplete     {counts[INCOMPLETE]:>4}",
         f"  skipped        {counts[SKIPPED]:>4}",
+        # Əvəz olunanlar case sayına DAXİL DEYİL (yoxsa yenə ikiqat sayılardı),
+        # amma gizlədilmir də — hansı nəticənin götürülmədiyi auditin faktıdır.
+        f"  superseded     {report.n_superseded:>4}   (əvəz olundu — silinmədi, sayılır)",
         "",
     ]
+    out += _warning_lines(report)
     if report.notice:
         out += [report.notice, ""]
 

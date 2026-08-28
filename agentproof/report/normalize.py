@@ -15,6 +15,7 @@ from agentproof.failure import HALT, REASONS, reason_for_response
 from agentproof.graders.calibration import judge_status
 from agentproof.pricing.table import load_prices
 from agentproof.report.cost import account_case, coverage
+from agentproof.report.merge import RunOrigin, fingerprint_case
 from agentproof.types import AgentResponse, CaseResult, GradeResult, RunRecord
 
 
@@ -172,3 +173,40 @@ def read_repeat_responses(
 ) -> list[tuple[dict[str, Any], list[AgentResponse]]]:
     """`.eval` faylını oxuyub `repeat_responses()` qaytarır."""
     return repeat_responses(read_eval_log(log_path))
+
+
+def log_origin(log: EvalLog, source: str = "") -> RunOrigin:
+    """Logun MƏNŞƏYİ: hansı qaçış, nə vaxt, hansı dataset imzası ilə.
+
+    AP-042: bir neçə log birlikdə oxunanda əvəzləmə məhz bu tarixə görə
+    aparılır — fayl adına və ya arqument sırasına görə yox.
+    """
+    meta = log.eval.metadata or {}
+    return RunOrigin(
+        run_id=log.eval.run_id or "",
+        started_at=str(log.eval.created or ""),
+        dataset_hash=str(meta.get("dataset_hash", "")),
+        source=source,
+    )
+
+
+def read_case_fingerprints(log_path: str) -> dict[str, str]:
+    """`.eval` logundakı hər case-in TƏRİF barmaq izi: `{case_id: fingerprint}`.
+
+    RunRecord case mətnini saxlamır, `.eval` logu isə saxlayır. Fərqli
+    `dataset_hash`-lı iki qaçışı birləşdirməyin YEGANƏ obyektiv sübutu budur:
+    "eyni id" yox, "eyni sual" (AP-042).
+    """
+    log = read_eval_log(log_path)
+    return {
+        str(sample.id): fingerprint_case(dict(sample.metadata or {}))
+        for sample in (log.samples or [])
+    }
+
+
+def read_repeat_samples(
+    log_path: str,
+) -> tuple[RunOrigin, list[tuple[dict[str, Any], list[AgentResponse]]]]:
+    """`(mənşə, [(case metadata, cavablar)])` — `reproduce.py` bunu işlədir."""
+    log = read_eval_log(log_path)
+    return log_origin(log, source=log_path), repeat_responses(log)

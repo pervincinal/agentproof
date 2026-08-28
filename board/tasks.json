@@ -1,5 +1,5 @@
 {
- "seq": 26,
+ "seq": 43,
  "tasks": [
   {
    "id": "AP-001",
@@ -849,8 +849,8 @@
    "desc": "evals/baselines/ BOŞDUR — heç bir baseline yoxdur, yəni report/baseline.py və --fail-on-regression praktikada işlədilmir. docs/STACK.md M4: 87% faydasız, 91% → 87% və bu 4 case sındı faydalıdır. Əlavə səbəb: docs/GRADER-AUDIT.md A-08 bağlanma qeydi grader davranışını dəyişdi (çılpaq rəqəm iynələri artıq tarixin içindən tutulmur), ona görə baseline məhz A-08-dən SONRAKI qaçışdan götürülməlidir. COVERAGE.md §4-də baseline teqli 39 case var — reqressiyanın ölçüldüyü yer budur.",
    "role": "harness-eng",
    "prio": "P2",
-   "status": "in_progress",
-   "assignee": null,
+   "status": "done",
+   "assignee": "harness-eng",
    "dod": "evals/baselines/dify@1.17.0.json tam qaçışdan götürülüb; run.py --baseline ... --fail-on-regression ilə qaçırılanda RunDelta çıxarır və reqressiyada qeyri-sıfır exit verir; 39 baseline teqli case-in cari nəticəsi snapshot-da ayrıca görünür; sənədə yazılıb ki, baseline hansı qaçışdan və hansı grader versiyasından götürülüb (A-08 sonrası).",
    "links": [
     "agentproof/report/baseline.py",
@@ -859,7 +859,7 @@
     "evals/datasets/COVERAGE.md"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-28T00:57:29",
+   "updated": "2026-08-28T14:28:44",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -878,6 +878,48 @@
      "actor": "main",
      "action": "backlog→in_progress",
      "detail": "full-run-03 qacir (165 case, grader duzelislerinden sonra)"
+    },
+    {
+     "at": "2026-08-28T13:49:17",
+     "actor": "main",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T13:58:20",
+     "actor": "harness-eng",
+     "action": "assigned",
+     "detail": "harness-eng"
+    },
+    {
+     "at": "2026-08-28T14:25:28",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T14:25:28",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T14:25:28",
+     "actor": "harness-eng",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T14:28:44",
+     "actor": "main",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T14:28:44",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "baseline mövcud, canli qapi sinandi"
     }
    ],
    "comments": [
@@ -885,6 +927,26 @@
      "at": "2026-08-27T19:12:29",
      "actor": "po",
      "text": "Asılılıq: AP-002 — baseline yalnız tam və A-08 sonrası qaçışdan götürülür."
+    },
+    {
+     "at": "2026-08-28T13:49:17",
+     "actor": "main",
+     "text": "Bloklayir: AP-042. Tam qacis artefakti yoxdur (full-run-03-de 25 skipped, full-run-03b-de hemin 25 ugurlu). Baseline butun case-ler ucun verdikt saxlamalidir, eks halda hemin 25 case reqressiya yoxlamasindan kenarda qalir. El ile birlesdirilmis fayl duzeltmirem — o zaman baseline senedlesdirilmis yolla tekrar istehsal olunmaz."
+    },
+    {
+     "at": "2026-08-28T14:25:28",
+     "actor": "harness-eng",
+     "text": "Baseline goturuldu: evals/baselines/dify_http@e60c825c84bbda8a-2026-08-28.json — 162 case, HER BIRI ucun verdikt var (skipped 0), 124 kecdi / 38 sindi = 76.5%. baseline tegli 39 case ayrica blokda: totals['baseline_tagged'] -> 36/39 kecdi, sinanlar bva-b-13-warranty_aurora_brand_mo-24, bva-b-21-lockout_failed_attempts-4, bva-b-21-lockout_failed_attempts-5. Menbe: full-run-03 (3eeCxPbaqUBrdcxcSaxXUL, sxem v2, 25 skipped) + full-run-03b (o6zhCse2Dm4UV4r3njg4JB, sxem v3, hemin 25). Grader: A-08 SONRASI. Istehsal: python evals/merge_runs.py reports/full-run-03 reports/full-run-03b --merge-across-datasets --out <fayl> — el ile yamaq YOXDUR, qayda agentproof/report/merge.py-dedir, provenans totals['merge']-dedir (menbeler, 25 superseded, xeberdarliqlar, case_fingerprints_verified=true). Sened: docs/BASELINE.md (+ STACK.md 8.5 istinadi). CI: ci_gates.py baseline evals/baselines --require hem ucuz, hem canli job-da acildi; bir nece snapshot olanda secim started_at-a goredir, fayl adina yox. test_repository_baselines_directory_is_still_empty evez olundu: indi baseline-in MOVCUD ve TAM oldugunu, --require ile qapinin yasil oldugunu ve workflow-da --require/--fail-on-regression-un acildigini yoxlayan 5 test var. ACIQ QALAN: (1) dataset-de 165 case var, snapshot 162-ni ehate edir — r6j-collision-* 3 case-i hec bir qacisda olculmeyib (full-run-03-den SONRA elave olunub); onlar gelecek muqayisede new_cases kimi gorunecek, reqressiya kimi bloklamayacaq. (2) flaky nisbeti 19.8% (hedd 10%) — baseline case basina TEK verdikt saxlayir, ona gore qeyri-sabit case-ler sebebsiz fixed/broken vere biler. Ikisi de docs/BASELINE.md 6-da yazilib."
+    },
+    {
+     "at": "2026-08-28T14:25:28",
+     "actor": "harness-eng",
+     "text": "Reqressiya qapisi REAL olaraq sinandi (evals/run.py --baseline ... --fail-on-regression, 5 case, --filter id=a|b|c|d|e): QIRMIZI -> exit 1, 'high severity case sindi: 5 case' + 'kecme derecesi 76.5% -> 0.0% (hedd 2.0%)', PR xulasesinde 'baseline: 77% -> 0% · 5 sindi · 0 duzeldi'. YASIL -> eyni 5 case oz qacisina qarsi, exit 0, '0% -> 0% · 0 sindi'. Yeni qapi her iki istiqamette isleyir. AMMA: bu sinaq mock adapteri ile edildi, xerc /bin/zsh.00. CANLI Dify qacisi MUMKUN OLMADI — bu muhitde DIFY_API_KEY yoxdur (localhost:8088/v1 qalxib, acarsiz 401 qaytarir; ANTHROPIC_API_KEY de yoxdur). Xerc heddi (/bin/zsh.60) tam istifade olunmadi. Canli 5 case-lik teqid ucun DIFY_API_KEY lazimdir."
+    },
+    {
+     "at": "2026-08-28T14:28:44",
+     "actor": "main",
+     "text": "Baseline canli hedefe qarsi da sinandi (agent mock ile sinamisdi): 4 case, 4/4 kecdi, 'baseline 77% -> 100% · 0 sindi · 1 duzeldi', exit 0. Qapi isleyir. LAKIN: repeat sayi muqayise olunmur -> AP-043."
     }
    ]
   },
@@ -1685,6 +1747,502 @@
      "text": "Hazırdır (review). Yeni modul: agentproof/report/cost.py — xərc üç rəqəmə bölündü: cost_usd (uğurlu cəhdlər) · wasted_cost_usd (uğursuz cəhdlərin ÖLÇÜLƏN xərci) · cost_coverage.unmeasured_attempts (usage gəlməyən cəhdlər — NAMƏLUM, sıfır DEYİL). Sınan/skipped case usage qaytarıbsa xərc artıq itmir (məs. message_end gəldi, sonra axın xəta ilə bitdi); backoff-da atılan cəhdlərin tokenləri də retry_usage ilə yandırılmış xərcə yazılır. CaseResult-a wasted_cost_usd + unmeasured_attempts, totals-a wasted_cost_usd + cost_coverage (status: complete/partial/unmeasured, direction: understates). run.py xülasəsi: 'xərc: $X uğurlu + $Y yandırılmış · N cəhdin xərci ÖLÇÜLMƏDİ (naməlum, sıfır deyil)'; PR şərhi və HTML hesabatda (xərc plitəsi + 'Xərc bölgüsü' cədvəli) eyni bölgü. full-run-03 ÜZƏRİNDƏ REAL DƏYƏR: wasted_cost_usd = $0.00 ÖLÇÜLƏN, çünki hədəf 75 sınan sorğunun heç biri üçün usage qaytarmadı (dify_usage: {} — Dify message_end-i yalnız uğurlu axında göndərir). Yəni fərq (.72 qeyd / ~ hesab) İNDİ GÖRÜNÜR ('75 cəhd ölçülmədi'), amma hələ də ölçülmür — bu, docs/LIMITATIONS.md LIM-E11 kimi yazıldı (istiqamət: xərci AŞAĞI göstərir; diaqnostik çağırışların RunRecord yaratmaması da orada sənədləşdi) və 'İddia -> məhdudiyyət' cədvəlinə 'Audit $W-ə başa gəldi' sətri əlavə olundu. Dayandırılmış qaçışda sorğu getmirsə (attempts=0) o, nə xərc, nə 'ölçülməyən' sayılır. Testlər: agentproof/tests/test_cost_accounting.py (14). pytest 875 yaşıl; schema_version 3, köhnə 1/2 artefaktlar oxunur."
     }
    ]
+  },
+  {
+   "id": "AP-027",
+   "title": "--filter: qarisiq sintaksis (id=a|id=b) SESSIZCE 1 case secir",
+   "desc": "AP-025 id=a|b|c sintaksisini elave etdi. Amma id=a|id=b|id=c yazmaq (iki sintaksisin qarisigi) xeta vermir — parser 'id=' acarina 'a|id=b|id=c' deyerini verir, yalniz birincisi uygun gelir ve qacis SESSIZCE 1 case ile davam edir. Menim ozum bu teleye dusdum: 25 case gozleyerken 1 qacdi. Bu, A-19 sinfinden problemdir — sessiz azaltma, xeta yox.",
+   "role": "harness-eng",
+   "prio": "P2",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "Deyer icinde '=' varsa (yeni qarisiq sintaksis) xeta verilir ve duzgun format gosterilir; VE YA secilmis case sayi gozlenilenden azdirsa xeberdarliq; test: id=a|id=b formasi xeta verir",
+   "links": [
+    "agentproof/runner/task.py"
+   ],
+   "created": "2026-08-28T13:33:16",
+   "updated": "2026-08-28T13:33:16",
+   "history": [
+    {
+     "at": "2026-08-28T13:33:16",
+     "actor": "main",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-028",
+   "title": "Adapter uyğunluq (conformance) test dəstini çıxar",
+   "desc": "base.py-dəki AgentAdapter Protocol yalnız 4 üzv tələb edir (name/version/invoke/health), amma müqavilənin ƏSL şərtləri həmin faylın docstring-ində mətn kimi yaşayır: adapter retry etmir (yeganə istisna rate_limit), latency_ms-i özü ölçür, hədəf token verməsə usage=None, error NƏ baş verdiyini / error_class isə NƏ ETMƏLİ olduğunu deyir (failure.py: rate_limit/credit_exhausted/auth/bad_request/unknown), və səssiz boş cavab qadağandır. Hazırda bu şərtləri yalnız test_http_adapter.py yoxlayır, o da Dify-yə xas formada. İkinci adapter yazılan an müqavilə pozuntusu yalnız canlı qaçışda üzə çıxacaq — yəni müştərinin pulu ilə. MÜŞTƏRİ SİQNALI: bu tapşırıq heç bir siqnaldan ASILI DEYİL — hansı adapter gələcəyindən asılı olmayaraq lazımdır, ona görə Boşluq 1-in ən yüksək prioritetli hissəsidir.",
+   "role": "harness-eng",
+   "prio": "P1",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "agentproof/adapters/conformance.py: hər hansı AgentAdapter nüsxəsini qəbul edən parametrləşdirilmiş pytest dəsti, ən azı 8 ayrı müqavilə şərti (invoke AgentResponse qaytarır; latency_ms adapter tərəfindən doldurulur; usage yoxdursa None, 0 deyil; boş cavab error ilə işarələnir; rate_limit-dən başqa siniflər DƏRHAL qayıdır, retry etmir; error_class failure.py siniflərindən biridir; hədəf əlçatmazsa health() False qaytarır, exception atmır; retrieved[] elementləri RetrievedChunk); mock və dify_http (agentproof/testing/mock_dify serverinə qarşı) hər ikisi keçir; CI-da qaçır; mövcud 875 testin heç biri sınmır",
+   "links": [
+    "agentproof/adapters/base.py",
+    "agentproof/adapters/http_agent.py",
+    "agentproof/adapters/mock_agent.py",
+    "agentproof/failure.py",
+    "agentproof/tests/test_http_adapter.py"
+   ],
+   "created": "2026-08-28T13:37:44",
+   "updated": "2026-08-28T13:37:44",
+   "history": [
+    {
+     "at": "2026-08-28T13:37:44",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-029",
+   "title": "Dify-yə xas məntiqi adapter nüvəsindən ayır",
+   "desc": "http_agent.py 786 sətirdir, halbuki base.py docstring-i açıq vəd verir: 'Yeni müştəri = bir adapter faylı, < 150 sətir'. Bu vəd hazırda yalandır. Faylda üç ayrı qat var: (a) Dify SSE wire formatı — event adları agent_message/agent_thought/message_end, DIFY_INFRA_ERRORS, dify_error zərfi, TOOL_SEPARATOR; (b) backoff/retry maşını — _backoff_delay, RETRYABLE/HALTING, retry_usage yığımı (AP-024, AP-026); (c) çoxnövbəli söhbət zənciri — conversation_id ötürülməsi, _merge, dropped_scripted_assistant_turns. (b) və (c) Dify-yə xas DEYİL: hər HTTP hədəf üçün eynidir, amma indi hər yeni adapterdə sıfırdan yazılmalıdır və AP-024/AP-026-nın dərsləri itir. MÜŞTƏRİ SİQNALI: AP-028 bitdikdən sonra icra olunur; ilk müştəri HTTP/SSE hədəf gətirirsə P1-ə qalxır, in-process SDK hədəf gətirirsə gözləyir.",
+   "role": "harness-eng",
+   "prio": "P2",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "Backoff/retry, çoxnövbəli zəncir və usage/xərc yığımı Dify-dən asılı olmayan modula (adapters/_http_core.py) köçür; http_agent.py yalnız Dify wire formatını saxlayır və < 250 sətirə düşür; AP-028 conformance dəsti hər ikisində keçir; test_http_adapter.py, test_rate_limit_backoff.py, test_multi_turn.py, test_cost_accounting.py MƏNBƏYİ DƏYİŞMƏDƏN keçir (yəni davranış eyni qalıb, yalnız yeri dəyişib)",
+   "links": [
+    "agentproof/adapters/http_agent.py",
+    "agentproof/adapters/base.py",
+    "agentproof/tests/test_rate_limit_backoff.py",
+    "agentproof/tests/test_multi_turn.py",
+    "agentproof/tests/test_cost_accounting.py"
+   ],
+   "created": "2026-08-28T13:38:19",
+   "updated": "2026-08-28T13:38:19",
+   "history": [
+    {
+     "at": "2026-08-28T13:38:19",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-030",
+   "title": "Bloklayıcı JSON HTTP adapteri yaz (SSE-siz hədəflər üçün)",
+   "desc": "Mövcud yeganə real adapter SSE-yə bağlıdır və bu, məcburiyyətdən doğub: Dify Agent Chat blocking rejimi rədd edir (http_agent.py başlığı, app_generator.py:94). Amma müştərinin öz FastAPI-si, LangGraph-ın /invoke endpoint-i və ya Vercel AI SDK route-u adətən sadə POST -> JSON verir: nə SSE axını, nə conversation_id. Bu, ən aşağı riskli 'ikinci adapter'dir, çünki heç bir framework SDK-sından asılı deyil — yalnız konfiqurasiya edilə bilən cavab sahə xəritəsi lazımdır. Bir dəfə yazılır, bütün ev-istehsalı HTTP hədəflərə yarayır. MÜŞTƏRİ SİQNALI: ilk müştəri öz HTTP servisini göstərirsə bu P0/P1 olur; hədəf Python-daxili obyektdirsə əvəzinə callable adapter (AP-031) üstün gəlir.",
+   "role": "harness-eng",
+   "prio": "P2",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "agentproof/adapters/json_http.py; cavab sahələri konfiqurasiya ilə xəritələnir (text_path, tool_calls_path, retrieved_path, usage_path) — kod dəyişmədən yeni hədəfə qoşulur; retrieved boş gəlirsə retrieval grader-ləri skipped verir, səssiz 0 YOX; usage yoxdursa None (cost_under skipped); AP-028 conformance dəsti keçir; agentproof/testing/ altında mock JSON server + testlər; README-yə 20 sətirlik 'öz sisteminizi qoşun' nümunəsi",
+   "links": [
+    "agentproof/adapters/http_agent.py",
+    "agentproof/adapters/base.py",
+    "agentproof/testing/mock_dify.py",
+    "evals/run.py"
+   ],
+   "created": "2026-08-28T13:38:19",
+   "updated": "2026-08-28T13:38:19",
+   "history": [
+    {
+     "at": "2026-08-28T13:38:19",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-031",
+   "title": "In-process (SDK) hədəflər üçün callable adapter kanalını aç",
+   "desc": "LangGraph və LlamaIndex müştəriləri çox vaxt auditə HTTP endpoint vermir: audit obyekti Python prosesinin içindəki qraf/obyektdir. Hazırda şəbəkəsiz yeganə adapter mock_agent.py-dır, o isə real çağırış etmir — sadəcə skriptləşdirilmiş cavab lüğətidir (_match sətir üzrə axtarış). Yəni in-process hədəfi ölçmək üçün müştəri öz sistemini HTTP-yə bükməyə məcbur olur; bu, auditə əlavə gün və müştəri tərəfində müqavimət deməkdir. MÜŞTƏRİ SİQNALI: ilk müştəri LangGraph/LlamaIndex/Vercel AI SDK işlədirsə bu P0 olur; yalnız HTTP hədəflər görsək backlog-da qalır və heç vaxt açılmaya bilər. AP-028-in müqavilə dəsti olmadan yazılmamalıdır.",
+   "role": "harness-eng",
+   "prio": "P3",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "agentproof/adapters/callable_agent.py: create_adapter('callable', fn=..., map_response=...) — fn sync və ya async callable qəbul edir, map_response nəticəni AgentResponse-a çevirir; AP-028 conformance dəsti keçir (xüsusən: fn exception atarsa error/error_class doldurulur, exception qaçışı sındırmır); test olaraq mətn + tool_calls + retrieved qaytaran realistik saxta qraf; docs-da 'hədəfiniz Python obyektidirsə' bölməsi 30 sətirdən qısa nümunə ilə",
+   "links": [
+    "agentproof/adapters/mock_agent.py",
+    "agentproof/adapters/base.py",
+    "agentproof/runner/agent.py"
+   ],
+   "created": "2026-08-28T13:38:56",
+   "updated": "2026-08-28T13:38:56",
+   "history": [
+    {
+     "at": "2026-08-28T13:38:56",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-032",
+   "title": "Hədəfin ölçüləbilirliyini yoxlayan preflight əmri yaz",
+   "desc": "Satış zəngindən sonra ilk texniki sual budur: 'sizin sisteminizi ümumiyyətlə ölçə bilərikmi?'. Cavab hazırda yalnız tam qaçış qurmaqla alınır — yəni müqavilədən əvvəl bir neçə gün iş. Müqavilədə health() var, amma o yalnız bool qaytarır; evals/run.py --target isə hədəf danışmayana qədər heç nə göstərmir. Əsl sual isə 'canlıdırmı' deyil, 'NƏYİ ölçə bilərik'dir: hədəf retrieved[] vermirsə bütün retrieval grader-ləri (graders/deterministic/retrieval.py) sıradan çıxır, tool_calls vermirsə tools.py/leakage.py, usage vermirsə budget.py. LIM-I09 və LIM-E06 məhz bu cür kor nöqtələrin nəticəsidir. Preflight müştəri hesabatındakı 'nəyi ölçmədik' bölməsinin xammalıdır. MÜŞTƏRİ SİQNALI: siqnaldan asılı deyil, amma dəyəri ilk zəngdə üzə çıxır — zəngdə göstərilə bilən yeganə texniki artefaktdır.",
+   "role": "harness-eng",
+   "prio": "P2",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "python -m agentproof.preflight --target <adapter> 5 zond qaçırır və cədvəl verir: (1) health; (2) tək növbəli sorğuya mətn qaytarırmı; (3) tool_calls görünürmü; (4) retrieved[] görünürmü; (5) usage/token görünürmü. Hər 'yox' üçün hansı grader ailəsinin ADLA sıradan çıxdığı yazılır (məs. 'retrieved yoxdur -> retrieval_hit_at_k, retrieval_precision skipped'); çıxış həm markdown, həm JSON; mock və dify_http üzərində test edilir; hesabat mətni birbaşa müştəri sənədinə köçürülə bilən formadadır",
+   "links": [
+    "agentproof/adapters/base.py",
+    "agentproof/graders/deterministic/retrieval.py",
+    "agentproof/graders/deterministic/tools.py",
+    "agentproof/graders/deterministic/budget.py",
+    "evals/run.py",
+    "docs/LIMITATIONS.md"
+   ],
+   "created": "2026-08-28T13:38:56",
+   "updated": "2026-08-28T13:38:56",
+   "history": [
+    {
+     "at": "2026-08-28T13:38:56",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-033",
+   "title": "CANONICAL.yaml sxemini korpusdan ayır və sənədləşdir",
+   "desc": "verify_fixtures.py CANONICAL/FIXTURES cütünü 1338 assertion ilə yoxlayır, amma sxemin ÖZÜ heç yerdə yazılmayıb — yalnız həmin skriptin içindən oxunur: parameters[] üçün məcburi sahələr (value, unit, status, doc, section, doc_version, applies_when), boundary.points >= 3 və ən azı 2 fərqli expected, precedence_ladder, counting_rules, superseded_index. Müştəri korpusu qurmağa başlayan an 'hansı sahələr məcburidir' sualının cavabı Python oxumaqdan keçir. İkinci problem: verify_fixtures.py Aurora-ya sərt bağlıdır — WINDOW_PARAM lüğəti korpus parametr adlarını sabit kodlayır, sifariş hesablamaları Aurora sxeminə bağlıdır, yəni başqa korpusda ümumiyyətlə qaçmır. MÜŞTƏRİ SİQNALI: siqnaldan ASILI DEYİL — hər audit bu sxemlə başlayır. Boşluq 2-nin ən aşağı riskli və ən əvvəl görülməli hissəsidir.",
+   "role": "dataset-eng",
+   "prio": "P2",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "target/corpus/SCHEMA.md (insan üçün) + maşınla oxunan sxem (JSON Schema və ya pydantic model) — parameters, precedence_ladder, counting_rules, superseded_index, meta.documents üçün; verify_fixtures.py-nin KORPUSDAN ASILI OLMAYAN hissəsi (sxem yoxlaması + daxili ardıcıllıq) ayrıca modula köçür və istənilən CANONICAL.yaml üzərində qaçır; Aurora-ya xas hissə (WINDOW_PARAM, sifariş/expected hesablamaları) ayrı faylda qalır; mövcud 1338 assertion hələ də exit 0 verir; sxem pozulmuş süni korpus nümunəsi ilə mənfi test var",
+   "links": [
+    "target/corpus/verify_fixtures.py",
+    "target/corpus/CANONICAL.yaml",
+    "target/corpus/FIXTURES.yaml"
+   ],
+   "created": "2026-08-28T13:39:38",
+   "updated": "2026-08-28T13:39:38",
+   "history": [
+    {
+     "at": "2026-08-28T13:39:38",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-034",
+   "title": "Siyasət sənədlərindən parametr namizədləri çıxaran ekstraktor yaz",
+   "desc": "Auditin ən bahalı hissəsi budur. Aurora Goods-un 8 siyasət faylı və 71KB-lıq CANONICAL.yaml-ı TAM ƏL İLƏ yazılıb; müştəri üçün bu iş sıfırdan təkrarlanır və 14 günlük auditi ~25 günə çıxarır, yəni marjanı yeyir. Tam avtomatlaşdırma mümkün deyil — dəyərin doğru olduğunu maşın təsdiq edə bilməz — amma NAMİZƏD çıxarışı mümkündür və alətin yarısı artıq var: graders/canonical.py-dəki extract_quantities / parse_quantity / bənd bölgüsü məhz rəqəm+vahid cütlərini tapır (indi agent cavabında), eyni funksiyalar siyasət mətninə yönəldilə bilər; anchors.py-dəki _CLAUSE_RE / _SECTION_RE / _APPENDIX_RE isə bənd nömrəsini artıq parse edir. Yəni bu tapşırıq yeni ixtira deyil, mövcud iki modulun yeni istiqamətə yönəldilməsidir. MÜŞTƏRİ SİQNALI: siqnaldan asılı deyil (hər audit bunu tələb edir), amma GİRİŞ FORMATI ilk müştəridən sonra dəqiqləşir — md fərz edilir; Confluence/PDF/HTML dəstəyi AYRI tapşırıqdır və indi qurulmamalıdır.",
+   "role": "dataset-eng",
+   "prio": "P2",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "target/corpus/extract.py: md fayl(lar)ı -> təsdiq gözləyən CANONICAL parametr qaralaması (value, unit, doc, section doldurulur; status, doc_version, applies_when BOŞ buraxılır — bunları insan verir); hər namizədin yanında sənəddəki tam cümlə iqtibas kimi saxlanır (auditor yoxlaya bilsin); Aurora korpusuna qarşı qaçırılır və mövcud CANONICAL.yaml parametrləri ilə müqayisə olunur — recall və false-positive rəqəmi ÖLÇÜLÜR və README-də yazılır ('avtomatik çıxarır' iddiası ölçülmüş rəqəm olmadan yazılmır); heç bir namizəd insan təsdiqi olmadan CANONICAL.yaml-a yazılmır (çıxış ayrı fayla gedir)",
+   "links": [
+    "agentproof/graders/canonical.py",
+    "target/corpus/anchors.py",
+    "target/corpus/CANONICAL.yaml",
+    "target/corpus/returns-and-refunds.md"
+   ],
+   "created": "2026-08-28T13:39:38",
+   "updated": "2026-08-28T13:39:38",
+   "history": [
+    {
+     "at": "2026-08-28T13:39:38",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-035",
+   "title": "Ziddiyyət və bayat bənd namizədlərini avtomatik aşkarlayan alət yaz",
+   "desc": "TRAPS.md-ə görə layihənin əsas silahı bayat/ləğv edilmiş bənd tələsidir (27 ədəd) və rəqəm toqquşmalarıdır (5 qrup / 31 məna). Aurora-da bunları BİZ əkmişik, ona görə harada olduqlarını əvvəlcədən bilirdik — TRAPS.md reyestri məhz bunun etirafıdır. Müştərinin real korpusunda isə bu ziddiyyətlər TƏSADÜFƏN mövcuddur və onları tapmaq auditin ƏSL dəyəridir: müştəri 'bizim sənədlərimiz bir-birini inkar edir' cümləsini eşitmək üçün pul verir. Hazırda bunu tapmağın yeganə yolu sənədləri əl ilə oxumaqdır. Halbuki üç sinif maşınla tapıla bilər: eyni parametrin iki sənəddə fərqli dəyəri; eyni rəqəmin fərqli qaydalarda təkrarı (LIM-I02-nin '30 gün iki fərqli qaydada' hadisəsi məhz budur və o, ölçmənin özünü yanıltdı); supersedes_version / effective_from uyğunsuzluğu (meta.documents strukturu bunu artıq daşıyır). MÜŞTƏRİ SİQNALI: ilk müştərinin korpusu 3-dən çox sənəddirsə dəyəri kəskin artır — kiçik korpusda əl ilə oxumaq daha ucuzdur. AP-034-ün namizəd cədvəli olmadan qaça bilməz.",
+   "role": "dataset-eng",
+   "prio": "P3",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "target/corpus/conflicts.py AP-034-ün namizəd cədvəli üzərində qaçır və üç hesabat verir: (1) eyni semantik ad / fərqli dəyər; (2) eyni rəqəm / fərqli parametr (rəqəm toqquşması namizədləri); (3) versiya-tarix ziddiyyəti (supersedes/effective_from zənciri qırıqdır); Aurora korpusunda qaçırılır və TRAPS.md-də sənədləşmiş 5 rəqəm toqquşması qrupundan neçəsinin tapıldığı ÖLÇÜLÜR və yazılır; hər aşkarlanan namizəd üçün hər iki mənbə cümləsi iqtibas kimi verilir; nəticə auditorun təsdiqi üçün siyahıdır, avtomatik tapıntı deyil",
+   "links": [
+    "target/corpus/TRAPS.md",
+    "target/corpus/CANONICAL.yaml",
+    "docs/LIMITATIONS.md",
+    "agentproof/graders/canonical.py"
+   ],
+   "created": "2026-08-28T13:40:21",
+   "updated": "2026-08-28T13:40:21",
+   "history": [
+    {
+     "at": "2026-08-28T13:40:21",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-036",
+   "title": "Dataset generatorunu yeni korpus üçün parametrləşdir",
+   "desc": "build_full.py 150 case-i CANONICAL.yaml-dan TÖRƏDİR və bu, layihənin əsas metodoloji iddiasıdır: 'test halları siyasət sənədindən törədilir, hazır dataset kimi qəbul edilmir' (build_full.py docstring, COVERAGE.md §10). Amma generatorun özü Aurora-ya sabit bağlıdır: REF_DATE = 2026-09-01 sabit kodlanıb (CANONICAL.meta-dan oxunmur), CORPUS yolu sabitdir, etiket->assertion lüğəti Aurora tələ adlarını daşıyır. Nəticədə müştəri korpusunda ya generator yenidən yazılmalıdır, ya da case-lər əl ilə — hər iki halda AP-034-dən qazanılan gün geri itir və metodoloji iddia yalnız Aurora üçün doğru qalır. MÜŞTƏRİ SİQNALI: AP-033 və AP-034 bitmədən mənası yoxdur; ilk real müştəri korpusu gələnə qədər ikinci sınaq korpusunun forması spekulyativdir, ona görə P3.",
+   "role": "dataset-eng",
+   "prio": "P3",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "build_full.py korpus yolunu və reference date-i CANONICAL.yaml meta bloqundan oxuyur, sabit kod qalmır; etiket->assertion xəritəsi ayrıca konfiqurasiya faylına çıxır (kod dəyişmədən yeni korpusun tələ adlarına uyğunlaşır); repo-ya ikinci, kiçik sınaq korpusu əlavə olunur (3 sənəd, ~10 parametr, sərhəd nöqtələri ilə) və generator onun üzərində qaçıb keçərli jsonl verir; mövcud evals/datasets/full.jsonl BAYT-BAYTINA eyni qalır (build_full.py --check keçir) və test_dataset_full.py sınmır",
+   "links": [
+    "evals/datasets/build_full.py",
+    "evals/datasets/COVERAGE.md",
+    "target/corpus/CANONICAL.yaml",
+    "agentproof/tests/test_dataset_full.py"
+   ],
+   "created": "2026-08-28T13:40:21",
+   "updated": "2026-08-28T13:40:21",
+   "history": [
+    {
+     "at": "2026-08-28T13:40:21",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-037",
+   "title": "Müştəri hesabatı şablonunu FINDINGS.md strukturundan çıxar",
+   "desc": "FINDINGS.md 74KB-dır və BİZİM tədqiqat sənədimizdir: Aurora Goods adları, AP-xxx tapşırıq nömrələri, daxili müzakirələr, C-01 düzəliş qeydi. Müştəriyə gedən sənəd başqa oxucu üçündür (applied-AI lead / CTO), onların sistemi və terminologiyası ilə danışır və QƏRAR üçün oxunur, arxiv üçün yox. Amma strukturu yenidən icad etməyə ehtiyac yoxdur: FINDINGS.md-nin skeleti düzgündür və hər bölmə bir səbəblə var — §1 xülasə, §2 metodologiya (SUT + korpus + reproduksiya qapısı), §3 təsdiqlənmiş tapıntılar, §4 ölçmənin öz auditi, §5 qeyri-determinizm, §8 nəyi ölçmədik, §9 flaky case-lər. §4 və §8 satılan şeyin ÖZÜDÜR: müştəri 'siz öz alətinizin harada yanıldığını da yazmısınız' cümləsinə görə audit alır, tapıntı siyahısına görə yox. MÜŞTƏRİ SİQNALI: siqnaldan ASILI DEYİL — struktur mövcud sənəddən çıxarılır, uydurulmur. Boşluq 3-ün ən aşağı riskli hissəsidir.",
+   "role": "writer",
+   "prio": "P2",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "docs/templates/CLIENT-REPORT.md: doldurulacaq yerlər açıq işarələnib; hər bölmənin başında 2-3 cümləlik 'bu bölmə niyə var və bura NƏ YAZILMIR' qeydi; §-ölçmənin öz auditi və §-nəyi ölçmədik MƏCBURİ kimi işarələnib (məlumat yoxdursa bölmə silinmir, xəbərdarlığa çevrilir — report/html.py-dəki eyni qayda); Aurora auditi bu şablona köçürülərək bir tam nümunə çıxarılır və şablonun doldurula bildiyi sübut olunur; nümunədə heç bir AP-xxx nömrəsi və daxili rol adı qalmır",
+   "links": [
+    "FINDINGS.md",
+    "docs/LIMITATIONS.md",
+    "agentproof/report/html.py",
+    "docs/writeup.md"
+   ],
+   "created": "2026-08-28T13:41:06",
+   "updated": "2026-08-28T13:41:06",
+   "history": [
+    {
+     "at": "2026-08-28T13:41:06",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-038",
+   "title": "İcraya hazır düzəliş siyahısı sxemini təyin et və Aurora tapıntılarına tətbiq et",
+   "desc": "FINDINGS.md tapıntıları TƏSVİR edir (F-1..F-4, OPS-01..OPS-05, VALID-01..03), amma 'nə etməli' sualını müştərinin öz mühəndisinə buraxır. 3-6 min dollarlıq auditin alıcısı üçün dəyər məhz burdadır: hesabat oxunub rəfə qoyulursa, ikinci audit satılmır. Material hazırdır və uydurulmamalıdır: F-1 (bilik bazasında olmayan mövzuda siyasət uydurulur, eskalasiya yoxdur), F-2 (əkilmiş billing anomaliyasına uydurulmuş izah + mübahisə birtərəfli bağlanır), F-3 (beynəlxalq sifarişə domestik son tarix tətbiq olunur), F-4 (bilik bazasında AÇIQ yazılmış qaydaya haqsız imtina), OPS-03 (tətbiq səviyyəsindəki top_k səssizcə iqnor edilir, faktiki default 2). Hər birinin düzəlişi FƏRQLİ qatdadır — bu ayrımın özü müştəri üçün dəyərdir. MÜŞTƏRİ SİQNALI: siqnaldan asılı deyil, amma 'hansı qat' sütununun dəyərləri müştərinin stack-ından asılıdır — ilk 3 zəngdən sonra sütun siyahısı dəqiqləşə bilər.",
+   "role": "analyst",
+   "prio": "P2",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "Hər tapıntı üçün sabit sxem müəyyən olunur: DÜZƏLİŞ (hansı qat: prompt / retrieval konfiqurasiyası / tool sxemi / guardrail / bilik bazası mətni), TƏXMİNİ ƏMƏK, YOXLAMA (düzəlişdən sonra hansı case id-lər yaşıla dönməlidir — mövcud full.jsonl id-ləri), RİSK (düzəliş nəyi sındıra bilər); Aurora-nın 4 F-tapıntısı və 5 OPS-tapıntısı bu sxemlə tam doldurulur; sxem AP-037 şablonunda ayrıca bölmə kimi yer alır; heç bir sətirdə ölçülməmiş effekt vədi (məs. 'bu, dəqiqliyi %20 artırır') yazılmır",
+   "links": [
+    "FINDINGS.md",
+    "docs/OPS-FINDINGS.md",
+    "evals/datasets/full.jsonl",
+    "docs/FAILURE-TAXONOMY.md"
+   ],
+   "created": "2026-08-28T13:41:06",
+   "updated": "2026-08-28T13:41:06",
+   "history": [
+    {
+     "at": "2026-08-28T13:41:06",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-039",
+   "title": "HTML hesabatını müştəri təhvili üçün brendsizləşdir və auditoriyaya görə ayır",
+   "desc": "report/html.py başlığında açıq yazılıb: 'Bu fayl müştəri təhvilinin görünən hissəsidir'. Üç qaydası (xarici asılılıq yox, gizlətmək mümkün deyil, bəzək yox sıxlıq) düzgündür və saxlanmalıdır — xüsusən 'xarici asılılıq yox', çünki müştəri datası (case mətnləri, agent cavabları) heç bir üçüncü tərəf hostuna getməməlidir; bu, satışda arqumentdir. Amma səhifə hazırda AgentProof-un DAXİLİ dilində danışır: taksonomiya kodları tək başına (R6, G2, S2 — _TAXONOMY_TAG regexi ilə taqlardan çıxarılır), docs/FAILURE-TAXONOMY.md yol istinadı, AP-xxx nömrələri. Müştəri mühəndisi bu səhifəni izahsız oxuya bilmir, yəni təhvil zəngdə şifahi tərcümə tələb edir. MÜŞTƏRİ SİQNALI: ilk müştəri HTML-i əsas təhvil kimi qəbul edirsə P1 olur; PDF və ya slayd istəyirsə bu tapşırığın forması dəyişir — ona görə zəngdən ƏVVƏL bitirmək riskdir və P3-dür.",
+   "role": "harness-eng",
+   "prio": "P3",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "Hər taksonomiya kodu səhifədə insan dilindəki adı ilə birlikdə görünür (kod qalır, amma heç yerdə tək başına deyil); hesabat başlığı, müştəri adı və hədəf sistem adı konfiqurasiya ilə verilir, sabit kodlanmır; --audience client|internal bayrağı əlavə olunur: client rejimində daxili tapşırıq nömrələri və repo yolları gizlədilir, LAKİN 'nəyi ölçmədik', judge kalibrasiyası və reproduksiya bölmələri HƏR İKİ rejimdə məcburi qalır (mövcud BASELINE_MISSING davranışı pozulmur); test_html_report.py genişləndirilir və hər iki rejim üçün assertion əlavə olunur",
+   "links": [
+    "agentproof/report/html.py",
+    "agentproof/tests/test_html_report.py",
+    "docs/FAILURE-TAXONOMY.md"
+   ],
+   "created": "2026-08-28T13:41:54",
+   "updated": "2026-08-28T13:41:54",
+   "history": [
+    {
+     "at": "2026-08-28T13:41:54",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-040",
+   "title": "Auditin maya dəyəri və müddət modelini mövcud artefaktlardan ölç",
+   "desc": "3-6 min dollarlıq qiymət hələ heç bir ölçülmüş məsrəfə söykənmir — yəni ilk qiymət danışığı təxminlə aparılacaq. Halbuki repo-da real data VAR: reports/ altında 20 qaçış qovluğu (pilot, full-run-01..03, retry-lər, judge-01, kalibrasiya), AP-026-dan sonra xərc uçotu sınan və skipped sorğuları da sayır (wasted_cost_usd), report/cost.py hesablamanı saxlayır. Eyni zamanda LIM-E11 açıq deyir ki, qaçışın FAKTİKİ xərci tam ölçülə bilmir və mövcud rəqəmlər xərci AŞAĞI göstərir — model bu qeyd-şərtlə qurulmalıdır, yoxsa qiymət döşəməsi yanlış çıxar. Ən böyük xərc maddəsi isə heç yerdə yazılmayıb: AP-021 triage-ı 29 stable-fail case-in cavabının ƏL İLƏ oxunması idi, AP-005 isə əl ilə triage. Bu saatlar hər müştəridə TƏKRARLANIR. MÜŞTƏRİ SİQNALI: siqnaldan asılı deyil və ilk zəngə GİRMƏZDƏN ƏVVƏL lazımdır — qiymət sualı ilk zəngdə gəlir.",
+   "role": "analyst",
+   "prio": "P1",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "docs/AUDIT-COST.md: Aurora auditinin geriyə dönük hesabı — model xərci reports/ artefaktlarından çıxarılır (LIM-E11 qeyd-şərti açıq yazılır), qaçış sayı və təkrar sayı, hər mərhələ üçün insan saatı; hansı mərhələlərin HƏR müştəridə təkrarlandığı və hansının bir dəfəlik olduğu ayrılır (korpus qurma vs harness qurma); buradan çıxan qiymət döşəməsi bir cümlə ilə yazılır (hansı qiymətdən aşağı marja mənfidir); artefaktdan gələn rəqəm ilə təxmin AYRICA işarələnir — heç bir təxmin ölçmə kimi göstərilmir; AP-034 və AP-036-nın hansı gün qənaətini vəd etdiyi bu modelə qarşı yoxlanılır",
+   "links": [
+    "reports/full-run-03",
+    "agentproof/report/cost.py",
+    "docs/LIMITATIONS.md",
+    "PLAN.md",
+    "FINDINGS.md"
+   ],
+   "created": "2026-08-28T13:41:54",
+   "updated": "2026-08-28T13:41:54",
+   "history": [
+    {
+     "at": "2026-08-28T13:41:54",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-041",
+   "title": "İlk 3 müştəri söhbətindən sonra bu backlog-u yenidən prioritetləşdir",
+   "desc": "AP-028..AP-040 tapşırıqlarının hamısı bir və eyni fərziyyə üzərində dayanır: hansı adapterin, hansı korpus formatının və hansı təhvil formatının lazım olduğunu BİZ bilmirik. Hər tapşırığın desc-ində onu açacaq müştəri siqnalı ayrıca yazılıb, məhz bu tapşırıq üçün. Bu, kod tapşırığı deyil, qərar tapşırığıdır və backlog-un qalan hissəsinin qapısıdır: söhbətdən əvvəl yanlış adapteri qurmaq ~3 gün, yanlış təhvil formatını qurmaq ~2 gün itkidir, üstəlik həmin kod sonradan saxlanılır və hər dəyişikliyi bahalaşdırır. Şirkət hələ heç bir potensial müştəri ilə danışmayıb — yəni indi ən yüksək gəlirli iş kod yazmaq deyil, altı sualı üç dəfə soruşmaqdır. AP-040 (maya dəyəri modeli) bu söhbətlərdən ƏVVƏL bitməlidir, çünki qiymət sualı ilk zəngdə gəlir.",
+   "role": "po",
+   "prio": "P1",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "Ən azı 3 potensial müştəri ilə söhbət aparılıb; hər biri üçün 6 sual cavablanıb və yazılıb: (1) hədəf sistem nədir — framework və çağırış interfeysi (HTTP/SSE, HTTP/JSON, in-process); (2) retrieved[] və tool_calls audit üçün çıxışa verilə bilərmi; (3) siyasət/ground truth harada yaşayır və hansı formatdadır (md, Confluence, PDF, Notion, heç yerdə); (4) auditdən NƏ gözləyirlər — hesabat, düzəliş siyahısı, yoxsa CI-a qoşulan harness; (5) qərar verən kimdir və büdcə hansı sətirdən çıxır; (6) hazırda hansı ölçmələri özləri edirlər. Nəticə docs/CUSTOMER-SIGNALS.md-ə yazılır (sitat səviyyəsində, ümumiləşdirmə səviyyəsində yox); AP-028..AP-040-ın HƏR BİRİNİN prioriteti board-da yenilənir və dəyişikliyin səbəbi comment kimi qeyd olunur; siqnalı təsdiqlənməyən tapşırıqlar açıq şəkildə ÖLDÜRÜLÜR (backlog-da 'bəlkə lazım olar' vəziyyətində saxlanmır)",
+   "links": [
+    "board/tasks.json",
+    "docs/writeup.md",
+    "README.md"
+   ],
+   "created": "2026-08-28T13:42:24",
+   "updated": "2026-08-28T13:42:24",
+   "history": [
+    {
+     "at": "2026-08-28T13:42:24",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-042",
+   "title": "reproduce.py: birlesmis qacislarda evez olunan case-leri ikiqat sayir",
+   "desc": "full-run-03 (25 skipped) + full-run-03b (hemin 25 case ugurla qacdi) birlesdirilende alet 187 case gosterir: 162 tesnif + 25 skipped. Skipped-ler artiq EVEZ OLUNUB, amma alet bunu bilmir. Nəticə: hesabatda 'skipped 25' gorunur, halbuki sifir olmalidir.",
+   "role": "harness-eng",
+   "prio": "P2",
+   "status": "done",
+   "assignee": "harness-eng",
+   "dod": "Eyni case_id bir nece qacisda varsa, EN SON (created tarixine gore) netice goturulur; evez olunan neticeler ayrica 'superseded' kimi qeyd olunur, silinmir; test: skipped + sonradan ugurlu = ugurlu sayilir",
+   "links": [
+    "agentproof/report/reproduction.py",
+    "evals/reproduce.py"
+   ],
+   "created": "2026-08-28T13:48:41",
+   "updated": "2026-08-28T14:28:44",
+   "history": [
+    {
+     "at": "2026-08-28T13:48:41",
+     "actor": "main",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T13:49:17",
+     "actor": "main",
+     "action": "backlog→todo",
+     "detail": "baseline ucun on sertdir — backlogdan cixarildi"
+    },
+    {
+     "at": "2026-08-28T13:58:20",
+     "actor": "harness-eng",
+     "action": "assigned",
+     "detail": "harness-eng"
+    },
+    {
+     "at": "2026-08-28T13:58:20",
+     "actor": "harness-eng",
+     "action": "todo→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T14:10:57",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T14:25:28",
+     "actor": "harness-eng",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-08-28T14:28:44",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "birlesme + superseded, 904 test"
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-08-28T14:10:57",
+     "actor": "harness-eng",
+     "text": "Duzeldildi. Yeni modul: agentproof/report/merge.py — case uzre birlesme, eveleme YALNIZ started_at/created tarixine gore (fayl adi/arqument sirasi ROL OYNAMIR). Evez olunan netice silinmir: 'superseded' siyahisi + say hem metn xulasesinde, hem reproduction.json-da (n_superseded/superseded/merge_warnings). Eyni tarixli ve ya tarixsiz qacislar SIRALANA BILMEDIYI ucun evez olunmur — 'N musteqil qacis = N cehd' senedlesmis rejimi qorunur (--as-repeats onu mecbur edir). TAPINTI: dataset_hash runner/task.py-de FILTRDEN SONRAKI case destine gore hesablanir, yeni o, dataset versiyasini yox, SECILMIS ALT DESTI imzalayir — buna gore full-run-03 (e60c825c...) ve full-run-03b (916f1c90...) hash-leri fərqlidir ve ciddi qayda ile birlesme bloklanir. Ona gore --merge-across-datasets acari elave olundu: sərhədi kecir, AMMA yalniz case TERIFININ barmaq izi (sha256) her iki qacisda eyni olduqda; ferqli terifli case hec vaxt birlesmir. 25 uest-usde dusen case-in terifi bayt-bayt eynidir (yoxlanildi). Netice: 187 -> 162 case, skipped 25 -> 0, superseded 25. pytest 899 yasil (+24)."
+    }
+   ]
+  },
+  {
+   "id": "AP-043",
+   "title": "Reqressiya qapisi ferqli --repeat sayini xeberdarliqsiz muqayise edir",
+   "desc": "Baseline --repeat 3 ile qurulub (cehd-seviyyesinde tesnifat), amma qapini --repeat OLMADAN (tek cehd) qacirdim ve heç bir xeberdarliq olmadi: 'baseline: 77% -> 100% · 1 duzeldi'. Flaky nisbeti 19.8% oldugu ucun TEK cehdin kecmesi hec ne subut etmir — hemin case sadece bu defe kecmis ola biler. Yeni qapi 'duzeldi' deyir, halbuki ola bilsin hec ne duzelmeyib.",
+   "role": "harness-eng",
+   "prio": "P1",
+   "status": "todo",
+   "assignee": null,
+   "dod": "Cari qacisin repeat sayi baseline-inkinden azdirsa ACIQ xeberdarliq verilir ve 'duzeldi/sindi' iddialari 'tesdiqlenmemis' kimi isarelenir; VE YA qapi eyni repeat teleb edir; test: repeat 1 vs baseline repeat 3 -> xeberdarliq",
+   "links": [
+    "agentproof/report/baseline.py",
+    "evals/run.py",
+    "reports/gate-live"
+   ],
+   "created": "2026-08-28T14:28:30",
+   "updated": "2026-08-28T14:28:30",
+   "history": [
+    {
+     "at": "2026-08-28T14:28:30",
+     "actor": "main",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
   }
  ]
 }

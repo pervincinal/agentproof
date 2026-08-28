@@ -243,13 +243,71 @@ def test_baseline_gate_emits_the_path_when_a_snapshot_exists(tmp_path, capsys):
     assert capsys.readouterr().out.strip().endswith("mock@1.0.json")
 
 
-def test_repository_baselines_directory_is_still_empty():
-    """AP-013 bitəndə bu test qırmızı olacaq — o zaman CI-da `--require` açılır."""
-    found = sorted(Path("evals/baselines").glob("*.json"))
-    assert not found, (
-        "Baseline snapshot-u əlavə olunub: CI-da `ci_gates.py baseline --require` "
-        "və `evals/run.py --fail-on-regression` aktivləşdirilməlidir."
+BASELINE_DIR = Path("evals/baselines")
+
+
+def _repo_baselines() -> list[Path]:
+    return sorted(BASELINE_DIR.glob("*.json"))
+
+
+def test_repository_has_a_baseline_snapshot():
+    """AP-013: `evals/baselines/` artıq BOŞ DEYİL.
+
+    Bu testin əvvəlki versiyası qovluğun boş olduğunu yoxlayırdı və snapshot
+    əlavə olunanda bilərəkdən qırmızı olurdu. Snapshot gəldi — indi eyni yer
+    əks istiqaməti qoruyur: baseline TƏSADÜFƏN silinsə, CI reqressiya qapısı
+    səssizcə söndürülərdi.
+    """
+    assert _repo_baselines(), (
+        "evals/baselines/ boşdur — reqressiya qapısı işləmir. Snapshot "
+        "`python evals/merge_runs.py ... --out evals/baselines/<ad>.json` ilə "
+        "alınır (docs/BASELINE.md)."
     )
+
+
+def test_repository_baseline_is_a_complete_run_record():
+    """Baseline-da HƏR case üçün verdikt var — `skipped` qalmır.
+
+    Ölçülməmiş case baseline-da qalsa, gələcək qaçışda o case reqressiya
+    yoxlamasından səssizcə kənarda qalardı (AP-013 DoD).
+    """
+    for path in _repo_baselines():
+        record = RunRecord.from_dict(json.loads(path.read_text(encoding="utf-8")))
+        assert ci_gates.artifact_problems(record) == [], path.name
+        skipped = [r.case_id for r in record.results if r.grade.skipped]
+        assert not skipped, f"{path.name}: ölçülməmiş case: {skipped[:5]}"
+        ids = [r.case_id for r in record.results]
+        assert len(ids) == len(set(ids)), f"{path.name}: təkrarlanan case_id"
+
+
+def test_repository_baseline_gate_passes_with_require():
+    """`--require` açıq olanda da qapı yaşıldır — CI-da bayraq qoşula bilər."""
+    assert ci_gates.main(["baseline", str(BASELINE_DIR), "--require"]) == 0
+
+
+def test_ci_workflow_requires_the_baseline_now_that_one_exists():
+    """Snapshot var -> CI-da `--require` və `--fail-on-regression` AÇIQ olmalıdır.
+
+    Bu qoşqu YAML-da yaşayır; testsiz qalsa, baseline əlavə olunandan sonra da
+    CI baseline-sız yaşıl qalar və heç kim fərqinə varmazdı.
+    """
+    workflow = Path(".github/workflows/evals.yml").read_text(encoding="utf-8")
+    assert "ci_gates.py baseline evals/baselines --require" in workflow
+    assert "--fail-on-regression" in workflow
+
+
+def test_baseline_gate_picks_the_newest_snapshot_by_timestamp_not_by_name(tmp_path, capsys):
+    """Bir neçə snapshot olanda seçim TARİXƏ görədir (AP-042 ilə eyni qayda)."""
+    d = tmp_path / "baselines"
+    d.mkdir()
+    (d / "zzz-old.json").write_text(
+        json.dumps({"started_at": "2026-01-01T00:00:00+00:00"}), encoding="utf-8"
+    )
+    (d / "aaa-new.json").write_text(
+        json.dumps({"started_at": "2026-08-28T00:00:00+00:00"}), encoding="utf-8"
+    )
+    assert ci_gates.main(["baseline", str(d)]) == 0
+    assert capsys.readouterr().out.strip().endswith("aaa-new.json")
 
 
 # ------------------------------------------------------------- CI xülasəsi
