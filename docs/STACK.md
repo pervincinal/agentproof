@@ -238,6 +238,8 @@ AgentAdapter (protokol)
 
 **Müqavilə şərtləri:**
 - Adapter **retry etmir** və **paralellik idarə etmir** — bunlar Inspect-in işidir. Adapter bir sorğu göndərir, bir cavab qaytarır.
+  - **Yeganə istisna (AP-024): `rate_limit` sinfi.** Hədəf 429/529-u HTTP statusu ilə deyil, 200 statuslu SSE axınının içində `error` event-i kimi qaytarır — Inspect üçün bu, uğurlu cavabdır və onun retry maşını işə düşmür. Ona görə adapter yalnız bu sinfi eksponensial backoff-la (`Retry-After` varsa ona hörmətlə) təkrar edir. `credit_exhausted` və `auth` **təkrarlanmır**: gözləmək kömək etmir, hər cəhd pul və vaxt yandırır. `credit_exhausted` görünəndə qaçış **bütövlükdə dayanır** (`agentproof/failure.py:HALT`) və `evals/run.py` çıxış kodu **3** verir.
+- Adapter xətanı iki sahə ilə qaytarır: `error` (hədəfin öz kodu — NƏ baş verdi) və `error_class` (səbəb sinfi — NƏ ETMƏLİ). Bir kodun altında iki fərqli hal qalmamalıdır.
 - Adapter `latency_ms`-i özü ölçür (wall-clock, sorğudan cavaba).
 - Hədəf token istifadəsini vermirsə, `usage` `None` olur və `cost_under` grader-i həmin case üçün `skipped` qaytarır — səssizcə keçmir.
 - Yeni müştəriyə uyğunlaşma = bir adapter faylı. **Ölçü hədəfi: 150 sətirdən az.** Bundan çox olursa, hədəf sistem qara qutudur və Scout meyarları pozulub.
@@ -329,7 +331,28 @@ python evals/run.py \
   --max-connections N                  # rate limit
   --out           reports/<run_id>/
   --fail-on-regression                 # CI üçün
+  --skip-anchor-check                  # lövbər↔dataset yoxlamasını keç (hesabata düşür)
 ```
+
+**`--filter` sintaksisi.** Vergül **şərt** ayırıcısıdır (VƏ), dəyər siyahısı deyil.
+Eyni açarın təkrarı **VƏ YA** ilə birləşir, ona görə bir açara bir neçə dəyər
+vermək üçün `|` var:
+
+```
+--filter 'tag=rag,severity=high'   # tag=rag VƏ severity=high
+--filter 'id=a|b|c'                # id ∈ {a,b,c}  (= 'id=a,id=b,id=c')
+--filter 'id=a,b,c'                # ✗ İŞLƏMİR — `b`, `c` şərt kimi oxunur
+```
+
+Açarlar: `tag` | `severity` | `grader` | `id`.
+
+**Lövbər yoxlaması (AP-022).** Seçimdə retrieval (`gold_chunks`) case-i varsa,
+qaçışdan əvvəl `target/corpus/anchor-map.json`-un dataset id-si hədəfin CARİ
+dataset-i ilə tutuşdurulur. Uyğun deyilsə qaçış **açıq xəta ilə dayanır**
+(`python target/corpus/anchors.py build`). Canlı dataset id oxunmursa (mock
+hədəf, Dify-sız CI) qaçış davam edir, amma `anchor_check.status = "unverified"`
+kimi hesabata düşür. Bax: A-19 — bayat xəritə 2 case-i `0/3` ilə sındırmışdı və
+bu «retrieval işləmir» saxta tapıntısı kimi görünürdü.
 
 Çıxış: `RunRecord` JSON + insan üçün konsol xülasə + `--baseline` verilibsə `RunDelta`.
 

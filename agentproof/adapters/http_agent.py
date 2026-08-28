@@ -22,6 +22,24 @@ Axından çıxarılanlar:
 Səssiz boş cavab YOXDUR: yarımçıq axın, timeout, transport xətası və boş
 cavab — hamısı `AgentResponse.error` sahəsində ADLA görünür.
 
+XƏTA SİNFİ VƏ BACKOFF (AP-024)
+------------------------------
+`error` NƏ baş verdiyini deyir, `error_class` isə NƏ ETMƏLİ olduğunu
+(`agentproof/failure.py`). `full-run-03`-də 25 case eyni
+`completion_request_error` kodu altında `skipped` oldu, halbuki səbəblər
+fərqli idi: 24-ü "credit balance is too low" (gözləməklə KEÇMİR), Dify
+loglarında isə ayrıca 429/529 (gözləməklə KEÇİR).
+
+  * `rate_limit`       -> eksponensial backoff + təkrar (`Retry-After` varsa ona
+                          hörmət). Cəhdlər bitsə case `skipped` qalır, amma
+                          səbəb `rate_limit` kimi kodlanır.
+  * `credit_exhausted` -> təkrar YOXDUR və QAÇIŞ BÜTÖVLÜKDƏ DAYANIR (`HALT`):
+                          növbəti 100 case-i də sındırmağın mənası yoxdur.
+  * `auth`             -> təkrar YOXDUR (gözləmək kömək etmir).
+
+Təkrar cəhdlərin tokenləri itmir: atılan cavabın `usage`-ı `retry_usage`-a
+yığılır və hesabatda `wasted_cost_usd` kimi görünür (AP-026).
+
 ÇOXNÖVBƏLİ SÖHBƏT
 -----------------
 `req.messages` bir neçə istifadəçi növbəsi daşıyırsa, adapter onları BİR
@@ -44,8 +62,10 @@ Bu, `raw.dropped_scripted_assistant_turns`-də sayılır — susqun qalmır.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
+import random
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -54,6 +74,13 @@ from typing import Any
 import httpx
 
 from agentproof.adapters.base import register_adapter
+from agentproof.failure import (
+    HALT,
+    HALTING,
+    REASON_HINT,
+    RETRYABLE,
+    classify_failure,
+)
 from agentproof.types import AgentRequest, AgentResponse, RetrievedChunk, ToolCall, Usage
 
 # SETUP.md §7.2 — bunlar hədəfin infrastruktur xətalarıdır, məzmun uğursuzluğu deyil
@@ -81,6 +108,16 @@ TOOL_SEPARATOR = ";"
 # Mətn daşıyan event növləri: agent app -> agent_message, adi chat -> message.
 TEXT_EVENTS = {"agent_message", "message"}
 
+# --- backoff (AP-024) ------------------------------------------------------
+# YALNIZ `rate_limit` sinfi üçün. `credit_exhausted` və `auth` yenidən cəhd
+# EDİLMİR: onlar gözləməklə keçmir, hər təkrar sadəcə pul və vaxt yandırır.
+DEFAULT_RATE_LIMIT_RETRIES = 3      # ilk sorğudan ƏLAVƏ cəhd sayı
+DEFAULT_BACKOFF_BASE_S = 2.0        # 2s, 4s, 8s, ...
+DEFAULT_BACKOFF_CAP_S = 60.0
+#: Jitter payı ≤ %10 — eyni anda oyanan case-ləri dağıdır, amma gözləmə
+#: müddətinin ARTAN olmasını pozmur (test bunu yoxlayır).
+BACKOFF_JITTER = 0.1
+
 
 @dataclass
 class _StreamState:
@@ -100,6 +137,9 @@ class _StreamState:
     saw_message_end: bool = False
     error_code: str = ""
     error_message: str = ""
+    #: `error` event-inin öz `status`-u. Upstream statusu (429/529) çox vaxt
+    #: BUNDA deyil, mesajın içindədir — hər ikisi təsnifata verilir.
+    error_status: int | None = None
     malformed_lines: int = 0
     data_lines: int = 0
 
@@ -119,6 +159,9 @@ class DifyHttpAgent:
         user: str = "agentproof-eval-runner",
         timeout_s: float = 180.0,
         model: str | None = None,
+        max_rate_limit_retries: int | None = None,
+        backoff_base_s: float | None = None,
+        backoff_cap_s: float | None = None,
     ) -> None:
         self.base_url = (
             base_url or os.environ.get("DIFY_BASE_URL", "http://localhost:8088/v1")
@@ -131,6 +174,16 @@ class DifyHttpAgent:
         # Etiket kənardan verilir; verilmirsə `usage.model` boş qalır və
         # `cost_under` `skipped` olur — səssiz keçmir (PLAN.md risk #2).
         self.model = model if model is not None else os.environ.get("AGENTPROOF_SUT_MODEL", "")
+        # Backoff parametrləri (AP-024) — mühitdən oxunur, açar kimi CLI-a düşmür.
+        self.max_rate_limit_retries = _env_num(
+            "AGENTPROOF_RATE_LIMIT_RETRIES", max_rate_limit_retries, DEFAULT_RATE_LIMIT_RETRIES
+        )
+        self.backoff_base_s = float(
+            _env_num("AGENTPROOF_BACKOFF_BASE_S", backoff_base_s, DEFAULT_BACKOFF_BASE_S)
+        )
+        self.backoff_cap_s = float(
+            _env_num("AGENTPROOF_BACKOFF_CAP_S", backoff_cap_s, DEFAULT_BACKOFF_CAP_S)
+        )
 
     def _headers(self) -> dict[str, str]:
         return {
@@ -194,6 +247,96 @@ class DifyHttpAgent:
         end_user: str,
         turn_index: int,
     ) -> AgentResponse:
+        """Bir növbə — `rate_limit` halında eksponensial backoff ilə təkrar.
+
+        Təkrar YALNIZ `rate_limit` sinfi üçündür (AP-024). `credit_exhausted`
+        və `auth` dərhal qaytarılır: onları yenidən cəhd etmək pul və vaxt
+        yandırır və heç vaxt keçmir.
+
+        `latency_ms` UĞURLU cəhdin ölçüsüdür — backoff gözləməsi ora
+        qatılmır, yoxsa hədəfin gecikmə profili bizim gözləməmizlə
+        çirklənərdi. Gözləmə müddətləri `raw["retry_waits_s"]`-dədir.
+        """
+        case_id = str(req.metadata.get("case_id", "")) if req.metadata else ""
+        if HALT.tripped:
+            # Qaçış onsuz da dayanıb — sorğu GÖNDƏRMİRİK (pul və vaxt yanmır).
+            return self._halted(turn_index, query, conversation_id)
+
+        waits: list[float] = []
+        burned: list[Usage] = []
+        attempt = 0
+        while True:
+            attempt += 1
+            turn = await self._send_once(req, query, conversation_id, end_user, turn_index)
+            reason = turn.error_class
+            if turn.error is None or reason not in RETRYABLE:
+                break
+            if attempt > self.max_rate_limit_retries:
+                # Cəhdlər bitdi: case `skipped` qalır, AMMA səbəb `rate_limit`
+                # kimi kodlanır — "completion_request_error" yığınında itmir.
+                turn.raw["retry_exhausted"] = True
+                break
+            # Atılan cəhdin tokenləri PULLA ödənilib — itməməlidir (AP-026).
+            if turn.usage is not None:
+                burned.append(turn.usage)
+            delay = self._backoff_delay(attempt, turn.raw.get("retry_after_s"))
+            waits.append(round(delay, 3))
+            await asyncio.sleep(delay)
+
+        turn.attempts = attempt
+        turn.retry_usage = _sum_usage(burned, self.model)
+        if waits:
+            turn.raw["retry_waits_s"] = waits
+            turn.raw["retry_reason"] = "rate_limit"
+            # Atılan cəhdlərin NEÇƏSİNİN tokeni ölçüldü — qalanının xərci
+            # NAMƏLUMDUR, sıfır deyil (AP-026).
+            turn.raw["measured_retries"] = len(burned)
+        turn.raw["attempts"] = attempt
+        if turn.error_class in HALTING:
+            # Növbəti case-ləri göndərməyin mənası yoxdur: səbəb hədəfdə deyil,
+            # hesabdadır. Qaçış BÜTÖVLÜKDƏ dayanır, səbəb adı ilə.
+            HALT.trip(turn.error_class or "", _error_detail(turn), case_id)
+        return turn
+
+    def _backoff_delay(self, attempt: int, retry_after_s: Any = None) -> float:
+        """`Retry-After` varsa ONA hörmət, yoxsa eksponensial artım + jitter."""
+        explicit = _opt_float(retry_after_s)
+        if explicit is not None and explicit >= 0:
+            return min(explicit, self.backoff_cap_s)
+        delay = min(self.backoff_base_s * (2 ** (attempt - 1)), self.backoff_cap_s)
+        return delay + random.uniform(0.0, delay * BACKOFF_JITTER)
+
+    def _halted(self, turn_index: int, query: str, conversation_id: str) -> AgentResponse:
+        """Qaçış dayandırılıb — hədəfə TOXUNMADAN adlandırılmış cavab."""
+        reason = HALT.reason or "unknown"
+        return AgentResponse(
+            text="",
+            latency_ms=0,
+            attempts=0,
+            error=f"halted:{reason}",
+            error_class=reason,
+            raw={
+                "transport": "none",
+                "halted": True,
+                "halt_reason": reason,
+                "halt_detail": HALT.detail,
+                "halt_first_case": HALT.case_id,
+                "hint": REASON_HINT.get(reason, ""),
+                "request_sent": False,
+                "turn_index": turn_index,
+                "sent_conversation_id": conversation_id,
+                "query": query,
+            },
+        )
+
+    async def _send_once(
+        self,
+        req: AgentRequest,
+        query: str,
+        conversation_id: str,
+        end_user: str,
+        turn_index: int,
+    ) -> AgentResponse:
         payload = {
             "inputs": req.metadata.get("inputs", {}),
             "query": query,
@@ -217,7 +360,13 @@ class DifyHttpAgent:
                 ) as r:
                     if r.status_code != 200:
                         raw = await r.aread()
-                        return self._http_error(raw, r.status_code, started, turn_index)
+                        return self._http_error(
+                            raw,
+                            r.status_code,
+                            started,
+                            turn_index,
+                            retry_after=r.headers.get("Retry-After"),
+                        )
                     async for line in r.aiter_lines():
                         _consume_line(state, line)
         except httpx.TimeoutException:
@@ -270,6 +419,9 @@ class DifyHttpAgent:
             if any(t.usage for t in turns)
             else None
         )
+        # Atılmış (backoff) cəhdlərin tokenləri də növbələr üzrə toplanır —
+        # çoxnövbəli case-də yanan pul tək növbədə gizlənməməlidir (AP-026).
+        retry_usage = _sum_usage([t.retry_usage for t in turns if t.retry_usage], self.model)
         conversation_ids = [
             str(t.raw.get("conversation_id") or "") for t in turns
         ]
@@ -292,27 +444,64 @@ class DifyHttpAgent:
                 "turn_errors": [t.error for t in turns],
                 "dropped_scripted_assistant_turns": dropped,
                 "message_id": last.raw.get("message_id", ""),
+                "attempts": sum(t.attempts for t in turns),
+                "measured_retries": sum(
+                    int(t.raw.get("measured_retries", 0) or 0) for t in turns
+                ),
             },
             error=next((t.error for t in turns if t.error), None),
+            # Zənciri qıran İLK xətanın sinfi — sonrakılar onun nəticəsidir.
+            error_class=next((t.error_class for t in turns if t.error), None),
+            attempts=sum(t.attempts for t in turns),
+            retry_usage=retry_usage,
             turns=turns,
         )
 
     # ------------------------------------------------------------------ daxili
     def _http_error(
-        self, raw: bytes, status: int, started: float, turn_index: int = 0
+        self,
+        raw: bytes,
+        status: int,
+        started: float,
+        turn_index: int = 0,
+        retry_after: str | None = None,
     ) -> AgentResponse:
         body = _json_or_text(raw)
         code = str(body.get("code", f"http_{status}"))
+        message = str(body.get("message", ""))
         return AgentResponse(
             text="",
             latency_ms=int((time.perf_counter() - started) * 1000),
-            raw={**body, "turn_index": turn_index},
+            raw={
+                **body,
+                "turn_index": turn_index,
+                "http_status": status,
+                # Səbəb sinfi köhnə artefaktlarda da hesablana bilsin deyə xam
+                # zərf `dify_error` formatında saxlanılır.
+                "dify_error": {"code": code, "message": message, "status": status},
+                # `Retry-After` başlığı: hədəf nə qədər gözləməyi ÖZÜ deyirsə,
+                # bizim eksponensial təxminimiz yox, ONUN rəqəmi tətbiq olunur.
+                "retry_after_s": _opt_float(retry_after),
+            },
             error=code if code in DIFY_INFRA_ERRORS else f"unexpected:{code}",
+            error_class=classify_failure(code=code, message=message, status=status),
         )
 
     def _finish(self, state: _StreamState, transport_error: str, latency_ms: int) -> AgentResponse:
         text = state.text
         error = _classify(state, transport_error)
+        # SƏBƏB SİNFİ: kod tək başına bəs etmir. `completion_request_error`
+        # altında həm 429 (gözlə), həm "credit balance too low" (gözləmə,
+        # balans doldur) gəlirdi — fərqi yalnız mesaj göstərir (AP-024).
+        error_class = (
+            classify_failure(
+                code=state.error_code or error or "",
+                message=state.error_message,
+                status=state.error_status,
+            )
+            if error
+            else None
+        )
         return AgentResponse(
             text=text,
             tool_calls=_tool_calls(state),
@@ -332,13 +521,18 @@ class DifyHttpAgent:
                 # fərqlənə bilər, ona görə XAM halda saxlanılır (müqayisə üçün).
                 "dify_usage": dict(state.usage),
                 "dify_error": (
-                    {"code": state.error_code, "message": state.error_message}
+                    {
+                        "code": state.error_code,
+                        "message": state.error_message,
+                        "status": state.error_status,
+                    }
                     if state.error_code
                     else None
                 ),
                 "n_retriever_resources": len(state.retriever),
             },
             error=error,
+            error_class=error_class,
         )
 
 
@@ -393,6 +587,7 @@ def _consume_event(state: _StreamState, event: dict[str, Any]) -> None:
     elif kind == "error":
         state.error_code = str(event.get("code", "") or f"http_{event.get('status', '')}")
         state.error_message = str(event.get("message", ""))
+        state.error_status = _opt_int(event.get("status"))
     # ping / message_file / tts_message / workflow_* — sayılır, atılır
 
 
@@ -515,6 +710,64 @@ def _as_int(value: Any) -> int:
         return int(float(value))
     except (TypeError, ValueError):
         return 0
+
+
+def _opt_int(value: Any) -> int | None:
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def _opt_float(value: Any) -> float | None:
+    """`Retry-After` saniyə ilə gəlir; HTTP-date formatı DƏSTƏKLƏNMİR.
+
+    Tanınmayan dəyər `None` qaytarır — yəni eksponensial backoff-a düşürük.
+    Səhv parse edilmiş tarixi "0 saniyə" kimi oxumaq rate limit-i daha da
+    pisləşdirərdi.
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _env_num(name: str, explicit: Any, default: Any) -> Any:
+    """Konfiqurasiya sırası: birbaşa arqument > mühit dəyişəni > default."""
+    if explicit is not None:
+        return explicit
+    raw = os.environ.get(name, "")
+    if not raw:
+        return default
+    try:
+        return type(default)(float(raw))
+    except (TypeError, ValueError):
+        return default
+
+
+def _sum_usage(items: list[Usage | None], model: str = "") -> Usage | None:
+    """Bir neçə `Usage`-ı toplayır. Boş siyahı -> `None` (sıfır DEYİL, yoxdur)."""
+    present = [u for u in items if u is not None]
+    if not present:
+        return None
+    return Usage(
+        input_tokens=sum(u.input_tokens for u in present),
+        output_tokens=sum(u.output_tokens for u in present),
+        cached_tokens=sum(u.cached_tokens for u in present),
+        model=next((u.model for u in present if u.model), model),
+    )
+
+
+def _error_detail(response: AgentResponse) -> str:
+    """Xətanın insan üçün oxunan izahı (hesabatda səbəb kimi görünür)."""
+    dify_error = (response.raw or {}).get("dify_error") or {}
+    message = str(dify_error.get("message", "")).strip()
+    code = str(dify_error.get("code", "") or response.error or "")
+    return f"{code}: {message}"[:500] if message else code
 
 
 def _usage(u: dict[str, Any] | None, model: str) -> Usage | None:

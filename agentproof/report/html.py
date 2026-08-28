@@ -33,6 +33,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
+from agentproof.failure import REASON_HINT, reason_for_response
 from agentproof.graders.calibration import MIN_AGREEMENT, MIN_KAPPA, judge_status
 from agentproof.report import reproduction as repro_mod
 from agentproof.report.pr_comment import headline, model_line
@@ -337,6 +338,21 @@ def _tile(key: str, value: str, note: str = "", cls: str = "") -> str:
     )
 
 
+def _cost_tile_sub(totals: dict) -> str:
+    """Xərc plitəsinin alt sətri: yandırılan və ÖLÇÜLMƏYƏN hissə (AP-026).
+
+    "bütün case, bütün təkrar" yazısı yanlış idi: sınan cəhdlərin xərci
+    ümumiyyətlə sayılmırdı və rəqəm həqiqətdən aşağı çıxırdı.
+    """
+    wasted = float(totals.get("wasted_cost_usd", 0.0) or 0.0)
+    cov = totals.get("cost_coverage") or {}
+    unmeasured = int(cov.get("unmeasured_attempts", 0) or 0)
+    parts = ["uğurlu cəhdlər", f"+${wasted:.2f} yandırılmış"]
+    if unmeasured:
+        parts.append(f"{unmeasured} cəhd ÖLÇÜLMƏDİ (naməlum, sıfır deyil)")
+    return " · ".join(parts)
+
+
 def _bucket_table(buckets: Sequence[Bucket], head: str) -> str:
     if not buckets:
         return '<p class="sub">məlumat yoxdur</p>'
@@ -482,7 +498,12 @@ def _section_summary(
             "qiymətləndirilə bilmədi — səssiz keçmə DEYİL",
             "skip" if t.get("n_skipped") else "",
         ),
-        _tile("xərc", f"${float(t.get('cost_usd', 0.0)):.2f}", "bütün case, bütün təkrar"),
+        _tile(
+            "xərc",
+            f"${float(t.get('cost_usd', 0.0)):.2f}",
+            _cost_tile_sub(t),
+            "skip" if (t.get("cost_coverage") or {}).get("status") == "unmeasured" else "",
+        ),
         _tile(
             "gecikmə",
             _fmt_ms(float(t.get("p95_latency_ms", 0.0))),
@@ -699,6 +720,34 @@ def _section_categories(record: RunRecord, labels: dict[str, str]) -> str:
     )
 
 
+def _cost_split_note(record: RunRecord) -> str:
+    """Uğurlu / yandırılan / ölçülməyən xərc — auditin əsas sualı (AP-026).
+
+    "Audit sizə nə qədər başa gəlir?" sualına "təxminən" cavabı qəbuledilməzdir;
+    "$X ölçüldü, N cəhd ölçülmədi" isə dürüst cavabdır.
+    """
+    t = record.totals
+    wasted = float(t.get("wasted_cost_usd", 0.0) or 0.0)
+    cov = t.get("cost_coverage") or {}
+    if not cov and wasted == 0.0:
+        return ""
+    rows = [
+        ("uğurlu cəhdlər", f"${float(t.get('cost_usd', 0.0)):.4f}"),
+        ("uğursuz cəhdlər (ölçülən)", f"${wasted:.4f}"),
+        (
+            "ölçülməyən cəhdlər",
+            f"{cov.get('unmeasured_attempts', 0)} / {cov.get('attempts', 0)} — "
+            "xərci NAMƏLUM (sıfır deyil)",
+        ),
+    ]
+    body = "".join(f"<tr><td>{esc(k)}</td><td class='num'>{esc(v)}</td></tr>" for k, v in rows)
+    note = esc(str(cov.get("note", "")))
+    return (
+        "<h3>Xərc bölgüsü</h3><table><tbody>" + body + "</tbody></table>"
+        + (f'<div class="note">{note}</div>' if note else "")
+    )
+
+
 def _section_cost_latency(record: RunRecord) -> str:
     res = record.results
     lat = [float(r.latency_ms) for r in res if r.latency_ms > 0]
@@ -728,6 +777,7 @@ def _section_cost_latency(record: RunRecord) -> str:
             "xərci hesablanmadı. Cəm xərc bu case-ləri SAYMIR (sıfır saymır, "
             "naməlum sayır).</div>"
         )
+    out.append(_cost_split_note(record))
     out.append("<h3>Gecikmə paylanması (saniyə)</h3>")
     out.append(_histogram_svg([v / 1000 for v in lat], unit="s"))
     if costs:
@@ -994,17 +1044,30 @@ def _section_failures(
             '<p class="sub">Skip səssiz keçmə DEYİL: bu case-lər keçmə dərəcəsinin '
             "məxrəcinə daxil edilmir və ayrıca sayılır.</p>"
         )
+        # Səbəb SİNFİ üzrə bölgü (AP-024): `rate_limit` gözləməklə keçir,
+        # `credit_exhausted` keçmir — oxucu hansı olduğunu bilmədən qərar verə bilmir.
+        by_reason = record.totals.get("skipped_by_reason") or {}
+        if by_reason:
+            out.append(
+                '<div class="note">Səbəb sinifləri: '
+                + " · ".join(
+                    f"<b>{esc(k)}</b> {v} — {esc(REASON_HINT.get(k, ''))}"
+                    for k, v in by_reason.items()
+                )
+                + "</div>"
+            )
         rows = "".join(
             "<tr>"
             f'<td class="cid">{esc(r.case_id)}</td>'
             f"<td>{esc(r.grade.grader)}</td>"
+            f'<td>{esc(reason_for_response(r.response) or "—")}</td>'
             f'<td><span class="pill sev-{esc(r.severity)}">{esc(r.severity)}</span></td>'
             f'<td class="reason">{esc(r.grade.reason) or "səbəb yazılmayıb"}</td></tr>'
             for r in skipped
         )
         out.append(
             '<div class="scroll"><table><thead><tr><th>case</th><th>grader</th>'
-            "<th>severity</th><th>səbəb</th></tr></thead><tbody>"
+            "<th>səbəb sinfi</th><th>severity</th><th>səbəb</th></tr></thead><tbody>"
             + rows
             + "</tbody></table></div>"
         )

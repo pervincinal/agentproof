@@ -189,6 +189,24 @@ def test_artifact_gate_rejects_a_missing_grader_name():
     assert any("grader adı" in p for p in ci_gates.artifact_problems(record))
 
 
+def test_artifact_gate_rejects_a_halted_run():
+    """AP-024: yarımçıq dayandırılmış qaçış CI-da YAŞIL çıxa bilməz.
+
+    Qalan case-lər hədəfə ümumiyyətlə göndərilmədi — «hamısı keçdi» ilə
+    «heç biri ölçülmədi» eyni şey deyil.
+    """
+    record = _record(
+        halted={"halted": True, "reason": "credit_exhausted", "case_id": "c1", "detail": ""}
+    )
+    problems = ci_gates.artifact_problems(record)
+    assert any("dayandırıldı" in p and "credit_exhausted" in p for p in problems)
+
+
+def test_artifact_gate_passes_when_the_run_was_not_halted():
+    record = _record(halted={"halted": False, "reason": "", "case_id": "", "detail": ""})
+    assert ci_gates.artifact_problems(record) == []
+
+
 def test_artifact_cli_returns_error_for_missing_run(tmp_path, capsys):
     assert ci_gates.main(["artifact", str(tmp_path / "yoxdur")]) == 1
     assert "boru xətti sındı" in capsys.readouterr().err

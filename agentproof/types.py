@@ -190,6 +190,33 @@ class AgentResponse:
     `SETUP.md §7.2`-də sadalanan Dify xəta kodları burada saxlanır.
     """
 
+    error_class: str | None = None
+    """Xətanın SƏBƏB SİNFİ (`agentproof/failure.py`): `rate_limit` ·
+    `credit_exhausted` · `auth` · `bad_request` · `unknown`.
+
+    `error` NƏ baş verdiyini deyir (hədəfin öz kodu), bu sahə isə NƏ ETMƏLİ
+    olduğunu: `rate_limit` gözləməklə keçir, `credit_exhausted` keçmir. AP-024-ə
+    qədər hər ikisi eyni `completion_request_error` kodu altında idi və qaçışa
+    baxan adam gözləməklə balans doldurmaq arasında qərar verə bilmirdi.
+
+    Köhnə artefaktlarda YOXDUR (`None`) — `failure.reason_for_response()` onu
+    xam `dify_error`-dan yenidən hesablayır.
+    """
+
+    attempts: int = 1
+    """Bu cavab üçün hədəfə NEÇƏ HTTP sorğusu getdi (backoff təkrarları daxil).
+
+    `1`-dən böyükdürsə, aradakı cəhdlər atılıb — amma tokenləri yanıb
+    (`retry_usage`). AP-026: yanan token hesabatdan itməməlidir.
+    """
+
+    retry_usage: "Usage | None" = None
+    """Backoff zamanı ATILMIŞ cəhdlərin token istifadəsi (varsa).
+
+    Bu tokenlər uğurlu cavaba daxil deyil, amma pulu ödənilib. `usage`-a
+    qatılmır (o, ölçmənin özüdür), ayrıca `wasted_cost_usd`-ə gedir.
+    """
+
     turns: list["AgentResponse"] = field(default_factory=list)
     """Çoxnövbəli case-də HƏR NÖVBƏNİN öz cavabı (tək növbədə boş qalır).
 
@@ -217,6 +244,9 @@ class AgentResponse:
             "latency_ms": self.latency_ms,
             "raw": self.raw,
             "error": self.error,
+            "error_class": self.error_class,
+            "attempts": self.attempts,
+            "retry_usage": self.retry_usage.to_dict() if self.retry_usage else None,
             "turns": [t.to_dict() for t in self.turns],
         }
 
@@ -230,6 +260,14 @@ class AgentResponse:
             latency_ms=int(d.get("latency_ms", 0)),
             raw=d.get("raw", {}),
             error=d.get("error"),
+            # Köhnə artefaktda (`schema_version` 1/2) bu üç sahə YOXDUR —
+            # default-lar köhnə davranışın eynisidir, oxuma sınmır.
+            error_class=d.get("error_class"),
+            # `0` HƏQİQİ dəyərdir: "sorğu ümumiyyətlə göndərilmədi" (qaçış
+            # dayandırılıb). `or 1` yazmaq onu 1-ə çevirib ölçülməyən cəhd
+            # kimi saydırardı — yəni olmayan xərci naməlum göstərərdi.
+            attempts=1 if d.get("attempts") is None else int(d["attempts"]),
+            retry_usage=Usage.from_dict(d.get("retry_usage")),
             turns=[AgentResponse.from_dict(t) for t in d.get("turns", [])],
         )
 
@@ -293,10 +331,28 @@ class CaseResult:
     response: AgentResponse
     grade: GradeResult
     cost_usd: float | None = None
+    """UĞURLU cəhdlərin xərci. `None` = ölçülmədi (usage gəlmədi), sıfır DEYİL."""
+
     latency_ms: int = 0
     attempt: int = 1
     tags: list[str] = field(default_factory=list)
     severity: str = "medium"
+
+    wasted_cost_usd: float = 0.0
+    """UĞURSUZ cəhdlərə gedən ÖLÇÜLƏN xərc (AP-026).
+
+    Sınan sorğu da token yandırır. `full-run-03`-də 75 sorğu sındı və hamısının
+    `cost_usd`-i `null` idi — yəni qeydlər $23.72 göstərdi, hesabdan ~$40 getdi.
+    """
+
+    unmeasured_attempts: int = 0
+    """Sınan, amma `usage` QAYTARMAYAN cəhdlərin sayı.
+
+    Bunların xərci NAMƏLUMDUR — sıfır deyil. `wasted_cost_usd`-ə qatılmır,
+    çünki qatılsa ölçülməmiş şey ölçülmüş kimi görünərdi; ayrıca sayılır ki,
+    "audit nəyə başa gəlir" sualına verilən cavabın hansı hissəsinin ölçüldüyü
+    bilinsin.
+    """
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -304,6 +360,8 @@ class CaseResult:
             "response": self.response.to_dict(),
             "grade": self.grade.to_dict(),
             "cost_usd": self.cost_usd,
+            "wasted_cost_usd": self.wasted_cost_usd,
+            "unmeasured_attempts": self.unmeasured_attempts,
             "latency_ms": self.latency_ms,
             "attempt": self.attempt,
             "tags": self.tags,
@@ -325,6 +383,10 @@ class CaseResult:
                 skipped=g.get("skipped", False),
             ),
             cost_usd=d.get("cost_usd"),
+            # Köhnə artefaktda yoxdur: 0.0 / 0 = "bu qaçışda ölçülməyib" —
+            # `totals["cost_coverage"]["status"]` onu ayrıca göstərir.
+            wasted_cost_usd=float(d.get("wasted_cost_usd", 0.0) or 0.0),
+            unmeasured_attempts=int(d.get("unmeasured_attempts", 0) or 0),
             latency_ms=int(d.get("latency_ms", 0)),
             attempt=int(d.get("attempt", 1)),
             tags=list(d.get("tags", [])),
@@ -335,7 +397,13 @@ class CaseResult:
 #: 1 -> 2: retrieval konfiqurasiyası (`embedding_model`, `embedding_provider`,
 #: `effective_top_k`, `reranking_enabled`) artefaktın öz içindədir. `1`
 #: oxunmağa davam edir — həmin sahələr `UNKNOWN` / `None` qalır.
-SCHEMA_VERSION = 2
+#:
+#: 2 -> 3 (AP-024 / AP-026): xəta SƏBƏB SİNFİ (`response.error_class`,
+#: `totals["skipped_by_reason"]`) və xərcin uğurlu/yandırılan/ölçülməyən
+#: bölgüsü (`wasted_cost_usd`, `unmeasured_attempts`, `totals["cost_coverage"]`).
+#: `1` və `2` oxunmağa DAVAM EDİR: yeni sahələr default alır və
+#: `cost_coverage.status` onların ölçülmədiyini açıq göstərir.
+SCHEMA_VERSION = 3
 
 
 def _opt_int(value: Any) -> int | None:

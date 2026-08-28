@@ -85,6 +85,8 @@ def server():
 
 
 def _adapter(server: MockDifyServer, **kw):
+    # Backoff bu faylın mövzusu deyil — gözləmə müddəti kiçildilir (AP-024).
+    kw.setdefault("backoff_base_s", 0.01)
     return create_adapter("dify_http", base_url=server.base_url, api_key=server.api_key, **kw)
 
 
@@ -208,21 +210,26 @@ async def test_chain_stops_when_a_turn_fails():
 
     Göndərilsəydi, yeni söhbət açılardı və nəticə çoxnövbəli kimi görünüb
     əslində tək-növbəli olardı — susqun korlanma.
+
+    Xəta QƏSDƏN `rate_limit` sinfindən DEYİL: rate limit halında adapter
+    həmin növbəni yenidən cəhd edir (AP-024) və zəncir qırılmır — bunu
+    `test_rate_limit_backoff.py` ayrıca yoxlayır.
     """
     calls = {"n": 0}
 
     def reply(body: dict[str, Any]) -> dict[str, Any]:
         calls["n"] += 1
         if calls["n"] == 2:
-            return {"error_event": ("too_many_requests", "slow down", 429)}
+            return {"error_event": ("provider_not_initialize", "model provider yoxdur", 400)}
         return {"answer": "ok"}
 
     with MockDifyServer(scripted={"": {"side_effect": reply}}) as srv:
         response = await _adapter(srv).invoke(_req(TURNS))
 
-    assert response.error == "too_many_requests"
+    assert response.error == "provider_not_initialize"
+    assert response.error_class == "auth"  # gözləməklə keçmir -> təkrar YOXDUR
     assert len(srv.request_log) == 2, "3-cü növbə göndərilməməli idi"
-    assert response.raw["turn_errors"] == [None, "too_many_requests"]
+    assert response.raw["turn_errors"] == [None, "provider_not_initialize"]
 
 
 @pytest.mark.asyncio

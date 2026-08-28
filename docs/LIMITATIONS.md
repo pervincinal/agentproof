@@ -615,6 +615,37 @@ qarışdırmaq — grader səhvini hədəfin səhvi kimi göstərmək — uydurm
   heç bir ölçmə iddiası qurulmamalıdır.
 - **Mənbə.** `target/app/IMPORT.md` §8.
 
+### LIM-E11 · Qaçışın FAKTİKİ xərci tam ölçülə bilmir — **↓ GİZLƏDİR** (xərci AŞAĞI göstərir)
+
+- **Nə ölçülmədi.** Uğursuz sorğuların yandırdığı tokenlər. `full-run-03`-də
+  25 case × 3 təkrar = **75 sorğu** sındı və hədəf onların HEÇ BİRİ üçün
+  `usage` qaytarmadı: Dify `message_end`-i yalnız uğurlu axında göndərir,
+  xəta axını `error` event-i ilə bitir və token sayı orada YOXDUR. Halbuki
+  sorğu modelə çatmışdı — giriş tokenləri ödənilib.
+- **Rəqəm.** Qeydlər həmin dövr üçün **$23.72** göstərdi, hesabdan **~$40**
+  getdi. Fərqin iki mənbəyi var: (a) sınan sorğular, (b) agentlərin
+  diaqnostik / kəşfiyyat çağırışları — onlar `RunRecord` yaratmır, çünki
+  qaçışın bir hissəsi deyil (bu, qismən qaçılmazdır, amma sənədləşdirilir).
+- **AP-026-dan sonrakı vəziyyət.** Uçot üç rəqəmə bölündü və üçüncüsü
+  **sıfır kimi göstərilmir**:
+  `cost_usd` (uğurlu cəhdlər) · `wasted_cost_usd` (uğursuz cəhdlərin
+  **ÖLÇÜLƏN** xərci) · `cost_coverage.unmeasured_attempts` (`usage`
+  gəlməyən cəhdlər — xərci **NAMƏLUM**). `usage` qismən gəlirsə (məs.
+  `message_end` gəldi, sonra axın xəta ilə bitdi) xərc artıq İTMİR.
+  `full-run-03` üzərində yenidən hesablananda: ölçülən yandırılmış xərc
+  **$0.00**, ölçülməyən **75 cəhd** — yəni fərq indi görünür, amma hələ də
+  ölçülmür.
+- **İstiqamət.** Hesabatdakı xərc həmişə **ALT HƏDDİR**. «Audit $X-ə başa
+  gəldi» iddiası yalnız `cost_coverage.status == "complete"` olanda dəqiqdir;
+  `partial` / `unmeasured` olanda rəqəmin yanında ölçülməyən cəhd sayı
+  **məcburi** göstərilməlidir.
+- **Azaltmaq üçün.** Hədəf tərəfdə xəta axınında da `usage` vermək (Dify
+  dəyişikliyi tələb edir) və ya provayder hesabatının (Anthropic Console
+  usage API) qaçış pəncərəsi ilə uzlaşdırılması. Hər ikisi bu işin
+  hüdudundan kənardadır.
+- **Mənbə.** `reports/full-run-03/*.json` (`response.raw.dify_error`,
+  `dify_usage: {}`) · `agentproof/report/cost.py` · AP-026.
+
 ---
 
 ## 4. Metodologiya və status
@@ -686,7 +717,8 @@ Hesabatın hər iddiası hansı məhdudiyyətlərlə birlikdə oxunmalıdır:
 | «Agent icazəsiz write etdi» | LIM-C13 — davranış ölçülür, zərər yox |
 | «Sistem injection-a davamlıdır/deyil» | LIM-C15 — 4 payload; red-team nəticəsi deyil |
 | «Cavablar sabitdir / qeyri-determinizm X%» | LIM-E03 (temperature bağlana bilmir) · LIM-E05 (N=3) · LIM-I08 (consistency ölçüsü köhnə) · LIM-M03 |
-| «Xərc $W/case» | LIM-E08 (qiymət rejimi + tarix) · LIM-E09 (mock, yüksüz sistem) |
+| «Xərc $W/case» | LIM-E08 (qiymət rejimi + tarix) · LIM-E09 (mock, yüksüz sistem) · **LIM-E11** (uğursuz sorğuların tokeni ölçülmür → xərc AŞAĞI) |
+| «Audit $W-ə başa gəldi» | **LIM-E11** — yalnız `cost_coverage.status == "complete"` olanda dəqiqdir; əks halda ölçülməyən cəhd sayı ilə birlikdə oxunmalıdır |
 | «Retrieval hit@k = V» | LIM-E02 (embedder) · LIM-C09 + LIM-C10 (korpus kiçik və təmiz → alt hədd) · **LIM-I09** (çoxlu çağırışda bəndlər dedup olunur → aşağı sayır) |
 | «Judge verdikti: justified/unjustified/wrong» | LIM-I03 — kalibrasiya qapısı keçilməyib; **dərc edilə bilməz** |
 | «Reqressiya yoxdur» | LIM-M02 — baseline yoxdur |

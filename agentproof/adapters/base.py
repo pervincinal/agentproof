@@ -2,6 +2,11 @@
 
 Müqavilə şərtləri:
   - Adapter retry ETMİR və paralellik idarə ETMİR — bunlar Inspect-in işidir.
+    YEGANƏ istisna `rate_limit` sinfidir (AP-024): 429/529 hədəfin İÇİNDƏN,
+    200 statuslu SSE axınında `error` event-i kimi gəlir, yəni Inspect onu
+    ümumiyyətlə görmür. Digər bütün siniflər (`credit_exhausted`, `auth`,
+    `bad_request`, `unknown`) DƏRHAL qaytarılır — təkrar pul yandırır və
+    heç vaxt keçmir.
   - Adapter `latency_ms`-i özü ölçür (wall-clock).
   - Hədəf token istifadəsini vermirsə `usage = None` olur (grader `skipped` verir).
   - Yeni müştəri = bir adapter faylı, < 150 sətir.

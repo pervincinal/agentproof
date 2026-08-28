@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from inspect_ai import eval as inspect_eval  # noqa: E402
 
+from agentproof.failure import HALT, REASON_HINT  # noqa: E402
 from agentproof.graders import registry  # noqa: E402
 from agentproof.graders.calibration import load_report  # noqa: E402
 from agentproof.graders.judge import (  # noqa: E402
@@ -30,6 +31,10 @@ from agentproof.graders.judge import (  # noqa: E402
 from agentproof.report.baseline import GatePolicy, compare, gate  # noqa: E402
 from agentproof.report.normalize import normalize_log  # noqa: E402
 from agentproof.report.pr_comment import render, render_console  # noqa: E402
+from agentproof.runner.anchor_check import (  # noqa: E402
+    AnchorMapMismatch,
+    verify_anchor_map,
+)
 from agentproof.runner.isolation import build_lane_pool  # noqa: E402
 from agentproof.runner.retrieval_config import (  # noqa: E402
     RetrievalCheck,
@@ -78,7 +83,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--target", required=True, help="adapter adı (mock | dify_http)")
     p.add_argument("--dataset", default=DEFAULT_DATASET)
     p.add_argument("--filter", dest="filter_expr", default=None,
-                   help="tag=policy,severity=high (açarlar: tag|severity|grader|id)")
+                   help=("case seçimi. Vergül ŞƏRT ayırıcısıdır (VƏ), dəyər siyahısı "
+                         "DEYİL: 'tag=rag,severity=high'. Bir açara bir neçə dəyər "
+                         "üçün `|` işlət: 'id=a|b|c' (= 'id=a,id=b,id=c', VƏ YA). "
+                         "Açarlar: tag|severity|grader|id"))
     p.add_argument("--stage", default="all", choices=["cheap", "judge", "all"])
     p.add_argument("--repeat", type=int, default=1,
                    help="qeyri-determinist case-lər üçün N müstəqil cavab")
@@ -113,6 +121,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--skip-retrieval-check", action="store_true",
                    help=("embedder / `top_k` oxumasını bilərəkdən keç. Səbəb hesabata "
                          "düşür: konfiqurasiyasız qaçış yenidən yoxlana bilmir (LIM-E06)"))
+    p.add_argument("--skip-anchor-check", action="store_true",
+                   help=("lövbər xəritəsi ↔ cari dataset uyğunluğunu yoxlama. "
+                         "Səbəb hesabata düşür: bayat xəritə retrieval case-lərini "
+                         "SAXTA şəkildə sındırır (A-19)"))
     p.add_argument("--log-dir", default=None)
     p.add_argument(
         "--tool-reset-url",
@@ -245,6 +257,24 @@ def main(argv: list[str] | None = None) -> int:
     for warning in retrieval.warnings:
         print(f"  ⚠️ {warning}", file=sys.stderr)
 
+    # --- lövbər xəritəsi CARİ dataset-ə aiddirmi (AP-022 / A-19) ----------
+    # Bayat xəritə gold chunk-ları mövcud olmayan segmentlərə çevirir və
+    # retrieval case-ləri SAXTA şəkildə sınır — «retrieval işləmir» tapıntısı
+    # hesabata düşür. Uyğunsuzluq bilinən haldır, ona görə burada DAYANIRIQ.
+    try:
+        anchor_check = verify_anchor_map(
+            selected,
+            live_dataset_id=retrieval.dataset_id,
+            dataset_source=retrieval.dataset_source,
+            skip=args.skip_anchor_check,
+        )
+    except AnchorMapMismatch as e:
+        print(f"\n{e}", file=sys.stderr)
+        return 1
+    print(anchor_check.console_line(), file=sys.stderr)
+    for warning in anchor_check.warnings:
+        print(f"  ⚠️ {warning}", file=sys.stderr)
+
     lanes = load_lanes(args.lanes)
     pool = build_lane_pool(lanes, args.tool_reset_url or None)
 
@@ -284,6 +314,9 @@ def main(argv: list[str] | None = None) -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     log_dir = args.log_dir or str(out_dir / "logs")
 
+    # Geri qayıtmayan xəta bayrağı hər qaçışda təmiz başlayır (AP-024).
+    HALT.reset()
+
     logs = inspect_eval(
         task,
         # Hədəf MODEL deyil, MƏHSULDUR — Inspect model qatı ümumiyyətlə işə düşmür.
@@ -308,6 +341,9 @@ def main(argv: list[str] | None = None) -> int:
     # Model yoxlamasının NƏTİCƏSİ hesabata düşür — "yoxlanmadı" halı gizlənə bilməz.
     record.totals["model_check"] = model_check.to_dict()
     record.totals["lanes"] = pool.size
+    # Lövbər yoxlamasının nəticəsi də artefaktın İÇİNDƏDİR — `--skip-anchor-check`
+    # işlədilibsə hesabatda görünür, səssiz keçid deyil.
+    record.totals["anchor_check"] = anchor_check.to_dict()
     # Konfiqurasiya artefaktın İÇİNƏ yazılır — kənar sənədə güvənmək məhz
     # LIM-E06-nın səbəbi idi.
     apply_retrieval(record, retrieval)
@@ -339,6 +375,19 @@ def main(argv: list[str] | None = None) -> int:
         for reason in gate_result.reasons:
             print(f"  - {reason}", file=sys.stderr)
         return 1
+
+    if HALT.tripped:
+        # Yarımçıq qaçış YAŞIL çıxa bilməz: qalan case-lər ümumiyyətlə
+        # göndərilmədi, yəni "nə keçdi, nə sındı" — ölçülmədi (AP-024 §3).
+        print(
+            f"\nQAÇIŞ DAYANDIRILDI — {HALT.reason}: {REASON_HINT.get(HALT.reason or '', '')}\n"
+            f"  ilk görünmə: {HALT.case_id or '?'}\n"
+            f"  səbəb      : {HALT.detail}\n"
+            "  Qalan case-lər hədəfə GÖNDƏRİLMƏDİ — bu nəticə tam deyil.\n"
+            "  Yenidən cəhd etmək kömək ETMİR; əvvəlcə səbəbi aradan qaldırın.",
+            file=sys.stderr,
+        )
+        return 3
     return 0
 
 

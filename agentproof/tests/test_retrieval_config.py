@@ -30,7 +30,7 @@ from agentproof.runner.retrieval_config import (
     probe_retrieval_config,
     read_app_dataset_ids,
 )
-from agentproof.types import UNKNOWN, RunRecord
+from agentproof.types import SCHEMA_VERSION, UNKNOWN, RunRecord
 
 #: Mühit dəyişənləri testə SIZMAMALIDIR: `probe_retrieval_config()` bilərəkdən
 #: env-ə düşür, yəni `.env`-i yükləyən qabıqda test yalançı yaşıl olardı.
@@ -148,7 +148,10 @@ def test_run_record_carries_live_retrieval_config():
     payload = json.loads(json.dumps(record.to_dict(), ensure_ascii=False))
     assert payload["embedding_model"] == "bge-m3"
     assert payload["effective_top_k"] == 8
-    assert payload["schema_version"] == 2
+    # Sxem versiyası artefaktın öz içindədir; AP-024/AP-026 ilə 3-ə qalxdı
+    # (xəta sinfi + xərc bölgüsü). Köhnə 1/2 oxunmağa davam edir — aşağıdakı
+    # `test_old_schema_version_1_record_still_loads` bunu kilidləyir.
+    assert payload["schema_version"] == SCHEMA_VERSION == 3
     # Səbəb izi də artefaktdadır — rəqəmin haradan gəldiyi SÜBUT olunmalıdır.
     assert payload["totals"]["retrieval_check"]["dataset_source"] == "app-config"
 

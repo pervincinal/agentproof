@@ -11,8 +11,10 @@ from typing import Any
 
 from inspect_ai.log import EvalLog, read_eval_log
 
+from agentproof.failure import HALT, REASONS, reason_for_response
 from agentproof.graders.calibration import judge_status
 from agentproof.pricing.table import load_prices
+from agentproof.report.cost import account_case, coverage
 from agentproof.types import AgentResponse, CaseResult, GradeResult, RunRecord
 
 
@@ -45,6 +47,10 @@ def normalize_log(
     # (`pricing/models.yaml`-da keçidli dərəcələr var).
     run_day = _run_date(log)
     results: list[CaseResult] = []
+    accounts = []
+    # Skipped case-lərin SƏBƏB SİNFİ (AP-024): 25 ədəd "completion_request_error"
+    # bir yığın kimi görünürdü, halbuki 24-ü kredit, qalanı rate limit idi.
+    skipped_by_reason: dict[str, int] = {}
 
     for sample in log.samples or []:
         score = next(iter(sample.scores.values())) if sample.scores else None
@@ -55,10 +61,16 @@ def normalize_log(
         value = None if score is None else score.value
         passed = value == 1.0 or value is True
 
-        cost = sum(
-            c for c in (prices.cost_usd(r.usage, on=run_day) for r in responses)
-            if c is not None
-        )
+        # Xərc UĞURLU / YANDIRILMIŞ / ÖLÇÜLMƏYƏN kimi ayrılır (AP-026):
+        # sınan sorğu da token yandırır, `null` yazmaq onu gizlədirdi.
+        account = account_case(responses, prices, run_day)
+        accounts.append(account)
+        if skipped:
+            reason = next(
+                (reason_for_response(r) for r in responses if reason_for_response(r)),
+                "unknown",
+            )
+            skipped_by_reason[reason] = skipped_by_reason.get(reason, 0) + 1
         results.append(
             CaseResult(
                 case_id=str(sample.id),
@@ -72,7 +84,9 @@ def normalize_log(
                     evidence=meta.get("evidence", {}) or {},
                     skipped=skipped,
                 ),
-                cost_usd=cost if any(r.usage for r in responses) else None,
+                cost_usd=account.cost_usd,
+                wasted_cost_usd=account.wasted_cost_usd,
+                unmeasured_attempts=account.unmeasured_attempts,
                 latency_ms=sum(r.latency_ms for r in responses),
                 attempt=len(responses) or 1,
                 tags=list(meta.get("tags", [])),
@@ -90,8 +104,18 @@ def normalize_log(
         "n_passed": sum(1 for r in graded if r.grade.passed),
         "n_failed": sum(1 for r in graded if not r.grade.passed),
         "n_skipped": len(results) - len(graded),
+        # Skipped-lər SƏBƏB SİNFİ üzrə (AP-024). Boş lüğət = skipped yoxdur.
+        # `rate_limit` gözləməklə keçir, `credit_exhausted` keçmir — qaçışa
+        # baxan adam hansı olduğunu bilmədən qərar verə bilmir.
+        "skipped_by_reason": {r: skipped_by_reason[r] for r in REASONS if r in skipped_by_reason},
         "pass_rate": (sum(1 for r in graded if r.grade.passed) / len(graded)) if graded else 0.0,
         "cost_usd": sum(costs),
+        # UĞURSUZ cəhdlərə gedən ÖLÇÜLƏN xərc. Ölçülməyən hissə burada DEYİL —
+        # `cost_coverage` onu ayrıca göstərir (sıfır kimi yazmaq yalan olardı).
+        "wasted_cost_usd": sum(r.wasted_cost_usd for r in results),
+        "cost_coverage": coverage(accounts),
+        # Qaçış yarıda dayandırılıbmı və niyə (AP-024 §3).
+        "halted": HALT.to_dict(),
         "p50_latency_ms": percentile(latencies, 50),
         "p95_latency_ms": percentile(latencies, 95),
         "price_table_as_of": prices.as_of,

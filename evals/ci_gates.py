@@ -131,6 +131,14 @@ def artifact_problems(record: RunRecord) -> list[str]:
     ungraded = [r.case_id for r in record.results if not r.grade.grader]
     if ungraded:
         problems.append(f"grader adı yazılmayıb ({len(ungraded)}): {ungraded[:5]}")
+    # AP-024: yarımçıq dayandırılmış qaçış YAŞIL çıxa bilməz — qalan case-lər
+    # hədəfə ümumiyyətlə göndərilmədi, yəni ölçülmədi.
+    halted = record.totals.get("halted") or {}
+    if halted.get("halted"):
+        problems.append(
+            f"qaçış yarıda dayandırıldı ({halted.get('reason', '?')}) — "
+            f"ilk görünmə: {halted.get('case_id') or '?'}; nəticə TAM DEYİL"
+        )
     return problems
 
 

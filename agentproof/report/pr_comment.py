@@ -2,9 +2,40 @@
 
 from __future__ import annotations
 
+from agentproof.failure import REASON_HINT
 from agentproof.graders.calibration import judge_status
 from agentproof.report.baseline import GateResult
+from agentproof.report.cost import summary_line
 from agentproof.types import UNKNOWN, RunDelta, RunRecord
+
+
+def skipped_lines(record: RunRecord, bullet: str = "  - ") -> list[str]:
+    """Skipped-lər SƏBƏB SİNFİ üzrə (AP-024).
+
+    Bir yığın `completion_request_error` oxucuya heç nə demir: gözləsin, yoxsa
+    balans doldursun? Sinif məhz bunu deyir.
+    """
+    by_reason = record.totals.get("skipped_by_reason") or {}
+    if not by_reason:
+        return []
+    return [
+        f"{bullet}{reason}: {count} — {REASON_HINT.get(reason, '')}"
+        for reason, count in by_reason.items()
+    ]
+
+
+def halt_lines(record: RunRecord, bullet: str = "  ") -> list[str]:
+    """Qaçış yarıda dayandırılıbsa səbəb AÇIQ yazılır — gizlənə bilməz."""
+    halted = record.totals.get("halted") or {}
+    if not halted.get("halted"):
+        return []
+    reason = halted.get("reason", "")
+    return [
+        f"{bullet}⛔ QAÇIŞ DAYANDIRILDI — {reason}: {halted.get('hint', '')}",
+        f"{bullet}   ilk görünmə: {halted.get('case_id') or '?'} · "
+        f"{halted.get('detail', '')[:200]}",
+        f"{bullet}   qalan case-lər hədəfə GÖNDƏRİLMƏDİ — nəticə TAM DEYİL.",
+    ]
 
 
 def headline(delta: RunDelta) -> str:
@@ -74,6 +105,32 @@ def render(
         "",
     ]
 
+    halted = totals.get("halted") or {}
+    if halted.get("halted"):
+        out += [
+            f"> ⛔ **Qaçış yarıda dayandırıldı — `{halted.get('reason', '')}`.** "
+            f"{halted.get('hint', '')}",
+            ">",
+            f"> İlk görünmə: `{halted.get('case_id') or '?'}` · "
+            f"{halted.get('detail', '')[:200]}",
+            ">",
+            "> Qalan case-lər hədəfə göndərilmədi — bu nəticə TAM DEYİL.",
+            "",
+        ]
+
+    reasons = skipped_lines(current, bullet="- ")
+    if reasons:
+        out += ["**Skipped səbəbləri:**", "", *reasons, ""]
+
+    cov = totals.get("cost_coverage") or {}
+    if cov.get("status") not in (None, "complete"):
+        out += [
+            f"**Xərc:** {summary_line(totals)} — "
+            f"{cov.get('unmeasured_attempts', 0)}/{cov.get('attempts', 0)} cəhd ölçülmədi "
+            f"({cov.get('note', '')}).",
+            "",
+        ]
+
     if gate_result is not None and not gate_result.passed:
         out += ["**Bloklama səbəbləri:**", ""]
         out += [f"- {r}" for r in gate_result.reasons]
@@ -109,13 +166,15 @@ def render(
 
     out += judge_block(current)
     out += retrieval_block(current)
+    out += anchor_block(current)
 
     out += [
         "---",
         f"<sub>model: {model_line(current)} · "
         f"retrieval: {retrieval_line(current)} · "
         f"lane: {totals.get('lanes', 1)} · "
-        f"xərc ${totals.get('cost_usd', 0):.2f} · "
+        f"xərc ${totals.get('cost_usd', 0):.2f} "
+        f"(+${float(totals.get('wasted_cost_usd', 0.0) or 0.0):.2f} yandırılmış) · "
         f"p50 {totals.get('p50_latency_ms', 0) / 1000:.1f}s · "
         f"p95 {totals.get('p95_latency_ms', 0) / 1000:.1f}s · "
         f"qiymət cədvəli {totals.get('price_table_as_of', '?')}</sub>",
@@ -183,6 +242,54 @@ def retrieval_block(record: RunRecord) -> list[str]:
     ]
 
 
+def anchor_line(record: RunRecord) -> str:
+    """Lövbər xəritəsi ↔ dataset uyğunluğu (AP-022).
+
+    Bayat xəritə retrieval case-lərini `0/k` ilə sındırır və hesabat bunu
+    «retrieval işləmir» kimi göstərir (A-19). Yoxlanmadığı hal GİZLƏNMİR.
+    """
+    check = record.totals.get("anchor_check") or {}
+    status = check.get("status", "")
+    if not status:
+        return "QEYD OLUNMAYIB (köhnə artefakt və ya yoxlama qaçmadı)"
+    if status == "match":
+        return (
+            f"uyğun — dataset `{str(check.get('live_dataset_id', ''))[:8]}` · "
+            f"{check.get('n_anchored_cases', 0)} lövbərli case"
+        )
+    if status == "no-retrieval":
+        return "tətbiq olunmur (seçimdə retrieval case-i yoxdur)"
+    if status == "skipped":
+        return "⚠️ YOXLANILMADI — `--skip-anchor-check` ilə bilərəkdən keçilib"
+    warnings = check.get("warnings") or []
+    return f"⚠️ {warnings[0] if warnings else check.get('detail', status)}"
+
+
+def anchor_block(record: RunRecord) -> list[str]:
+    """PR şərhində lövbər xəbərdarlıqları — biri də gizlənmir."""
+    check = record.totals.get("anchor_check") or {}
+    warnings = check.get("warnings") or []
+    if not warnings:
+        return []
+    return [
+        "### ⚠️ Lövbər xəritəsi",
+        "",
+        *[f"- {w}" for w in warnings],
+        "",
+    ]
+
+
+def _coverage_console(totals: dict) -> list[str]:
+    """Ölçülməyən xərc AÇIQ yazılır — sıfır kimi görünməsin (AP-026)."""
+    cov = totals.get("cost_coverage") or {}
+    if not cov or cov.get("status") == "complete":
+        return []
+    return [
+        f"            ⚠️ {cov.get('unmeasured_attempts', 0)}/{cov.get('attempts', 0)} "
+        f"cəhdin xərci ölçülmədi — {cov.get('note', '')}"
+    ]
+
+
 def render_console(record: RunRecord, delta: RunDelta | None = None) -> str:
     """Baseline olmadan da işləyən insan üçün konsol xülasəsi."""
     t = record.totals
@@ -191,11 +298,14 @@ def render_console(record: RunRecord, delta: RunDelta | None = None) -> str:
         f"  keçdi   : {t.get('n_passed', 0)}/{t.get('n_graded', 0)}  ({t.get('pass_rate', 0):.1%})",
         f"  sındı   : {t.get('n_failed', 0)}",
         f"  skipped : {t.get('n_skipped', 0)}  (qiymətləndirilə bilmədi — səssiz keçmə deyil)",
-        f"  xərc    : ${t.get('cost_usd', 0):.4f}  "
-        f"(qiymət cədvəli {t.get('price_table_as_of', '?')} · "
+        *skipped_lines(record, bullet="            · "),
+        f"  xərc    : {summary_line(t)}",
+        f"            (qiymət cədvəli {t.get('price_table_as_of', '?')} · "
         f"dərəcə tarixi {t.get('priced_on', '?')})",
+        *_coverage_console(t),
         f"  model   : {model_line(record)}",
         f"  retrieval: {retrieval_line(record)}",
+        f"  lövbər  : {anchor_line(record)}",
         f"  gecikmə : p50 {t.get('p50_latency_ms', 0):.0f} ms · p95 {t.get('p95_latency_ms', 0):.0f} ms",
         f"  növbə   : {t.get('multi_turn_cases', 0)} çoxnövbəli case zəncirləndi",
     ]
@@ -215,4 +325,5 @@ def render_console(record: RunRecord, delta: RunDelta | None = None) -> str:
         )
     if delta is not None:
         lines.append(f"  baseline: {headline(delta)}")
+    lines += halt_lines(record)
     return "\n".join(lines)

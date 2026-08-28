@@ -137,6 +137,39 @@ def test_empty_selection_raises_instead_of_reporting_a_green_run():
         build_task(DATASET, adapter="mock", stage="judge")
 
 
+def test_skipped_cases_are_counted_by_reason_class(server, tmp_path):
+    """AP-024 DoD: `run.py` xülasəsində skipped-lər SƏBƏB SİNFİ üzrə sayılır.
+
+    Əvvəl hamısı bir `completion_request_error` yığını idi; qaçışa baxan adam
+    gözləmək (rate limit) və balans doldurmaq (kredit) arasında qərar verə
+    bilmirdi.
+    """
+    from agentproof.testing.mock_dify import CREDIT_EXHAUSTED_MESSAGE
+
+    server.scripted["restocking"] = {
+        "error_event": ("completion_request_error", CREDIT_EXHAUSTED_MESSAGE, 400)
+    }
+    record, _ = _run(server, tmp_path, filter_expr="id=spike-01-restocking-fee")
+
+    assert record.totals["n_skipped"] == 1
+    assert record.totals["skipped_by_reason"] == {"credit_exhausted": 1}
+    assert record.totals["halted"]["halted"] is True
+
+    console = render_console(record)
+    assert "credit_exhausted: 1" in console
+    assert "QAÇIŞ DAYANDIRILDI" in console
+
+
+def test_totals_split_successful_and_wasted_cost(server, tmp_path):
+    """AP-026 DoD: `run.py` xülasəsində uğurlu və yandırılan xərc AYRIDIR."""
+    record, _ = _run(server, tmp_path)
+    totals = record.totals
+    assert "wasted_cost_usd" in totals
+    assert totals["cost_coverage"]["status"] == "complete"
+    # Mock model adı vermir -> dollar hesablanmır; bu, sıfır kimi GİZLƏNMİR.
+    assert "yandırılmış" in render_console(record)
+
+
 # ------------------------------------------------------------ hesabat qatı
 def test_baseline_diff_reports_change_not_absolute_number(server, tmp_path):
     baseline, _ = _run(server, tmp_path / "base")

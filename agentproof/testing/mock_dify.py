@@ -45,6 +45,29 @@ def _dify_error(code: str, message: str, status: int) -> tuple[int, dict[str, An
     return status, {"code": code, "message": message, "status": status}
 
 
+#: Canlı `full-run-03`-dən BİR-BİR köçürülmüş kredit xətası. Dify upstream
+#: cavabı MƏTN kimi sarır — ona görə səbəb yalnız mesajdan oxunur.
+CREDIT_EXHAUSTED_MESSAGE = (
+    "[models] Bad Request Error, Error code: 400 - {'type': 'error', 'error': "
+    "{'type': 'invalid_request_error', 'message': 'Your credit balance is too low "
+    "to access the Anthropic API. Please go to Plans & Billing to upgrade or "
+    "purchase credits.'}, 'request_id': 'req_011CeTzFiqDQ7E5iMWnKGFD6'}"
+)
+
+#: Eyni zərf, 429 ilə — Dify loglarında rate limit belə görünür.
+RATE_LIMIT_MESSAGE = (
+    "[models] Rate Limit Error, Error code: 429 - {'type': 'error', 'error': "
+    "{'type': 'rate_limit_error', 'message': 'Number of request tokens has "
+    "exceeded your per-minute rate limit.'}}"
+)
+
+#: 529 — upstream overloaded. Gözləməklə keçir, kodu isə eynidir.
+OVERLOADED_MESSAGE = (
+    "[models] Api Server Overloaded Error, Error code: 529 - {'type': 'error', "
+    "'error': {'type': 'overloaded_error', 'message': 'Overloaded'}}"
+)
+
+
 class _Handler(BaseHTTPRequestHandler):
     server_version = "MockDify/1.17.0"
     protocol_version = "HTTP/1.1"
@@ -64,11 +87,15 @@ class _Handler(BaseHTTPRequestHandler):
             return False
         return header[len("Bearer ") :] == self.script.api_key
 
-    def _send(self, status: int, payload: dict[str, Any]) -> None:
+    def _send(
+        self, status: int, payload: dict[str, Any], headers: dict[str, str] | None = None
+    ) -> None:
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
+        for name, value in (headers or {}).items():
+            self.send_header(name, value)
         self.end_headers()
         self.wfile.write(body)
 
@@ -141,7 +168,7 @@ class _Handler(BaseHTTPRequestHandler):
         outcome = self.script.chat(body)
         if outcome.http_error is not None:
             status, payload = outcome.http_error
-            self._send(status, payload)
+            self._send(status, payload, outcome.http_headers)
             return
         self._stream(outcome.lines(), outcome.truncate)
 
@@ -162,11 +189,14 @@ class _ChatOutcome:
         http_error: tuple[int, dict[str, Any]] | None = None,
         truncate: bool = False,
         malformed: bool = False,
+        http_headers: dict[str, str] | None = None,
     ) -> None:
         self.events = events or []
         self.http_error = http_error
         self.truncate = truncate
         self.malformed = malformed
+        # `Retry-After` — hədəf nə qədər gözləməyi özü deyir (AP-024).
+        self.http_headers = http_headers or {}
 
     def lines(self) -> Iterator[str]:
         events = self.events
@@ -195,6 +225,11 @@ class MockDifyServer:
           "side_effect": callable(body) -> dict | None,  # real yan təsir (tool servisi)
           "error": ("code","message",status),  # HTTP səviyyəsində Dify xəta zərfi
           "error_event": ("code","message",status),  # axın ORTASINDA `error` event-i
+          "times": int,                        # xəta yalnız İLK N sorğuda verilir,
+                                               # sonra normal cavab gəlir (backoff testi)
+          "retry_after": str,                  # `Retry-After` başlığı (HTTP xətası ilə)
+          "usage_before_error": bool,          # `error_event`-dən ƏVVƏL `message_end`
+                                               # (tokenlər yandı, cavab sındı)
           "no_message_end": bool,              # `message_end` göndərilmir
           "no_conversation_id": bool,          # event-lərdə `conversation_id` boş gəlir
                                                # (çoxnövbəli zəncirin qırılması)
@@ -216,6 +251,8 @@ class MockDifyServer:
         self.default = default or {"answer": "Bu barədə məlumatım yoxdur."}
         self.api_key = api_key
         self._conversations: dict[str, list[dict[str, Any]]] = {}
+        #: `times: N` sayğacı (skript açarı -> neçə dəfə xəta verildi).
+        self._error_counts: dict[str, int] = {}
         self.request_log: list[dict[str, Any]] = []
         self._httpd = _Server((host, port), _Handler)
         self._httpd.script = self  # type: ignore[attr-defined]
@@ -245,12 +282,27 @@ class MockDifyServer:
         self.stop()
 
     # ---- skript məntiqi ---------------------------------------------
-    def _match(self, query: str) -> dict[str, Any]:
+    def _match(self, query: str) -> tuple[str, dict[str, Any]]:
         q = query.lower()
         for needle, spec in self.scripted.items():
             if needle.lower() in q:
-                return spec
-        return self.default
+                return needle, spec
+        return "", self.default
+
+    def _error_expired(self, needle: str, spec: dict[str, Any]) -> bool:
+        """`times: N` — xəta yalnız ilk N sorğuda verilir.
+
+        Backoff testinin şərti budur: hədəf bir müddət 429 qaytarır, sonra
+        özünə gəlir. Sayğac skript açarına görə aparılır.
+        """
+        limit = spec.get("times")
+        if limit is None:
+            return False
+        seen = self._error_counts.get(needle, 0)
+        if seen >= int(limit):
+            return True
+        self._error_counts[needle] = seen + 1
+        return False
 
     def messages_for(self, conversation_id: str) -> list[dict[str, Any]]:
         return self._conversations.get(conversation_id, [])
@@ -263,9 +315,18 @@ class MockDifyServer:
         if body.get("response_mode") != "streaming":
             return _ChatOutcome(http_error=_dify_error(*BLOCKING_REJECTION))
 
-        spec = dict(self._match(query))
+        needle, matched = self._match(query)
+        spec = dict(matched)
+        expired = self._error_expired(needle, spec)
+        if expired:
+            # Hədəf özünə gəldi: xəta təlimatları düşür, normal cavab qalır.
+            spec.pop("error", None)
+            spec.pop("error_event", None)
         if "error" in spec:
-            return _ChatOutcome(http_error=_dify_error(*spec["error"]))
+            headers = (
+                {"Retry-After": str(spec["retry_after"])} if spec.get("retry_after") else {}
+            )
+            return _ChatOutcome(http_error=_dify_error(*spec["error"]), http_headers=headers)
 
         # Söhbət id-si BURADA həll olunur, `side_effect`-dən ƏVVƏL: real Dify-da
         # da yeni söhbətin id-si cavab hazırlanarkən mövcuddur. Beləcə skript
@@ -339,6 +400,23 @@ class MockDifyServer:
 
         if spec.get("error_event"):
             code, message, status = spec["error_event"]
+            if spec.get("usage_before_error"):
+                # `message_end` GƏLDİ (tokenlər yandı), sonra axın xəta ilə
+                # bitdi. Bu tokenlərin xərci itməməlidir (AP-026).
+                events.append(
+                    {
+                        **base,
+                        "event": "message_end",
+                        "id": message_id,
+                        "files": [],
+                        "metadata": {
+                            "usage": _usage_payload(
+                                spec.get("usage", {"prompt_tokens": 900, "completion_tokens": 40})
+                            ),
+                            "retriever_resources": [],
+                        },
+                    }
+                )
             events.append(
                 {
                     "event": "error",

@@ -19,7 +19,7 @@ from inspect_ai.agent import Agent, AgentState, agent
 from inspect_ai.model import ChatMessageAssistant, ModelOutput
 
 from agentproof.adapters.base import AgentAdapter, create_adapter
-from agentproof.runner.bridge import push_response
+from agentproof.runner.bridge import current_case_id, push_response
 from agentproof.runner.isolation import Lane, LanePool, build_lane_pool
 from agentproof.types import AgentRequest
 
@@ -67,6 +67,9 @@ def target_agent(
                 messages=messages,
                 session_id=f"{id(state):x}-{attempt}",
                 seed=None if seed is None else seed + attempt,
+                # Case id adapterə ötürülür: geri qayıtmayan xəta (AP-024)
+                # hesabatda "ilk hansı case-də göründü" ilə yazılmalıdır.
+                metadata={"case_id": current_case_id()},
             )
             response = await impl.invoke(req)
             push_response(response)

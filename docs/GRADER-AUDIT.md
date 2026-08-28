@@ -903,6 +903,25 @@ edilməməlidir.
 **Bu qaçış üçün:** hər iki case ölçülə bilməz sayılır və `FINDINGS.md`-ə
 DÜŞMÜR.
 
+**MEXANİZM BAĞLANDI (AP-022).** Xəritəni yenidən qurmaq bir dəfəlik düzəliş
+idi; kor nöqtə isə qalırdı. İndi `evals/run.py` qaçışdan ƏVVƏL
+`agentproof/runner/anchor_check.py` ilə xəritənin `dataset_id`-sini hədəfin
+**CANLI** dataset-i ilə tutuşdurur. Kritik fərq: canlı id
+`AGENTPROOF_DATASET_ID`-dən yox, `retrieval_config.probe_retrieval_config()`-dan
+gəlir — yəni **app-ın öz konfiqurasiyasından** (`dataset_source: "app-config"`,
+AP-019). Məhz bu, yuxarıda «qoruma app-ın həqiqətən sorğuladığı dataset-i
+bilmir» deyə qeyd olunan boşluqdur.
+
+| Hal | Davranış |
+|---|---|
+| xəritə ≠ canlı dataset | **qaçış DAYANIR** (exit 1), mesaj `anchors.py build`-i və təsir altındakı case id-lərini göstərir |
+| seçimdə retrieval (`gold_chunks`) case-i yoxdur | blok yoxdur — `status: "no-retrieval"` |
+| canlı dataset id oxunmur (mock hədəf, Dify-sız CI, `--skip-retrieval-check`) | blok yoxdur, `status: "unverified"` + XƏBƏRDARLIQ hesabatda |
+| `--skip-anchor-check` | keçir, amma `status: "skipped"` + XƏBƏRDARLIQ artefaktda və PR şərhində — səssiz keçid deyil |
+
+Nəticə hər qaçışda `RunRecord.totals["anchor_check"]`-ə yazılır.
+Reqressiya testləri: `agentproof/tests/test_anchor_check.py`.
+
 ---
 
 ## A-20 — T-07 (ORD-10046): korpus öz-özünə ziddir (AÇIQ)

@@ -12,6 +12,7 @@ from inspect_ai.dataset import MemoryDataset, Sample
 from inspect_ai.model import ChatMessageAssistant, ChatMessageUser
 
 from agentproof.runner.agent import target_agent
+from agentproof.runner.bridge import case_context
 from agentproof.runner.isolation import LanePool, build_lane_pool
 from agentproof.runner.scorer import agentproof_scorer
 from agentproof.runner.stages import Stage, filter_stage
@@ -63,8 +64,27 @@ def dataset_hash(cases: Iterable[Case]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
+FILTER_KEYS = ("tag", "severity", "grader", "id")
+
+#: Xəta mesajı sintaksisi GÖSTƏRMƏLİDİR. `id=a,b,c` yazmaq təbii görünür, amma
+#: vergül AYRI şərtləri ayırır — səbəbini deməyən mesaj qaçış itirir (AP-025).
+FILTER_SYNTAX_HELP = (
+    "  bir açar, bir neçə dəyər (VƏ YA): --filter 'id=a|b|c'\n"
+    "  və ya açarı təkrarla            : --filter 'id=a,id=b,id=c'\n"
+    "  fərqli açarlar VƏ ilə birləşir  : --filter 'tag=rag,severity=high'\n"
+    "  vergül DƏYƏR siyahısı deyil, ŞƏRT ayırıcısıdır — `id=a,b,c` işləmir\n"
+    f"  açarlar: {'|'.join(FILTER_KEYS)}"
+)
+
+
 def parse_filter(expr: str | None) -> list[tuple[str, str]]:
-    """`tag=policy,severity=high` -> [("tag","policy"), ("severity","high")]"""
+    """`tag=policy,severity=high` -> [("tag","policy"), ("severity","high")]
+
+    Bir açarın bir neçə dəyəri `|` ilə də yazıla bilər: `id=a|b|c` tam olaraq
+    `id=a,id=b,id=c` ilə eynidir (`apply_filter` təkrar açarları VƏ YA ilə
+    birləşdirir). `id=a,b,c` isə İŞLƏMİR — vergül şərt ayırıcısıdır — ona görə
+    xəta mesajı düzgün formatı göstərir.
+    """
     if not expr:
         return []
     out: list[tuple[str, str]] = []
@@ -73,9 +93,17 @@ def parse_filter(expr: str | None) -> list[tuple[str, str]]:
         if not part:
             continue
         if "=" not in part:
-            raise ValueError(f"--filter sintaksisi: key=value; alındı: {part!r}")
-        key, value = part.split("=", 1)
-        out.append((key.strip(), value.strip()))
+            raise ValueError(
+                f"--filter sintaksisi: key=value; alındı: {part!r}\n" + FILTER_SYNTAX_HELP
+            )
+        key, raw_value = part.split("=", 1)
+        key = key.strip()
+        values = [v.strip() for v in raw_value.split("|")]
+        if not any(values) or any(not v for v in values):
+            raise ValueError(
+                f"--filter: {key!r} açarının dəyəri boşdur ({part!r})\n" + FILTER_SYNTAX_HELP
+            )
+        out.extend((key, value) for value in values)
     return out
 
 
@@ -97,7 +125,9 @@ def apply_filter(cases: list[Case], expr: str | None) -> list[Case]:
             return case.grader in values
         if key == "id":
             return case.id in values
-        raise ValueError(f"naməlum filter açarı: {key!r} (tag|severity|grader|id)")
+        raise ValueError(
+            f"naməlum filter açarı: {key!r}\n" + FILTER_SYNTAX_HELP
+        )
 
     return [c for c in cases if all(matches(c, k, v) for k, v in by_key.items())]
 
@@ -153,6 +183,10 @@ def build_task(
     ]
     task = Task(
         dataset=MemoryDataset(samples, name=Path(dataset_path).stem),
+        # `setup` hər sample-dan ƏVVƏL qaçır: case id-sini store-a yazır, çünki
+        # Inspect agent-ə yalnız `messages` ötürür (AP-024 — dayandırma səbəbi
+        # hansı case-də göründüyü ilə yazılmalıdır).
+        setup=case_context(),
         solver=target_agent(
             adapter=adapter,
             adapter_config=adapter_config or {},

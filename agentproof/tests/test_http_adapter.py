@@ -23,6 +23,9 @@ def server():
 
 
 def _adapter(server: MockDifyServer, **kw):
+    # `backoff_base_s` kiçikdir: bu fayl backoff-un ÖZÜNÜ deyil, wire formatını
+    # kilidləyir. Backoff davranışı `test_rate_limit_backoff.py`-dədir.
+    kw.setdefault("backoff_base_s", 0.01)
     return create_adapter("dify_http", base_url=server.base_url, api_key=server.api_key, **kw)
 
 
@@ -101,12 +104,23 @@ async def test_unauthorized_is_surfaced_as_infra_error(server):
 
 
 @pytest.mark.asyncio
-async def test_adapter_does_not_retry_itself(server):
-    """Müqavilə (STACK.md §8.2): retry Inspect-in işidir, adapterin yox."""
+async def test_adapter_retries_only_the_rate_limit_class(server):
+    """Müqavilə (STACK.md §8.2, AP-024 ilə dəqiqləşdirilib).
+
+    Adapter ümumi retry etmir — Inspect-in işini əvəz etmir. YEGANƏ istisna
+    `rate_limit` sinfidir, çünki onu Inspect görmür: 429 hədəfin İÇİNDƏN
+    (`completion_request_error` zərfində) gəlir və Inspect üçün bu, uğurlu
+    200 cavabdır.
+    """
     server.scripted["flaky"] = {"error": ("too_many_requests", "slow down", 429)}
     before = len(server.request_log)
-    await _adapter(server).invoke(_req("flaky sual"))
-    assert len(server.request_log) - before == 1
+    await _adapter(server, max_rate_limit_retries=2).invoke(_req("flaky sual"))
+    assert len(server.request_log) - before == 3  # 1 ilk cəhd + 2 təkrar
+
+    server.scripted["xarab sorğu"] = {"error": ("invalid_param", "user is required", 400)}
+    before = len(server.request_log)
+    await _adapter(server).invoke(_req("xarab sorğu"))
+    assert len(server.request_log) - before == 1, "rate limit olmayan xəta təkrarlanmamalıdır"
 
 
 # ------------------------------------------------------------------ SSE yolu
