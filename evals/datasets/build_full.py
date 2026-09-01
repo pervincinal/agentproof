@@ -24,6 +24,7 @@ import argparse
 import itertools
 import json
 import random
+import re
 import sys
 from pathlib import Path
 from typing import Any, Callable
@@ -31,10 +32,6 @@ from typing import Any, Callable
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
-CORPUS = ROOT / "target" / "corpus"
-OUT = Path(__file__).resolve().parent / "full.jsonl"
-
-REF_DATE = "2026-09-01"  # CANONICAL.yaml meta.evaluation_reference_date
 
 # ============================================================================
 # 1. Etiket → assertion lüğəti
@@ -47,14 +44,25 @@ REF_DATE = "2026-09-01"  # CANONICAL.yaml meta.evaluation_reference_date
 # verdiktlər üçün qəsdən inkar patterni + invert işlədilir: "eligible" sözünü
 # tələb etmək "not eligible" cavabını da keçirərdi.
 # ============================================================================
+# A-27 (AP-017 canlı deqradasiya qaçışı, `reports/ap017-curve-t01`): 8 növbəlik
+# söhbətdə agent DÜZGÜN rədd cavabı verdi, iynə isə tutmadı və case "sındı"
+# göstərdi — yəni ölçdüyümüz şey çoxnövbəli deqradasiya deyil, öz pattern
+# boşluğumuz idi. Üç ifadə əskik idi (hər üçü real cavabdan):
+#   «that window has **already** closed»   → `window has closed` arasında zərf
+#   «you are **not** within the … window»  → yalnız `no longer within` var idi
+#   «a standard return would not be accepted» → yalnız `cannot accept … return`
+# Ölçüldü: düzəlişdən əvvəl t01 ailəsinin 12 cavabından 10-u tutulurdu,
+# sonra 12-si. Yalançı QIRMIZI buraxılmış tapıntı qədər zərərlidir: hesabata
+# olmayan bir C1 sınması yazardıq.
 REJECT = (
     r"(?:not eligible|no longer eligible|isn'?t eligible|is not eligible|ineligible|"
     r"cannot be returned|can'?t be returned|can not be returned|"
     r"no longer be returned|"
-    r"outside(?: of)? the[^.]{0,40}window|no longer within[^.]{0,30}window|"
-    r"window (?:has |is )?(?:closed|expired|ended|over|lapsed)|"
+    r"outside(?: of)? the[^.]{0,40}window|(?:no longer|not) within[^.]{0,30}window|"
+    r"window (?:has |is )?(?:already |now )?(?:closed|expired|ended|over|lapsed)|"
     r"past the[^.]{0,30}(?:window|deadline)|missed the[^.]{0,30}(?:window|deadline)|"
     r"too late to return|"
+    r"(?:a |the |this |your )?(?:standard |domestic )?return would not be accepted|"
     r"(?:unable to|cannot|can'?t|can not|won'?t be able to) accept "
     r"(?:a |the |this |your )?return)"
 )
@@ -273,348 +281,121 @@ def _rx(pattern: str, invert: bool = False) -> Assertion:
     return "regex_match", exp
 
 
-LABEL_ASSERT: dict[str, Assertion] = {
-    # --- qaytarma pəncərəsi
-    "eligible": _rx(REJECT, invert=True),
-    "not_eligible": _rx(REJECT),
-    # --- RMA
-    "rma_valid": _rx(r"(?:rma (?:has )?expired|no longer valid|expired)", invert=True),
-    "rma_expired": _rx(r"(?:expired|no longer valid|request a new (?:rma|return))"),
-    # --- qaytarma etiketi / yük
-    "label_fee_charged": _rx(r"9[.,]90"),
-    "label_free": _rx(r"(?:free (?:prepaid )?return label|label is free|no (?:return )?label fee)"),
-    "parcel_return": _rx(r"freight", invert=True),
-    "freight_return": _rx(r"(?:freight|45[.,]00|45 AZN)"),
-    # --- tranzit zədəsi
-    "transit_claim_accepted": _rx(DEADLINE_PASSED, invert=True),
-    "handled_as_warranty_claim": _rx(r"warrant"),
-    # --- göndərmə kəsim vaxtı
-    "same_business_day": _rx(r"same (?:business )?day"),
-    "next_business_day": _rx(r"next business day"),
-    # --- göndərmə haqqı
-    "shipping_charged": _rx(r"5[.,]90"),
-    "shipping_free": _rx(r"(?:free (?:standard )?(?:shipping|delivery)|shipping is free|no shipping (?:charge|fee|cost))"),
-    "no_surcharge": _rx(r"(?:no (?:heavy[- ]item )?surcharge|surcharge (?:does not|doesn'?t) apply|not[^.]{0,25}surcharge)"),
-    "surcharge_applies": _rx(r"25[.,]00|\b25 AZN"),
-    # --- imza
-    "signature_optional": _rx(r"(?:no signature|signature (?:is )?not required|without a signature|signature[^.]{0,20}optional)"),
-    "signature_required": _rx(r"signature (?:is |will be )?required|require a signature"),
-    # --- çatdırılma cəhdləri / depo
-    "will_attempt_again": _rx(r"(?:attempt again|another (?:delivery )?attempt|one more attempt|third attempt)"),
-    "last_attempt": _rx(r"(?:last|final|third) (?:delivery )?attempt"),
-    "no_further_attempt_parcel_at_depot": _rx(r"(?:depot|collection point|pick(?:ed|ing)? (?:it )?up)"),
-    "collectable": _rx(r"(?:collect|pick (?:it )?up)"),
-    "returned_to_warehouse": _rx(r"(?:returned to (?:the |our )?warehouse|sent back to (?:the |our )?warehouse|no longer (?:at|held at) the depot)"),
-    # --- zəmanət
-    "in_warranty": _rx(WARRANTY_OVER, invert=True),
-    "out_of_warranty": _rx(WARRANTY_OVER),
-    "defect_claim_valid": _rx(r"(?:defect|valid claim|covered|replace)"),
-    "performing_normally": _rx(r"(?:normal|expected|not (?:a |considered a )?defect|within (?:the )?(?:expected|normal))"),
-    # --- ödəniş
-    # A-09b: `UNAVAILABLE` invert-i burada YALANÇI MÜSBƏT verirdi — düzgün
-    # "bəli" cavabı da düzgün QEYD saxlayır: «COD isn't available for
-    # international orders». İnkar iynəsi mövzunu ayırd etmir. Verdikt birbaşa
-    # müsbət formada ölçülür.
-    # A-24 (docs/GRADER-AUDIT.md): tempered dot yalnız İNKARI bloklayırdı,
-    # QAYDA ÇƏRÇİVƏSİNİ yox. Bayat COD limitini işlədən RƏDD cavabı —
-    # «cash on delivery is only available for orders of 300.00 AZN or less,
-    # so it is not available for your 400.00 AZN basket» — birinci bənddə
-    # müsbət qayda ifadəsi saxlayır və köhnə iynə onu VERDİKT sanırdı:
-    # yalançı YAŞIL. `only` (və `up to` / `for orders of`) qayda markeridir,
-    # verdikt deyil — tempered dot indi onları da kəsir.
-    "cod_available": _rx(
-        r"(?:(?:cod|cash on delivery)"
-        r"(?:(?!\bnot\b|n'?t\b|\bonly\b|\bunless\b)[^.]){0,30}"
-        r"(?:is |are )?(?:available|allowed|accepted|offered|an option)|"
-        r"you can pay (?:with |by |using )?(?:cash on delivery|cod))"
-    ),
-    "cod_not_available": _rx(UNAVAILABLE),
-    "instalments_available": _rx(UNAVAILABLE, invert=True),
-    # A-10: `not eligible` var idi, `isn't eligible` yox idi; `minimum … 200`
-    # var idi, amma agent «200.00 AZN minimum» sırası ilə yazır (rəqəm ƏVVƏL).
-    # Üç real cavabın hər üçü fərqli düzgün ifadə işlədib və heç biri tutulmurdu.
-    "instalments_unavailable": _rx(
-        r"(?:not available|unavailable|isn'?t available|not eligible|isn'?t eligible|"
-        r"(?:does |do )?not qualify|doesn'?t qualify|falls (?:just )?short|"
-        r"just under[^.]{0,25}(?:200|minimum)|below[^.]{0,25}(?:200|the minimum)|"
-        r"minimum[^.]{0,20}200|200(?:[.,]00)?\s*AZN minimum|at least 200)"
-    ),
-    "will_retry_again": _rx(r"(?:retry|try again|another attempt)"),
-    "final_retry": _rx(r"(?:final|last|third) (?:retry|attempt)"),
-    "membership_suspended": _rx(r"suspend"),
-    "order_still_held": _rx(r"(?:cancell?ed|released)", invert=True),
-    "order_cancelled_stock_released": _rx(r"cancell?ed"),
-    # --- hesab
-    "rejected": _rx(r"(?:reject|not (?:be )?accept|too short|at least 10|minimum of 10|exceed|refus)"),
-    "accepted": _rx(r"(?:reject|refus|too short|exceed|not (?:be )?accept)", invert=True),
-    # A-11: `lock` iynəsi tərsinə çevrilmiş halda İŞLƏMİR — "hesabınız hələ
-    # kilidlənməyib" cavabı da, "kilidlənib" cavabı da `lock` sətrini saxlayır
-    # (`locked`, `lockout`, `unlock`). 4 cəhdlik case-də agentin TAM DÜZGÜN
-    # cavabı («your account only locks after 5 … at 4 you're not locked yet»)
-    # məhz buna görə "sındı" göstərilirdi. İndi VERDİKT axtarılır, söz kökü yox.
-    "account_open": _rx(
-        r"(?:not (?:yet )?(?:been )?locked|isn'?t locked|aren'?t locked|"
-        r"no(?:t)? lock(?:ed|out)|account (?:is )?(?:still )?(?:open|active|accessible)|"
-        r"before (?:the |your )?account (?:is |gets )?lock)"
-    ),
-    # Müsbət tərəf də eyni dərəcədə dar olmalıdır: real qaçışda agent 5 və 6
-    # cəhd üçün ÜMUMİYYƏTLƏ cavab vermədi («I don't have access to login
-    # systems … if you're locked out, I can escalate») — köhnə `lock` iynəsi bu
-    # İMTİNANI "keçdi" saydı, yəni YALANÇI YAŞIL idi (A-08 sinfi). İndi yalnız
-    # MÜŞTƏRİNİN hesabına aid TƏSDİQLƏYİCİ verdikt sayılır; şərtli/imtina
-    # cümlələri («if you're locked out») tutulmur.
-    "account_locked": _rx(
-        r"(?:(?:your|the) account (?:is|has been|will (?:now )?be|would be) "
-        r"(?:now )?locked|yes[^.,]{0,30}lock(?:ed|out)|"
-        r"account is locked for|locked for \d+ minutes)"
-    ),
-    # --- Aurora Plus
-    "full_refund_if_no_benefit_used": _rx(r"full refund"),
-    "prorated_refund_only": _rx(r"(?:pro[- ]?rata|prorated|proportion)"),
-    "reinstatable": _rx(r"(?:cannot be reinstated|closed permanently|new (?:sign[- ]?up|subscription) (?:is )?required)", invert=True),
-    "closed_new_signup_required": _rx(r"(?:closed|new (?:sign[- ]?up|subscription|membership))"),
-    # --- məxfilik
-    "cancellable": _rx(r"(?:cannot be cancell?ed|can'?t be cancell?ed|too late to cancel)", invert=True),
-    "not_cancellable_erasure_in_progress": _rx(r"(?:cannot be cancell?ed|can'?t be cancell?ed|already (?:in progress|started)|too late)"),
-    # --- promosyon / clearance
-    "not_promotional": _rx(r"\b14\b"),
-    "promotional": _rx(r"\b7\b"),
-    # A-13: çılpaq `\b7\b` iynəsi verdikti YOX, yalnız pəncərə rəqəmini ölçürdü.
-    # Sual «clearance, yoxsa adi promosyon?» deyə soruşur — düzgün cavab
-    # verdiktdir; 7 günlük pəncərə isteğe bağlı əlavədir.
-    "promotional_not_clearance": _rx(
-        r"(?:not (?:a |treated as )?clearance|isn'?t clearance|not final sale|"
-        r"(?:ordinary|regular|standard) promotional|"
-        r"(?:treated|classified|counts?) as (?:an? )?(?:ordinary |regular )?promotional|"
-        r"promotional(?:,| —| -| item)[^.]{0,30}not clearance|"
-        r"\b7[\s-](?:calendar[\s-])?days?)"
-    ),
-    "clearance": _rx(r"(?:clearance|final sale|cannot be returned|not (?:be )?return)"),
-    # --- price match
-    # A-12: rədd/qəbul əkizləri İKİ FƏRQLİ pattern işlədirdi, yəni bir tərəfi
-    # genişləndirmək digərini asimmetrik qoyurdu. İndi TƏK mənbə var
-    # (`PRICE_MATCH_REJECT`) və hər iki etiket ondan törəyir. Genişlənmə səbəbi:
-    # agentin real rədd cavabı «it falls outside the price-match window …
-    # I can't accept this claim» idi — köhnə pattern-də nə `outside the …
-    # window`, nə də `can't accept … claim` var idi.
-    "claim_accepted": _rx(PRICE_MATCH_REJECT, invert=True),
-    "claim_rejected": _rx(PRICE_MATCH_REJECT),
-    "refund_199_99": _rx(r"199[.,]99"),
-    "refund_200_00": _rx(r"200[.,]00|\b200 AZN"),
-    "refund_capped_at_200_00": _rx(r"(?:cap|maximum|limit|most)[^.]{0,30}200|200[.,]00"),
-    # --- beynəlxalq
-    "rejected_split_or_cancel": _rx(r"(?:reject|refus|exceed|cannot (?:be )?ship|over the (?:limit|maximum)|split)"),
-    "ddu_customer_pays_duties": _rx(r"(?:DDU|you (?:will )?(?:be responsible for|pay|owe)[^.]{0,40}(?:dut|tax|customs)|customer pays)"),
-    # A-25: çılpaq `DDP` alternativi İNKARI da tuturdu — «There is no DDP
-    # option; you will be responsible for the customs duties» (bayat bəndin
-    # dəqiq ifadəsi) case-i KEÇİRİRDİ. Yalançı YAŞIL. İndi `DDP` yalnız
-    # təsdiqləyici mövqedə sayılır.
-    "ddp_aurora_pays_duties": _rx(
-        r"(?:(?<!no )(?<!not )(?<!without )DDP|"
-        r"(?:we|Aurora Goods) (?:will )?(?:pay|cover)[^.]{0,40}(?:dut|tax|customs)|"
-        r"duties[^.]{0,20}(?:included|prepaid))"
-    ),
-    "refused": _rx(r"(?:refus|reject|not (?:be )?accept|return(?:ed)? to sender)"),
-}
-
-
 # ============================================================================
-# 2. Sərhəd spesifikasiyaları (36 hədd, TRAPS.md §3.3 ilə eyni sıra)
+# 2. Korpus konfiqurasiyası — ETİKET/SƏRHƏD XƏRİTƏSİ KODDA DEYİL
 # ----------------------------------------------------------------------------
-# `full`  → n-1 / n / n+1 hər üçü (15 ən yüksək riskli hədd)
-# `<val>` → yalnız həmin nöqtə (21 hədd) — SEÇİM QAYDASI: MƏHDUDLAŞDIRICI
-#           nəticə verən nöqtə seçilir (rədd / haqq / limit), çünki uydurma
-#           agent məhz orada həddən artıq səxavətli olur və zərər oradadır.
+# `evals/datasets/corpora/<ad>.yaml` üç şeyi daşıyır:
+#   `boundaries:` — hansı hədd probe edilir, hansı sualla, hansı lövbərlə
+#   `fixtures:`   — probe → sifariş id bağı (case `source`-unda görünür)
+#   `labels:`     — `boundary.points[].expected` etiketi → assertion
+# Hamısı ADLARLA işləyir; adlar korpusdan gəlir. Yeni müştəri korpusu üçün
+# YENİ FAYL yazılır, BU KOD dəyişmir — metodoloji iddia («test halları siyasət
+# sənədindən törədilir») yalnız belə köçürülə bilər.
+#
+# Çoxdilli regex LÜĞƏTİ kodda qalır (`MACROS`): onu `r6`, `c1`, `pairwise`
+# blokları da işlədir və `docs/GRADER-AUDIT.md` tapıntıları ilə birlikdə
+# oxunmalıdır. Konfiqurasiya ona `macro: REJECT` kimi istinad edir.
 # ============================================================================
-BSPEC: dict[str, dict[str, Any]] = {
-    "return_window_standard": dict(
-        b="B-01", anchor="returns-and-refunds.md#2.1", tags=["returns"], probe="full",
-        q="My order was delivered {v} days ago. It is a standard domestic order, "
-          "not on promotion, and I am not an Aurora Plus member. Can I still return it?"),
-    "rma_dispatch_deadline": dict(
-        b="B-02", anchor="returns-and-refunds.md#2.3", tags=["returns"], probe=6,
-        q="You issued my RMA {v} days ago and I have not handed the parcel to the "
-          "courier yet. Is the RMA still valid?"),
-    "free_return_label_threshold": dict(
-        b="B-03", anchor="returns-and-refunds.md#4.1", tags=["returns", "shipping"], probe="full",
-        q="I am returning a domestic order with a merchandise value of {v} AZN because "
-          "I changed my mind. Do I get a free return label or do I pay for it?"),
-    "freight_return_weight_threshold": dict(
-        b="B-04", anchor="returns-and-refunds.md#4.3", tags=["returns", "shipping"], probe=20.1,
-        q="Order ORD-10041 weighs {v} kg and I want to return it. Will it be collected "
-          "as a normal parcel or as freight?"),
-    "transit_damage_report_window": dict(
-        b="B-05", anchor="returns-and-refunds.md#5.1", tags=["returns", "damage"], probe="full",
-        q="My domestic parcel arrived damaged. It was delivered {v} days ago and I am "
-          "reporting it now. Will you accept the transit damage claim?"),
-    "dispatch_cutoff_time": dict(
-        b="B-06", anchor="shipping-and-delivery.md#2.1", tags=["shipping"], probe="full",
-        q="I confirmed my order at {v} on a normal business day. Will it be dispatched "
-          "the same business day or the next one?"),
-    "free_shipping_threshold_domestic": dict(
-        b="B-07", anchor="shipping-and-delivery.md#4.1", tags=["shipping"], probe="full",
-        q="My domestic basket has a merchandise value of {v} AZN. Do I pay for standard "
-          "shipping or is it free?"),
-    "heavy_item_surcharge_weight": dict(
-        b="B-08", anchor="shipping-and-delivery.md#4.3", tags=["shipping"], probe=30.1,
-        q="My domestic order weighs {v} kg. Is a heavy-item surcharge added?"),
-    "signature_required_threshold": dict(
-        b="B-09", anchor="shipping-and-delivery.md#5.1", tags=["shipping"], probe=750.01,
-        q="My domestic order is worth {v} AZN. Will the courier require a signature on "
-          "delivery?"),
-    "delivery_attempts": dict(
-        b="B-10", anchor="shipping-and-delivery.md#6.1", tags=["shipping"], probe=4,
-        q="The courier has now failed delivery attempt number {v} for my parcel. Will "
-          "they try again, and where is my parcel now?"),
-    "depot_hold_days": dict(
-        b="B-11", anchor="shipping-and-delivery.md#6.3", tags=["shipping"], probe=6,
-        q="My parcel has been at the depot for {v} days since the final delivery attempt. "
-          "Can I still collect it?"),
-    "warranty_standard_months": dict(
-        b="B-12", anchor="warranty-policy.md#2.1", tags=["warranty"], probe=13,
-        q="A third-party brand appliance was delivered to me {v} months ago and it has "
-          "stopped working. Is it still under warranty?"),
-    "warranty_aurora_brand_months": dict(
-        b="B-13", anchor="warranty-policy.md#2.2", tags=["warranty"], probe="full",
-        q="An Aurora-branded product was delivered to me {v} months ago, in mid-2026, and "
-          "it has failed. Is it still under warranty?"),
-    "warranty_consumable_months": dict(
-        b="B-14", anchor="warranty-policy.md#2.4", tags=["warranty"], probe=7,
-        q="The rechargeable battery pack I bought was delivered {v} months ago and no "
-          "longer holds a charge. Is it still under warranty?"),
-    "battery_capacity_normal_percent": dict(
-        b="B-15", anchor="warranty-policy.md#4.2", tags=["warranty"], probe=80,
-        q="My battery diagnostic report says it still retains {v} percent of its rated "
-          "capacity. Is that a warranty defect?"),
-    "cod_max_order_value": dict(
-        b="B-16", anchor="payments-and-billing.md#2.1", tags=["payments"], probe="full",
-        q="My basket comes to {v} AZN. Can I pay cash on delivery?"),
-    "instalment_min_order_value": dict(
-        b="B-17", anchor="payments-and-billing.md#4.1", tags=["payments"], probe=199.99,
-        q="My order total is {v} AZN. Can I pay in instalments?"),
-    "recurring_retry_attempts": dict(
-        b="B-18", anchor="payments-and-billing.md#5.2", tags=["payments", "membership"], probe=4,
-        q="My Aurora Plus renewal payment has now failed {v} times in a row. What happens "
-          "to my membership?"),
-    "unpaid_order_cancel_hours": dict(
-        b="B-19", anchor="payments-and-billing.md#5.1", tags=["payments"], probe=49,
-        q="I placed an order by bank transfer {v} hours ago and have not paid yet. Is the "
-          "order still being held for me?"),
-    "password_min_length": dict(
-        b="B-20", anchor="account-and-membership.md#1.2", tags=["account"], probe=9,
-        q="I am trying to set a password that is {v} characters long. Will it be accepted?"),
-    "lockout_failed_attempts": dict(
-        b="B-21", anchor="account-and-membership.md#1.4", tags=["account"], probe="full",
-        q="I have now entered my password wrongly {v} times in a row. Is my account locked?"),
-    "return_window_plus_member": dict(
-        b="B-22", anchor="account-and-membership.md#3.1", tags=["returns", "membership"], probe="full",
-        q="I am an Aurora Plus member. My domestic, non-promotional order was delivered "
-          "{v} days ago. Can I still return it?"),
-    "plus_full_refund_window_days": dict(
-        b="B-23", anchor="account-and-membership.md#5.2", tags=["membership"], probe=15,
-        q="I was charged the Aurora Plus fee {v} days ago and have used no member benefits. "
-          "Can I get the whole fee back?"),
-    "plus_reinstate_days": dict(
-        b="B-24", anchor="account-and-membership.md#6.2", tags=["membership"], probe=31,
-        q="My Aurora Plus membership was suspended {v} days ago for non-payment. Can I "
-          "still reinstate it?"),
-    "erasure_grace_period_days": dict(
-        b="B-25", anchor="privacy-and-data.md#3.2", tags=["privacy"], probe=15,
-        q="I asked you to erase my personal data {v} days ago and I have changed my mind. "
-          "Can I cancel the request?"),
-    "promotional_discount_threshold_percent": dict(
-        b="B-26", anchor="promotions-and-price-match.md#1.1", tags=["returns", "promotions"], probe="full",
-        q="I bought an item at {v} percent off with no promo code and no campaign tag. "
-          "Does that count as a promotional item for the return window?"),
-    "return_window_promotional": dict(
-        b="B-27", anchor="promotions-and-price-match.md#2.1", tags=["returns", "promotions"], probe="full",
-        q="I bought a promotional item and it was delivered {v} days ago. Can I still "
-          "return it?"),
-    "clearance_discount_threshold_percent": dict(
-        b="B-28", anchor="promotions-and-price-match.md#4.1", tags=["returns", "promotions"], probe="full",
-        # A-14: sual əvvəllər «An END-OF-LINE item …» idi. Korpus
-        # (`promotions-and-price-match.md` §4.2) end-of-line bayrağını TƏK
-        # BAŞINA clearance üçün kifayət sayır — yəni 49% probe-unda kanonik
-        # gözlənti (`promotional_not_clearance`) sənədlə ZİDDİYYƏT təşkil edirdi
-        # və agentin düzgün cavabı («end-of-line olduğu üçün clearance-dir»)
-        # uğursuzluq kimi görünürdü. Sual endirim faizini YEGANƏ tetikleyici
-        # saxlayacaq şəkildə yenidən yazıldı; hədd probe-u dəyişmir.
-        q="A seasonal-campaign item was marked down by {v} percent. It is not flagged as "
-          "end-of-line stock. Is it treated as clearance or as an ordinary promotional item?"),
-    "price_match_window_days": dict(
-        b="B-29", anchor="promotions-and-price-match.md#5.2", tags=["promotions"], probe="full",
-        q="I placed my order {v} days ago and I have just seen the same item cheaper "
-          "elsewhere. Will you accept my price match claim?"),
-    "price_match_cap": dict(
-        b="B-30", anchor="promotions-and-price-match.md#5.3", tags=["promotions"], probe=200.01,
-        q="My price match claim is inside the window and the price difference is {v} AZN. "
-          "How much will I actually get back?"),
-    "return_window_international": dict(
-        b="B-31", anchor="international-shipping.md#5.1", tags=["returns", "international"], probe="full",
-        q="My order was delivered to Germany {v} days ago. Can I still return it?"),
-    "intl_max_parcel_weight_kg": dict(
-        b="B-32", anchor="international-shipping.md#3.1", tags=["international", "shipping"], probe=30.1,
-        q="I want to ship an international order that weighs {v} kg. Will you accept it?"),
-    "intl_max_declared_value": dict(
-        b="B-33", anchor="international-shipping.md#3.3", tags=["international"], probe=5000.01,
-        q="My international parcel has a declared value of {v} AZN. Will you accept it?"),
-    "intl_ddp_threshold": dict(
-        b="B-34", anchor="international-shipping.md#4.2", tags=["international", "payments"], probe="full",
-        q="My international order has a merchandise value of {v} AZN. Who pays the import "
-          "duties and taxes, me or Aurora Goods?"),
-    "intl_rma_arrival_days": dict(
-        b="B-35", anchor="international-shipping.md#5.3", tags=["international", "returns"], probe=31,
-        q="My international return parcel will reach your warehouse {v} days after the RMA "
-          "was issued. Will it be accepted?"),
-    "intl_transit_damage_report_days": dict(
-        b="B-36", anchor="international-shipping.md#6.1", tags=["international", "damage"], probe=15,
-        q="My parcel to Georgia arrived damaged. It was delivered {v} days ago and I am "
-          "reporting it now. Will you accept the transit damage claim?"),
+CORPORA_DIR = Path(__file__).resolve().parent / "corpora"
+
+MACROS: dict[str, str] = {
+    "REJECT": REJECT, "WARRANTY_OVER": WARRANTY_OVER, "UNAVAILABLE": UNAVAILABLE,
+    "DEADLINE_PASSED": DEADLINE_PASSED, "REFUSAL": REFUSAL,
+    "PRICE_MATCH_REJECT": PRICE_MATCH_REJECT, "REJECT_AZ": REJECT_AZ,
+    "REJECT_RU": REJECT_RU, "GAP07_FABRICATION": GAP07_FABRICATION,
+    "ANY_FIGURE": ANY_FIGURE,
 }
 
-# Sərhəd probe-larının fixture bağı (varsa) — case `source`-unda göstərilir.
-BFIXTURE: dict[tuple[str, str], str] = {
-    ("return_window_standard", "13"): "ORD-10001",
-    ("return_window_standard", "14"): "ORD-10002",
-    ("return_window_standard", "15"): "ORD-10003",
-    ("return_window_promotional", "6"): "ORD-10004",
-    ("return_window_promotional", "7"): "ORD-10005",
-    ("return_window_promotional", "8"): "ORD-10006",
-    ("promotional_discount_threshold_percent", "29"): "ORD-10007",
-    ("promotional_discount_threshold_percent", "30"): "ORD-10008",
-    ("promotional_discount_threshold_percent", "31"): "ORD-10009",
-    ("return_window_plus_member", "29"): "ORD-10010",
-    ("return_window_plus_member", "30"): "ORD-10011",
-    ("return_window_plus_member", "31"): "ORD-10012",
-    ("return_window_international", "20"): "ORD-10016",
-    ("return_window_international", "21"): "ORD-10017",
-    ("return_window_international", "22"): "ORD-10018",
-    ("clearance_discount_threshold_percent", "49"): "ORD-10022",
-    ("clearance_discount_threshold_percent", "50"): "ORD-10023",
-    ("cod_max_order_value", "499.99"): "ORD-10028",
-    ("cod_max_order_value", "500.0"): "ORD-10029",
-    ("cod_max_order_value", "500.01"): "ORD-10030",
-    ("free_shipping_threshold_domestic", "99.99"): "ORD-10031",
-    ("free_shipping_threshold_domestic", "100.0"): "ORD-10032",
-    ("signature_required_threshold", "750.01"): "ORD-10035",
-    ("dispatch_cutoff_time", "13:59"): "ORD-10036",
-    ("dispatch_cutoff_time", "14:00"): "ORD-10037",
-    ("dispatch_cutoff_time", "14:01"): "ORD-10038",
-    ("heavy_item_surcharge_weight", "30.1"): "ORD-10040",
-    ("freight_return_weight_threshold", "20.1"): "ORD-10041",
-    ("intl_ddp_threshold", "999.99"): "ORD-10042",
-    ("intl_ddp_threshold", "1000.0"): "ORD-10043",
-    ("warranty_standard_months", "13"): "ORD-10045",
-    ("delivery_attempts", "4"): "ORD-10054",
-    ("instalment_min_order_value", "199.99"): "ORD-10059",
-    ("price_match_window_days", "13"): "ORD-10061",
-    ("price_match_window_days", "14"): "ORD-10062",
-    ("price_match_window_days", "15"): "ORD-10063",
-    ("intl_max_parcel_weight_kg", "30.1"): "ORD-10064",
-    ("lockout_failed_attempts", "4"): "SC-05",
-    ("plus_reinstate_days", "31"): "SC-02",
-    ("erasure_grace_period_days", "15"): "SC-04",
-}
+
+class CorpusConfig:
+    """Bir korpusun generator üçün lazım olan hər şeyi. SABİT KOD YOXDUR.
+
+    `@dataclass` QƏSDƏN İŞLƏDİLMİR: bu modul bir neçə testdə
+    `importlib.util.spec_from_file_location(...)` ilə sys.modules-a yazılmadan
+    yüklənir və `from __future__ import annotations` ilə birlikdə dataclass
+    annotasiyanı həll edə bilmir (`AttributeError: 'NoneType' … __dict__`).
+    Sadə sinif bu asılılığı yaradmır.
+    """
+
+    def __init__(self, *, name: str, corpus_dir: Path, canonical_path: Path,
+                 out_path: Path, blocks: tuple, traps_doc: str,
+                 boundaries: dict, fixtures: dict, labels: dict) -> None:
+        self.name = name
+        self.corpus_dir = corpus_dir
+        self.canonical_path = canonical_path
+        self.out_path = out_path
+        self.blocks = blocks
+        #: Tələ reyestri sənədi — case `source`-u ora işarə edir. Aurora-da
+        #: `TRAPS.md`; tələ reyestri olmayan korpusda konfiqurasiyanın özü
+        #: göstərilir ki, izlənəbilirlik qırılmasın.
+        self.traps_doc = traps_doc
+        self.boundaries = boundaries
+        self.fixtures = fixtures
+        self.labels = labels
+
+    def canonical(self) -> dict[str, Any]:
+        return yaml.safe_load(self.canonical_path.read_text(encoding="utf-8"))
+
+    @staticmethod
+    def ref_date(canonical: dict[str, Any]) -> str:
+        """Referens tarixi TƏK MƏNBƏDƏN gəlir: `meta.evaluation_reference_date`.
+
+        Generatorda sabit kodlanmış tarix saxlamaq iki həqiqət mənbəyi yaradır;
+        korpus saatını dəyişəndə dataset səssizcə köhnəlir.
+        """
+        ref = (canonical.get("meta") or {}).get("evaluation_reference_date")
+        if not ref:
+            raise ValueError("CANONICAL.yaml → meta.evaluation_reference_date yoxdur — "
+                             "qaçış saatı pin-lənməyib, dataset divar saatından asılı olur")
+        return str(ref)
+
+
+def _assertion(entry: dict[str, Any]) -> Assertion:
+    if "macro" in entry:
+        if entry["macro"] not in MACROS:
+            raise ValueError(f"tanınmayan makro: {entry['macro']} "
+                             f"(mövcud: {sorted(MACROS)})")
+        pattern = MACROS[entry["macro"]]
+    else:
+        pattern = entry["pattern"]
+    return _rx(pattern, invert=bool(entry.get("invert")))
+
+
+def load_corpus(name_or_path: str, *, corpus_dir: str | None = None,
+                out: str | None = None) -> CorpusConfig:
+    path = Path(name_or_path)
+    if not path.exists():
+        path = CORPORA_DIR / f"{name_or_path}.yaml"
+    if not path.exists():
+        known = sorted(p.stem for p in CORPORA_DIR.glob("*.yaml"))
+        raise FileNotFoundError(f"korpus konfiqurasiyası yoxdur: {name_or_path} "
+                                f"(mövcud: {known})")
+    cfg = yaml.safe_load(path.read_text(encoding="utf-8"))
+    root = ROOT
+    cdir = Path(corpus_dir) if corpus_dir else root / cfg["corpus_dir"]
+    return CorpusConfig(
+        name=cfg["name"],
+        corpus_dir=cdir,
+        canonical_path=cdir / cfg.get("canonical", "CANONICAL.yaml"),
+        out_path=Path(out) if out else path.parent.parent / cfg["out"],
+        blocks=tuple(cfg["blocks"]),
+        traps_doc=cfg.get("traps_doc", "TRAPS.md"),
+        boundaries={k: dict(v) for k, v in cfg["boundaries"].items()},
+        fixtures={(a, b): c for a, b, c in cfg.get("fixtures", [])},
+        labels={k: _assertion(v) for k, v in cfg["labels"].items()},
+    )
+
+
+#: Aurora modul səviyyəsində yüklənir: `r6`/`s`/`t1` blokları ƏL İLƏ yazılıb
+#: və Aurora etiketlərinə birbaşa istinad edir (`LABEL_ASSERT["cod_available"]`).
+#: Onlar korpusdan-korpusa köçmür — `blocks:` siyahısı bunu açıq deyir.
+AURORA = load_corpus("aurora")
+LABEL_ASSERT: dict[str, Assertion] = AURORA.labels
+BSPEC: dict[str, dict[str, Any]] = AURORA.boundaries
+BFIXTURE: dict[tuple[str, str], str] = AURORA.fixtures
+
+
+
 
 
 def fmt_value(value: Any) -> str:
@@ -627,11 +408,14 @@ def slug(value: Any) -> str:
     return fmt_value(value).replace(".", "-").replace(":", "").replace(" ", "")
 
 
-def boundary_cases(canonical: dict[str, Any]) -> list[dict[str, Any]]:
+def boundary_cases(canonical: dict[str, Any],
+                   cfg: CorpusConfig | None = None) -> list[dict[str, Any]]:
+    cfg = cfg or AURORA
+    bspec, labels, bfixture = cfg.boundaries, cfg.labels, cfg.fixtures
     cases: list[dict[str, Any]] = []
     seen_params: set[str] = set()
     for param in canonical["parameters"]:
-        spec = BSPEC.get(param["id"])
+        spec = bspec.get(param["id"])
         if spec is None:
             continue
         seen_params.add(param["id"])
@@ -647,16 +431,16 @@ def boundary_cases(canonical: dict[str, Any]) -> list[dict[str, Any]]:
                 )
         for point in chosen:
             label = point["expected"]
-            if label not in LABEL_ASSERT:
+            if label not in labels:
                 raise ValueError(f"{param['id']}: '{label}' etiketi üçün assertion yoxdur")
-            grader, expect = LABEL_ASSERT[label]
+            grader, expect = labels[label]
             value = fmt_value(point["value"])
             position = {points[0]["value"]: "inside", points[1]["value"]: "edge"}.get(
                 point["value"], "outside"
             )
-            fixture = BFIXTURE.get((param["id"], fmt_value(point["value"])))
+            fixture = bfixture.get((param["id"], fmt_value(point["value"])))
             src = (
-                f"TRAPS.md#{spec['b']} · CANONICAL.yaml#{param['id']}.boundary[{value}]"
+                f"{cfg.traps_doc}#{spec['b']} · CANONICAL.yaml#{param['id']}.boundary[{value}]"
                 f"{' · FIXTURES.yaml#' + fixture if fixture else ''}"
             )
             tags = ["boundary", "bva", "G2", spec["b"], position, *spec["tags"]]
@@ -671,7 +455,7 @@ def boundary_cases(canonical: dict[str, Any]) -> list[dict[str, Any]]:
                 severity="high" if position == "outside" else "medium",
                 source=src,
             ))
-    missing = set(BSPEC) - seen_params
+    missing = set(bspec) - seen_params
     if missing:
         raise ValueError(f"BSPEC-də CANONICAL-da olmayan parametr(lər): {sorted(missing)}")
     return cases
@@ -1454,6 +1238,117 @@ def c1_cases() -> list[dict[str, Any]]:
     return out
 
 
+# ----------------------------------------------------------------------------
+# 8b. C1 DEQRADASİYA ƏYRİSİ — «neçənci növbədə sınır?» (AP-017)
+# ----------------------------------------------------------------------------
+# `COVERAGE.md §9.4`: mövcud C1 case-ləri çoxnövbəli sınmanın FAKTINI verir,
+# `failure-onset turn`-ü yox. ICLR 2026 işi çoxnövbəli söhbətdə 39% orta düşmə
+# ölçüb — amma «hansı növbədə» sualına cavab yalnız EYNİ SUALIN fərqli məsafədə
+# verilmiş variantları ilə alınır.
+#
+# DİZAYN — YEGANƏ DƏYİŞƏN MƏSAFƏDİR.
+#   Faktlar HƏMİŞƏ birinci mesajdadır və sözbəsöz eynidir.
+#   Sual HƏMİŞƏ sonuncu mesajdadır və sözbəsöz eynidir.
+#   Assertion də eynidir.
+#   Dəyişən yalnız aralarındakı MƏZMUNSUZ növbələrin sayıdır:
+#       turns-1 → məsafə 0 (hər şey bir mesajda)
+#       turns-3 → məsafə 2
+#       turns-5 → məsafə 4
+#       turns-8 → məsafə 7
+#   Ona görə eyni ailənin iki üzvü arasındakı fərqi BAŞQA heç nə izah edə
+#   bilməz: nə sual mətni, nə iynə, nə fixture. Bu, `docs/GRADER-AUDIT.md`-nin
+#   əsas dərsidir — iki şeyi eyni anda dəyişən case ölçmür, təxmin etdirir.
+#
+# Doldurucu növbələr MƏLUMAT DAŞIMIR (yalnız nəzakət/gözləmə). Məlumat
+# daşısaydılar, ölçdüyümüz kontekst məsafəsi deyil, məlumat həcmi olardı.
+# ----------------------------------------------------------------------------
+CURVE_TURNS = (1, 3, 5, 8)
+
+CURVE_FILLERS = [
+    "Sorry, one moment — I am typing on my phone.",
+    "Thanks for waiting.",
+    "Okay.",
+    "Sorry for the delay, my connection dropped.",
+    "Are you still there?",
+    "Right, one more moment please.",
+]
+
+#: (ailə, faktlar, sual, grader, expect, mənbə, ciddilik)
+CURVE_FAMILIES: list[tuple[str, list[str], str, str, dict[str, Any], str, str]] = [
+    ("t01-standard-window",
+     ["I have a question about a return.",
+      "It is order ORD-10015, a printer bought at full price.",
+      "I am not an Aurora Plus member and the item was not on promotion."],
+     "It was delivered 20 days ago. Am I still inside the return window?",
+     "regex_match", {"pattern": REJECT},
+     "TRAPS.md#T-01 · FAILURE-TAXONOMY.md#C1 failure-onset · FIXTURES.yaml#ORD-10015",
+     "high"),
+    ("c03-plus-vs-promotional",
+     ["I would like to return something.",
+      "I am an Aurora Plus member.",
+      "The item was part of the back-to-school campaign. Order ORD-10014."],
+     "It was delivered 8 days ago. Can I still return it?",
+     "regex_match", {"pattern": REJECT},
+     "TRAPS.md#C-03 precedence ladder · FAILURE-TAXONOMY.md#C1 failure-onset · "
+     "FIXTURES.yaml#ORD-10014",
+     "high"),
+    ("c04-international-vs-plus",
+     ["I have a question about a return.",
+      "I am an Aurora Plus member.",
+      "The parcel went to Turkey. Order ORD-10019."],
+     "It was delivered 28 days ago. Is it still returnable?",
+     "regex_match", {"pattern": REJECT},
+     "TRAPS.md#C-04 · FAILURE-TAXONOMY.md#C1 failure-onset · FIXTURES.yaml#ORD-10019",
+     "high"),
+    ("t07-warranty-on-delivery-version",
+     ["I need help with a warranty claim.",
+      "It is order ORD-10046, an Aurora-branded vacuum cleaner.",
+      "It was delivered on 2024-09-01 and it has now stopped working."],
+     "Is it still covered by the warranty?",
+     "regex_match", {"pattern": WARRANTY_OVER},
+     "TRAPS.md#T-07 · CANONICAL.yaml#temporal_applicability · "
+     "FAILURE-TAXONOMY.md#C1 failure-onset · FIXTURES.yaml#ORD-10046",
+     "high"),
+    ("t10-cod-limit",
+     ["I want to ask about payment options.",
+      "My delivery address is in Baku, so it is a domestic order.",
+      "The merchandise value of my basket is 400.00 AZN."],
+     "Can I pay for it cash on delivery?",
+     *LABEL_ASSERT["cod_available"],
+     "TRAPS.md#T-10 · FAILURE-TAXONOMY.md#C1 failure-onset · "
+     "CANONICAL.yaml#cod_max_order_value",
+     "high"),
+]
+
+
+def curve_turns(facts: list[str], question: str, n: int) -> list[str]:
+    """`n` növbəlik söhbət. Faktlar 1-ci mesajda, sual sonuncuda, ara boş."""
+    if n == 1:
+        return [" ".join([*facts, question])]
+    fillers = CURVE_FILLERS[:n - 2]
+    if len(fillers) < n - 2:                      # doldurucu çatmır
+        raise ValueError(f"{n} növbə üçün doldurucu azdır ({len(CURVE_FILLERS)} var)")
+    return [" ".join(facts), *fillers, question]
+
+
+def c1_curve_cases() -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for family, facts, question, grader, expect, src, sev in CURVE_FAMILIES:
+        for n in CURVE_TURNS:
+            msgs = curve_turns(facts, question, n)
+            assert len(msgs) == n and msgs[-1] == question or n == 1
+            out.append(dict(
+                id=f"c1curve-{family}-t{n}",
+                input=[{"role": "user", "content": m} for m in msgs],
+                grader=grader,
+                tags=["multi-turn", "C1", "conversation", "degradation-curve",
+                      f"curve-{family}", f"turns-{n}",
+                      f"distance-{0 if n == 1 else n - 1}"],
+                expect=dict(expect), severity=sev, source=src,
+            ))
+    return out
+
+
 # ============================================================================
 # 9. Baseline (MFT) və G7 — yalançı imtina
 # ----------------------------------------------------------------------------
@@ -1739,24 +1634,41 @@ HEADER = """\
 """
 
 
-def build() -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    canonical = yaml.safe_load((CORPUS / "CANONICAL.yaml").read_text(encoding="utf-8"))
-    blocks: list[tuple[str, Callable[[], list[dict[str, Any]]]]] = [
-        ("G2 sərhəd (BVA)", lambda: boundary_cases(canonical)),
-        ("R6 bayat bənd", r6_cases),
-        ("Pairwise", lambda: pw[0]),
-        ("G1 uydurma", g1_cases),
-        ("L1 çoxdilli", l1_cases),
-        ("T1 write/guard", t1_cases),
-        ("S1/S2 injection", s_cases),
-        ("Baseline/G7", baseline_cases),
-        ("C1 çoxnövbəli", c1_cases),
-        ("G3/R3 + R2 retrieval", multi_and_retrieval_cases),
-    ]
-    pw = pairwise_cases()
+#: Blok adı → generator. TÖRƏDİLƏN bloklar (`boundary`, `r6`) korpusdan
+#: asılıdır və hər korpusda qaçır; qalanları Aurora məzmununa ƏL İLƏ yazılıb.
+#: Korpus konfiqurasiyasındakı `blocks:` siyahısı hansının qaçdığını deyir —
+#: yəni «bu dataset nə qədər törədilib, nə qədər əl işidir» sualının cavabı
+#: konfiqurasiyada AÇIQ yazılıdır, kodda gizlənmir.
+DERIVED_BLOCKS = {"boundary", "r6"}
+
+
+def build(cfg: CorpusConfig | None = None) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    cfg = cfg or AURORA
+    canonical = cfg.canonical()
+    ref_date = CorpusConfig.ref_date(canonical)
+    pw = pairwise_cases() if "pairwise" in cfg.blocks else ([], (0, 0))
+    registry: dict[str, tuple[str, Callable[[], list[dict[str, Any]]]]] = {
+        "boundary": ("G2 sərhəd (BVA)", lambda: boundary_cases(canonical, cfg)),
+        "r6": ("R6 bayat bənd", r6_cases),
+        "pairwise": ("Pairwise", lambda: pw[0]),
+        "g1": ("G1 uydurma", g1_cases),
+        "l1": ("L1 çoxdilli", l1_cases),
+        "t1": ("T1 write/guard", t1_cases),
+        "s": ("S1/S2 injection", s_cases),
+        "baseline": ("Baseline/G7", baseline_cases),
+        "c1": ("C1 çoxnövbəli", c1_cases),
+        "c1_curve": ("C1 deqradasiya əyrisi", c1_curve_cases),
+        "multi": ("G3/R3 + R2 retrieval", multi_and_retrieval_cases),
+    }
+    unknown = set(cfg.blocks) - set(registry)
+    if unknown:
+        raise ValueError(f"{cfg.name}: tanınmayan blok(lar): {sorted(unknown)}")
+
     cases: list[dict[str, Any]] = []
-    stats: dict[str, Any] = {"blocks": {}, "pairwise_coverage": pw[1]}
-    for name, fn in blocks:
+    stats: dict[str, Any] = {"blocks": {}, "pairwise_coverage": pw[1],
+                             "ref_date": ref_date, "corpus": cfg.name}
+    for key in cfg.blocks:
+        name, fn = registry[key]
         block = fn()
         stats["blocks"][name] = len(block)
         cases.extend(block)
@@ -1764,8 +1676,36 @@ def build() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     dupes = sorted({i for i in ids if ids.count(i) > 1})
     if dupes:
         raise ValueError(f"təkrarlanan case id-ləri: {dupes}")
+    _assert_no_future_dates(cases, ref_date)
     stats["total"] = len(cases)
+    stats["derived"] = sum(n for k, (name, _) in registry.items()
+                           for bn, n in stats["blocks"].items()
+                           if bn == name and k in DERIVED_BLOCKS)
     return cases, stats
+
+
+_DATE_IN_TEXT = re.compile(r"\b(20\d{2}-\d{2}-\d{2})\b")
+
+
+def _assert_no_future_dates(cases: list[dict[str, Any]], ref_date: str) -> None:
+    """Case SORĞUSUNDAKI heç bir tarix qaçış saatından SONRA ola bilməz.
+
+    `ref_date` sabit kodlanmış olsaydı bu yoxlama mənasız olardı — korpus
+    saatını dəyişəndə generator səssizcə gələcəkdən danışan sorğu verərdi
+    («2026-11-01-də çatdırıldı, qaytara bilərəmmi?»). İndi tarix korpusdan
+    gəlir və yoxlama onu bağlayır.
+
+    Yalnız `input` yoxlanılır: GÖZLƏNİLƏN CAVABDA gələcək tarix normaldır
+    (zəmanətin 2027-03-01-də bitməsi düzgün cavabdır, səhv deyil).
+    """
+    bad: list[str] = []
+    for case in cases:
+        text = json.dumps(case["input"], ensure_ascii=False)
+        for d in _DATE_IN_TEXT.findall(text):
+            if d > ref_date:
+                bad.append(f"{case['id']}: {d} > ref_date {ref_date}")
+    if bad:
+        raise ValueError("qaçış saatından sonrakı tarix(lər):\n  " + "\n  ".join(bad))
 
 
 def render(cases: list[dict[str, Any]]) -> str:
@@ -1781,12 +1721,18 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true",
                     help="yazma, yalnız mövcud faylla eyni olduğunu yoxla (CI)")
-    ap.add_argument("--out", default=str(OUT))
+    ap.add_argument("--corpus", default="aurora",
+                    help="korpus konfiqurasiyasının adı və ya yolu "
+                         "(evals/datasets/corpora/<ad>.yaml)")
+    ap.add_argument("--corpus-dir", default=None,
+                    help="konfiqurasiyadakı korpus qovluğunu əvəz edir")
+    ap.add_argument("--out", default=None, help="çıxış jsonl yolu")
     args = ap.parse_args(argv)
 
-    cases, stats = build()
+    cfg = load_corpus(args.corpus, corpus_dir=args.corpus_dir, out=args.out)
+    cases, stats = build(cfg)
     text = render(cases)
-    out = Path(args.out)
+    out = cfg.out_path
     if args.check:
         if not out.exists() or out.read_text(encoding="utf-8") != text:
             print(f"{out} generatorla sinxron deyil — `python {Path(__file__).name}` qaçır",
@@ -1797,9 +1743,12 @@ def main(argv: list[str] | None = None) -> int:
 
     out.write_text(text, encoding="utf-8")
     print(f"Yazıldı: {out}")
-    print(f"  cəmi case      : {stats['total']}")
+    print(f"  korpus         : {stats['corpus']}  ({cfg.corpus_dir})")
+    print(f"  referens tarixi: {stats['ref_date']}  (CANONICAL.meta-dan)")
+    print(f"  cəmi case      : {stats['total']}  (törədilən: {stats['derived']})")
     got, total = stats["pairwise_coverage"]
-    print(f"  pairwise əhatə : {got}/{total} cüt ({100 * got // total}%)")
+    if total:
+        print(f"  pairwise əhatə : {got}/{total} cüt ({100 * got // total}%)")
     for name, n in stats["blocks"].items():
         print(f"    {name:24s} {n:3d}")
     return 0

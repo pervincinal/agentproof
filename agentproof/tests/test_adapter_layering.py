@@ -8,6 +8,16 @@ Aşağıdakılar həmin qaydanı maşınla kilidləyir:
   adapters/_dify_wire.py   yalnız wire formatı — httpx-ə TOXUNMUR
   adapters/http_agent.py   HTTP müştərisi, < 250 sətir
   adapters/conformance.py  heç bir KONKRET adapteri idxal ETMİR
+
+AP-030/AP-031 ilə sərhəd İKİ yeni adapterə də şamil olunur:
+
+  adapters/json_http.py      bloklayıcı JSON müştərisi, < 250 sətir
+  adapters/callable_agent.py in-process çağırılan, < 250 sətir
+  adapters/_field_map.py     sahə adları — nə HTTP, nə hədəf tanıyır
+
+Qayda sadədir: **backoff, HALT və növbə birləşməsi YALNIZ nüvədədir**. Bu
+kilid olmasa, hər yeni adapter onları öz üslubunda yenidən yazardı və
+`full-run-03`-ün dərsləri üç fərqli cür sınardı.
 """
 
 from __future__ import annotations
@@ -21,6 +31,12 @@ ADAPTERS = Path(__file__).resolve().parents[1] / "adapters"
 
 #: `base.py` docstring-indəki vədin faktiki həddi (AP-029 DoD).
 MAX_ADAPTER_LINES = 250
+
+#: Hər biri BİR hədəf ailəsinin məftilini/çağırış üsulunu saxlayır.
+ADAPTER_FILES = ("http_agent.py", "json_http.py", "callable_agent.py")
+
+#: Nüvə qatı: konkret hədəfi tanımayan, hamı tərəfindən paylaşılan kod.
+CORE_FILES = ("_http_core.py", "_field_map.py")
 
 
 def _source(name: str) -> str:
@@ -55,12 +71,27 @@ def _imports(name: str) -> set[str]:
 
 def test_core_does_not_know_about_dify():
     """Nüvə hədəfin protokolunu tanısaydı, ikinci adapter onu miras alardı."""
-    code = _code("_http_core.py").lower()
-    assert "dify" not in code, "nüvənin KODUNDA Dify izi qaldı"
-    assert "httpx" not in code, "nüvə HTTP kitabxanasına bağlanmamalıdır"
+    for name in CORE_FILES:
+        code = _code(name).lower()
+        assert "dify" not in code, f"{name}: nüvənin KODUNDA Dify izi qaldı"
+        assert "httpx" not in code, f"{name}: nüvə HTTP kitabxanasına bağlanmamalıdır"
     assert not any("adapters" in m for m in _imports("_http_core.py")), (
         "nüvə heç bir konkret adapteri idxal etməməlidir"
     )
+    # `_field_map` yalnız nüvənin köməkçilərini götürür, adapter idxal ETMİR.
+    foreign = {
+        m for m in _imports("_field_map.py")
+        if "adapters" in m and not m.startswith("agentproof.adapters._http_core")
+    }
+    assert not foreign, f"_field_map.py konkret adapter idxal edir: {sorted(foreign)}"
+
+
+def test_field_map_has_no_target_specific_names():
+    """Sahə adları KONFİQURASİYADADIR — biri kodda sabitlənsəydi, növbəti
+    müştəri üçün yenə fayl redaktə etmək lazım gələrdi."""
+    code = _code("_field_map.py").lower()
+    for vendor in ("dify", "langgraph", "llamaindex", "openai", "anthropic", "vercel"):
+        assert vendor not in code, f"_field_map.py kodunda `{vendor}` adı var"
 
 
 def test_wire_layer_does_not_open_connections():
@@ -72,17 +103,35 @@ def test_wire_layer_does_not_open_connections():
 
 def test_adapter_file_stays_small():
     """786 sətir bir daha yığılmasın: hədd testdədir, docstring-də deyil."""
-    lines = len(_source("http_agent.py").splitlines())
-    assert lines <= MAX_ADAPTER_LINES, f"http_agent.py {lines} sətirdir"
+    for name in ADAPTER_FILES:
+        lines = len(_source(name).splitlines())
+        assert lines <= MAX_ADAPTER_LINES, f"{name} {lines} sətirdir"
 
 
 def test_backoff_and_merge_live_only_in_the_core():
     """Təkrar maşını və növbə birləşməsi adapterdə TƏKRARLANMAMALIDIR."""
-    for name in ("http_agent.py", "_dify_wire.py"):
+    for name in ADAPTER_FILES + ("_dify_wire.py", "_field_map.py"):
         code = _code(name)
         assert "asyncio . sleep" not in code, f"{name}: backoff gözləməsi nüvədə olmalıdır"
         assert "RETRYABLE" not in code, f"{name}: təkrar qərarı nüvədə olmalıdır"
         assert "HALT" not in code, f"{name}: qaçışın dayandırılması nüvədə olmalıdır"
+
+
+def test_every_adapter_uses_the_shared_core():
+    """Yeni adapter nüvəni ATLAYA bilməz.
+
+    Atlasaydı, backoff/HALT/növbə birləşməsi orada sıfırdan yazılardı — və
+    bu, AP-029-un aradan qaldırdığı vəziyyətin eynisidir.
+    """
+    for name in ADAPTER_FILES:
+        imports = _imports(name)
+        assert "agentproof.adapters._http_core" in imports, f"{name} nüvəni idxal etmir"
+        assert f"agentproof.adapters._http_core.send_with_retry" in imports, (
+            f"{name}: sorğu nüvənin təkrar maşınından KEÇMİR"
+        )
+        assert f"agentproof.adapters._http_core.merge_turns" in imports, (
+            f"{name}: növbələr nüvə ilə birləşdirilmir"
+        )
 
 
 def test_conformance_suite_is_adapter_agnostic():

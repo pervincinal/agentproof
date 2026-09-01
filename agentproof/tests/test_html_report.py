@@ -11,11 +11,15 @@ olunmasını təmin edən üç şərt maşınla yoxlanır:
   3. **Kənara sorğu getmir və məzmun kod kimi icra olunmur** — CDN yoxdur,
      case mətnindəki HTML/skript escape olunur (dataset-də prompt injection
      yükləri var: escape olunmasa hesabatın özü hücum səthidir).
+  4. **`--audience client` yalnız DAXİLİ izi çıxarır** (AP-039) — tapşırıq
+     nömrəsi, repo yolu, daxili əmr. Ölçü nəticəsi, məhdudiyyət və məcburi
+     bölmələr hər iki rejimdə eynidir; məcburi bölməni kəsmək cəhdi qırmızıdır.
 """
 
 from __future__ import annotations
 
 import json
+import pathlib
 import re
 
 import pytest
@@ -459,3 +463,227 @@ def test_cli_returns_error_when_no_run_record_found(tmp_path, capsys):
     (tmp_path / "empty").mkdir()
     assert html_mod.main([str(tmp_path / "empty")]) == 2
     assert "RunRecord tapılmadı" in capsys.readouterr().err
+
+
+# =====================================================================
+# 4. Auditoriya: `--audience client|internal` (AP-039)
+#
+# Burada yoxlanan iki şey var və ikisi də hesabatın etibarı ilə bağlıdır:
+#   a) `client` rejimində DAXİLİ iz qalmır (tapşırıq nömrəsi, repo yolu,
+#      daxili rol adı, daxili əmr) — AP-037-də bu `grep` ilə əl ilə edilirdi;
+#   b) `client` rejimi heç bir ÖLÇÜ nəticəsini gizlətmir. Müştəri hesabatı
+#      daha az daxilidir, daha az dürüst DEYİL.
+# =====================================================================
+def _client(record, **kw):
+    return html_mod.render(record, audience=html_mod.CLIENT, **kw)
+
+
+def test_internal_is_the_default_and_keeps_internal_references():
+    """`internal` rejimi dəyişmir: repo yolu və düzəliş əmri yerindədir."""
+    page = html_mod.render(_record([_result("c1", passed=False)]))
+    assert "evals/run.py" in page
+    assert "FAILURE-TAXONOMY" in page
+    assert html_mod.find_internal_traces(page)  # daxili rejimdə izlər QALIR
+
+
+def test_client_mode_leaves_no_internal_trace():
+    """AP-037-nin əl ilə `grep`-i — avtomatlaşdırılmış hali."""
+    record = _record(
+        [_result("c1", passed=False, tags=["G2", "GAP-02", "returns"])],
+        n_skipped=1,
+    )
+    page = _client(record, dataset_path="evals/datasets/full.jsonl")
+    assert html_mod.find_internal_traces(page) == []
+    for needle in ("evals/", "FAILURE-TAXONOMY", "python -m agentproof", "board/task.py"):
+        assert needle not in page
+
+
+def test_gap_tag_is_not_mistaken_for_an_internal_task_number():
+    """`GAP-02` dataset taqıdır, AP-xxx deyil — skanner onu tutmamalıdır."""
+    assert html_mod.find_internal_traces("<p>GAP-02 · MAP-07</p>") == []
+    assert html_mod.find_internal_traces("<p>AP-039</p>") == [
+        ("daxili tapşırıq nömrəsi", "AP-039")
+    ]
+
+
+def test_evidence_text_is_never_scrubbed():
+    """Sübut mətni redaktə olunmur: müştəri üçün təmizləmək ≠ sübutu dəyişmək."""
+    quote = "Agent dedi: evals/run.py faylına baxın (AP-999)"
+    record = _record([_result("c1", passed=False, text=quote)])
+    page = _client(record)
+    assert quote in page
+
+
+def test_scrub_replaces_a_leaked_trace_visibly_not_silently():
+    scrubbed = html_mod.scrub_internal("<p>bax AP-012 və evals/run.py</p>")
+    assert "AP-012" not in scrubbed and "evals/run.py" not in scrubbed
+    assert scrubbed.count(html_mod.REDACTED) == 2
+
+
+# --------------------------------------------- client rejimi nəyi GİZLƏTMİR
+def test_client_mode_keeps_every_limitation_and_warning():
+    """Məhdudiyyət, flaky, kalibrasiya, ölçülməyən xərc — hamısı qalır."""
+    record = _record(
+        [_result("c1", passed=False, usage=False), _result("c2", skipped=True)],
+        n_skipped=1,
+        cost_coverage={"attempts": 4, "unmeasured_attempts": 2, "status": "unmeasured"},
+        wasted_cost_usd=0.42,
+        judge={
+            "used": True, "graders": ["requires_justification"], "calibrated": True,
+            "passed": True, "agreement": 0.9666, "kappa": 0.9497, "n": 30,
+            "rubric": "requires_justification@v1", "judge_model": "claude-opus-5",
+            "summary": "uyğunluq 96.7%",
+        },
+    )
+    page = _client(record)
+    assert "BASELINE YOXDUR" in page          # məhdudiyyət
+    assert "REPRODUKSİYA TƏSNİFATI YOXDUR" in page
+    assert "ÖLÇÜLMƏDİ" in page                # flaky ölçülmədi
+    assert "96.7%" in page and "0.950" in page  # kalibrasiya rəqəmi
+    assert "ÖLÇÜLMƏDİ (naməlum, sıfır deyil)" in page  # ölçülməyən xərc
+    assert "Nəyi ölçmədik" in page
+    assert "səssiz keçmə DEYİL" in page       # skipped izahı
+
+
+def test_client_and_internal_pages_report_identical_numbers():
+    """Auditoriya DİLİ dəyişir, RƏQƏMİ yox."""
+    record = _record(
+        [_result("c1", passed=False), _result("c2"), _result("c3", skipped=True)],
+        n_skipped=1,
+    )
+    def nums(page):
+        return sorted(re.findall(r"\d+\.\d%|\$\d+\.\d+|\d+ / \d+", page))
+
+    internal = nums(html_mod.render(record))
+    assert len(internal) > 5, "test boşa çıxmasın: müqayisə olunacaq rəqəm olmalıdır"
+    assert internal == nums(_client(record))
+
+
+# ------------------------------------------------------- məcburi bölmələr
+@pytest.mark.parametrize("audience", list(html_mod.AUDIENCES))
+def test_mandatory_sections_are_present_in_both_audiences(audience):
+    page = html_mod.render(_record([_result("c1", passed=False)]), audience=audience)
+    for sid, name in html_mod.MANDATORY_SECTIONS:
+        assert f'id="{sid}"' in page, sid
+        assert name in page, name
+    assert page.count(html_mod.MANDATORY_MARK) == len(html_mod.MANDATORY_SECTIONS)
+
+
+@pytest.mark.parametrize(
+    "section",
+    ["_section_not_measured", "_section_measurement_audit", "_section_judge",
+     "_section_reproduction"],
+)
+@pytest.mark.parametrize("audience", list(html_mod.AUDIENCES))
+def test_cutting_a_mandatory_section_makes_the_render_fail(monkeypatch, section, audience):
+    """Satış sənədində ən çox kəsilmək istənən bölmələr — kəsmək cəhdi qırmızıdır."""
+    monkeypatch.setattr(html_mod, section, lambda *a, **k: "")
+    with pytest.raises(html_mod.MandatorySectionMissing):
+        html_mod.render(_record([_result("c1", passed=False)]), audience=audience)
+
+
+def test_not_measured_section_lists_direction_and_unsupported_claims():
+    page = _client(_record([_result("c1", passed=False)]))
+    assert "↓ GİZLƏDİR" in page and "↔ İKİ TƏRƏFLİ" in page
+    assert "çıxarıla BİLMƏYƏN nəticələr" in page
+    # şablon §8: cədvəl ən azı 5 sətirdir
+    table = page.split("çıxarıla BİLMƏYƏN nəticələr")[1].split("</table>")[0]
+    assert table.count('<tr><td class="num">') >= 5
+
+
+def test_measurement_audit_says_unknown_when_no_manual_audit_was_recorded():
+    page = _client(_record([_result("c1", passed=False)]))
+    assert "ƏL İLƏ GRADER AUDİTİ BU ARTEFAKTDA QEYD OLUNMAYIB" in page
+    assert "NAMƏLUMDUR" in page
+
+
+def test_measurement_audit_shows_recorded_grader_audit_numbers():
+    record = _record(
+        [_result("c1", passed=False)],
+        grader_audit={"real": 7, "measurement_gap": 2, "ambiguous": 1, "false_green": 3},
+    )
+    page = _client(record)
+    assert "ÖLÇMƏ BOŞLUĞU" in page
+    assert "yalançı yaşıl" in page
+    assert ">3</b>" in page or "<b>3</b>" in page
+
+
+# ------------------------------------------------- başlıq və taksonomiya
+def test_title_and_subtitle_are_parameterised_for_the_client():
+    page = _client(
+        _record([_result("c1")]),
+        client_name="Aurora Goods",
+        system_name="Support agent v1.0",
+        audit_date="2026-08-28",
+    )
+    assert "Aurora Goods" in page
+    assert "Support agent v1.0 — etibarlılıq auditi" in page
+    assert "2026-08-28" in page
+    assert "AgentProof audit hesabatı" not in page.split("<footer>")[0]
+
+
+def test_taxonomy_code_is_never_shown_alone(monkeypatch):
+    monkeypatch.setattr(html_mod, "taxonomy_labels", lambda *a, **k: {"G2": "Rəqəm təhrifi"})
+    page = _client(_record([_result("c1", passed=False, tags=["G2"])]))
+    assert "G2 · Rəqəm təhrifi" in page
+
+
+def test_unknown_audience_is_rejected():
+    with pytest.raises(ValueError):
+        html_mod.render(_record([_result("c1")]), audience="marketing")
+
+
+# ------------------------------------------------------------------ CLI
+def test_cli_client_audience_writes_a_page_without_internal_traces(tmp_path):
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "rec.json").write_text(
+        json.dumps(_record([_result("c1", passed=False)]).to_dict(), ensure_ascii=False),
+        encoding="utf-8",
+    )
+    assert html_mod.main([str(run_dir), "--audience", "client", "--client", "Aurora"]) == 0
+    page = (run_dir / "index.html").read_text(encoding="utf-8")
+    assert html_mod.find_internal_traces(page) == []
+    assert "Aurora" in page
+    assert "BASELINE YOXDUR" in page  # müştəri versiyası da susmur
+
+
+def test_cli_defaults_to_internal_audience(tmp_path):
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "rec.json").write_text(
+        json.dumps(_record([_result("c1", passed=False)]).to_dict(), ensure_ascii=False),
+        encoding="utf-8",
+    )
+    assert html_mod.main([str(run_dir)]) == 0
+    assert "evals/run.py" in (run_dir / "index.html").read_text(encoding="utf-8")
+
+
+# ------------------------------------------------- real qaçış üzərində
+REAL_RUN = pathlib.Path(__file__).resolve().parents[2] / "reports" / "full-run-02"
+
+
+@pytest.mark.skipif(not REAL_RUN.is_dir(), reason="nümunə qaçış qovluğu yoxdur")
+def test_real_run_renders_clean_for_the_client_and_keeps_the_same_numbers():
+    """Fikstura deyil, TƏHVİL VERİLƏN qaçış: 147 case, real cavab mətnləri."""
+    record_path = next(
+        p for p in sorted(REAL_RUN.glob("*.json")) if p.name != "reproduction.json"
+    )
+    record = RunRecord.from_dict(json.loads(record_path.read_text(encoding="utf-8")))
+    repro = repro_mod.report_from_dict(
+        json.loads((REAL_RUN / "reproduction.json").read_text(encoding="utf-8"))
+    )
+    internal = html_mod.render(record, repro=repro, dataset_path="evals/datasets/full.jsonl")
+    client = html_mod.render(
+        record,
+        repro=repro,
+        dataset_path="evals/datasets/full.jsonl",
+        audience=html_mod.CLIENT,
+        client_name="Aurora Goods",
+    )
+    assert html_mod.find_internal_traces(internal)      # daxili versiyada izlər var
+    assert html_mod.find_internal_traces(client) == []  # müştəri versiyasında yoxdur
+    numbers = lambda p: sorted(re.findall(r"\d+\.\d%|\$\d+\.\d+", p))
+    assert numbers(internal) == numbers(client)
+    for sid, name in html_mod.MANDATORY_SECTIONS:
+        assert f'id="{sid}"' in client and name in client

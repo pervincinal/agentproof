@@ -55,7 +55,7 @@ Built on [Inspect AI](https://github.com/UKGovernmentBEIS/inspect_ai)
 
 ```bash
 python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python -m pytest              # 733 tests
+.venv/bin/python -m pytest              # 1278 tests
 ```
 
 Standing up the target system (Dify + Ollama + the mock tool service) is
@@ -71,9 +71,72 @@ at the token prices in effect on the run date.
   --dataset evals/datasets/full.jsonl        # -> reports/<run-id>/index.html
 ```
 
+## Connect your own system
+
+Nothing above is Dify-specific. The retry/backoff machine, the halt-on-credit
+rule and the multi-turn chain live in one shared core, so a new target is a
+field map, not a new adapter:
+
+```python
+from agentproof.adapters import create_adapter
+
+# a plain POST -> JSON service (FastAPI, Express, a LangGraph /invoke route)
+adapter = create_adapter(
+    "json_http",
+    url="https://api.acme.internal/agent/invoke",
+    api_key=os.environ["ACME_TOKEN"],
+    query_field="message",
+    text_path="data.reply",              # your names, not ours
+    usage_path="data.tokens",
+    tool_calls_path="data.steps",
+    retrieved_path="data.citations",
+    conversation_id_path="data.thread_id",  # omit it and multi-turn is refused,
+    model="claude-sonnet-5",                # not silently measured single-turn
+)
+
+# an in-process target: a LangGraph/LlamaIndex object, no network at all
+adapter = create_adapter("callable", fn=my_graph.answer, text_path="reply")
+```
+
+A field we cannot find is never a zero: missing `usage` is `None` (so
+`cost_under` reports *skipped*, not *passed*), missing `retrieved` is an empty
+list with the absence recorded, and an empty answer is named rather than graded
+as a wrong one. Every adapter — including yours — runs against the same
+25-check contract suite.
+
+Before an audit, ask what the target actually makes measurable:
+
+```bash
+python -m agentproof.preflight --target json_http --model claude-sonnet-5
+```
+
+It sends three requests and prints which grader families are unavailable and
+why — e.g. *"no `retrieved[]` → `retrieval_hit_at_k`, `precision_at_k` will
+skip"*. Details: [`docs/ADAPTERS.md`](docs/ADAPTERS.md),
+[`docs/PREFLIGHT.md`](docs/PREFLIGHT.md).
+
 A rendered example is committed at
 [`reports/full-run-02/index.html`](reports/full-run-02/index.html): one static
 file, no CDN, no external request — the client's data never leaves the page.
+
+The same run renders for two audiences. `--audience client` drops what only
+means something to us — internal task ids, repo paths, the commands we would
+run to fix the gap — and takes the client's name and the audit date from the
+command line:
+
+```bash
+.venv/bin/python -m agentproof.report.html reports/<run-id> \
+  --dataset evals/datasets/full.jsonl \
+  --audience client --client "Acme" --system "Support agent v1.0" \
+  --audit-date 2026-08-28 --out reports/<run-id>/client.html
+```
+
+It drops nothing else. Limitations, the flaky rate, the judge calibration
+numbers, unmeasured cost and the whole *what we did not measure* section are
+identical in both files — those sections are what an auditor is paid for, and
+[`docs/templates/CLIENT-REPORT.md`](docs/templates/CLIENT-REPORT.md) marks them
+mandatory. The renderer enforces that: if a mandatory section disappears from
+the page, `render()` raises instead of shipping a quieter report.
 
 ## Continuous integration
 

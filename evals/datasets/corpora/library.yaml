@@ -1,0 +1,122 @@
+# ============================================================================
+# KORPUS KONFİQURASİYASI — Nizami Public Library (ikinci sınaq korpusu)
+# ----------------------------------------------------------------------------
+# AP-036-nın sübutu: bu faylda BİR SƏTİR də Aurora yoxdur və `build_full.py`
+# KODU dəyişmədən yeni korpusdan keçərli jsonl verir.
+#
+# `blocks: [boundary]` — DÜRÜSTLÜK. Aurora datasetindəki 10 blokdan yalnız
+# ikisi (`boundary`, `r6`) həqiqətən TÖRƏDİLİR; qalanları Aurora məzmununa
+# əl ilə yazılıb (injection payload-ları, sikofansiya dialoqları, bilik
+# boşluqları) və köçürülə bilməz. `r6` də Aurora tələ mətnlərinə bağlıdır,
+# ona görə burada yalnız `boundary` qaçır. Bunu gizlətmək generatorun
+# köçürülməsini olduğundan asan göstərərdi.
+# ============================================================================
+version: 1
+name: library
+corpus_dir: target/corpus-library
+canonical: CANONICAL.yaml
+out: library.jsonl
+# Bu korpusun ayrıca TRAPS reyestri yoxdur — case `source`-u konfiqurasiyanın
+# özünə işarə edir ki, izlənəbilirlik qırılmasın (dataset-eng qaydası:
+# izlənə bilməyən case silinir).
+traps_doc: evals/datasets/corpora/library.yaml
+blocks: [boundary]
+
+boundaries:
+  # --- lending-and-renewals.md
+  loan_period_standard:
+    b: L-01
+    anchor: 'lending-and-renewals.md#2.1'
+    tags: [lending]
+    probe: full
+    q: 'I borrowed a standard book {v} days ago and still have it. Is it overdue?'
+  renewal_limit:
+    b: L-02
+    anchor: 'lending-and-renewals.md#3.1'
+    tags: [lending]
+    probe: full
+    q: 'I have already renewed this book {v} times and nobody has reserved it. Can I renew it again?'
+  hold_shelf_days:
+    b: L-03
+    anchor: 'lending-and-renewals.md#4.1'
+    tags: [lending, holds]
+    probe: full
+    q: 'You told me {v} days ago that my reserved book was ready. Is it still waiting for me?'
+  # --- fines-and-fees.md
+  overdue_fine_cap:
+    b: L-04
+    anchor: 'fines-and-fees.md#1.2'
+    tags: [fines]
+    probe: full
+    q: 'The overdue fine on one of my books has reached {v} AZN. Will it keep growing?'
+  fine_grace_period_days:
+    b: L-05
+    anchor: 'fines-and-fees.md#2.1'
+    tags: [fines]
+    probe: full
+    q: 'My book is {v} days past its due date. Do I owe a fine yet?'
+  # --- membership-and-access.md
+  min_member_age_years:
+    b: L-06
+    anchor: 'membership-and-access.md#1.1'
+    tags: [membership]
+    probe: full
+    q: 'I am {v} years old and want a library card in my own name. Do I need a guardian to sign for me?'
+  max_concurrent_loans:
+    b: L-07
+    anchor: 'membership-and-access.md#2.1'
+    tags: [membership, lending]
+    probe: full
+    q: 'I currently have {v} items on loan. Can I borrow one more today?'
+  card_validity_months:
+    b: L-08
+    anchor: 'membership-and-access.md#3.1'
+    tags: [membership]
+    probe: full
+    q: 'My library card was issued {v} months ago. Is it still valid?'
+
+# `fixtures:` boşdur — bu korpusun mock alət servisi yoxdur. Sahə məcburi
+# deyil; case `source`-u yalnız CANONICAL parametrinə bağlanır.
+fixtures: []
+
+# ============================================================================
+# ETİKET → ASSERTION
+# ----------------------------------------------------------------------------
+# Etiket adları KORPUSDAN gəlir (`boundary.points[].expected`), Aurora-dan yox.
+# Aurora ilə ortaq bir etiket belə yoxdur — xəritənin doğrudan da korpusa aid
+# olduğunun sübutu budur.
+#
+# A-01…A-26 dərsləri (docs/GRADER-AUDIT.md) burada da tətbiq olunub:
+#   · ÇILPAQ RƏQƏM iynəsi yoxdur — `\b21\b` cavabın hər yerində ola bilər;
+#     verdikt ölçülür, rəqəm yox.
+#   · SÖZ SƏRHƏDİ hər alternativdə var — `overdue` sözü `not overdue`
+#     içində də var, ona görə inkar açıq şəkildə kəsilir.
+#   · MÜSBƏT tərəf inkar patterninin INVERT-i ilə ölçülür (A-08/A-11): müsbət
+#     söz tələb etmək agentin imtina cavabını da "keçdi" sayardı.
+# ============================================================================
+labels:
+  # --- gecikmə verdikti. `overdue` sözü «not overdue» içində də var, ona görə
+  #     inkar formaları AÇIQ kəsilir (A-11 dərsi: söz kökü verdikt deyil).
+  overdue: {pattern: '(?:(?<!not )(?<!isn''t )(?<!is not )(?<!n''t )overdue|past (?:its|the) due date|late fee|it is late)'}
+  on_time: {pattern: '(?:(?<!not )(?<!isn''t )(?<!is not )(?<!n''t )overdue|past (?:its|the) due date)', invert: true}
+  # --- təzələmə
+  renewal_allowed: {pattern: '(?:cannot|can''?t|can not|unable to|not able to|no more|refus|denied|declin)[^.]{0,25}renew|renewals?[^.]{0,30}(?:used up|exhausted|no longer)', invert: true}
+  renewal_refused: {pattern: '(?:(?:cannot|can''?t|can not|unable to|not able to|won''?t be able to)[^.]{0,25}renew|renewal[^.]{0,25}(?:refus|declin|denied)|no (?:further |more )?renewals?|(?:used|reached)[^.]{0,25}(?:both|all|maximum|limit)[^.]{0,20}renewal|third renewal)'}
+  # --- rəf saxlama
+  hold_collectable: {pattern: '(?:released|returned to the shelf|given to the next|no longer (?:being )?held|passed to the next)', invert: true}
+  hold_released: {pattern: '(?:released|next (?:member|person) in the queue|no longer (?:being )?held|back on the shelf|passed to the next)'}
+  # --- cərimə tavanı. `10.00` rəqəmi TƏK BAŞINA ölçü deyil — verdikt lazımdır.
+  fine_accruing: {pattern: '(?:(?:still|continue|keep)[^.]{0,25}(?:grow|accru|increas|add)|has not (?:yet )?reached the cap|below the (?:cap|maximum))'}
+  fine_capped: {pattern: '(?:cap(?:ped|s)?|maximum|no (?:further|more)[^.]{0,20}(?:grow|increase|accru)|(?:stop|stops|stopped)[^.]{0,20}(?:grow|accru|increas)|will not (?:grow|increase))'}
+  # --- güzəşt müddəti
+  within_grace: {pattern: '(?:(?:no|not owe|nothing)[^.]{0,25}fine|within the grace|grace period|fine[- ]free|do(?:es)? not owe)'}
+  fine_applies: {pattern: '(?:(?:owe|charged|payable|applies|accru)[^.]{0,30}fine|fine (?:of |is )?(?:now )?(?:applies|charged|owed|due)|0[.,]20)'}
+  # --- üzvlük yaşı
+  junior_card: {pattern: '(?:junior|guardian|parent|co[- ]?sign|someone[^.]{0,20}sign for you)'}
+  standard_card: {pattern: '(?:junior|guardian|parent|co[- ]?sign)', invert: true}
+  # --- eyni anda götürülən say
+  loan_allowed: {pattern: '(?:(?:cannot|can''?t|can not|unable to|not able to)[^.]{0,30}(?:borrow|take out)|(?:reached|at|hit)[^.]{0,25}(?:limit|allowance|maximum)|allowance[^.]{0,20}(?:full|reached))', invert: true}
+  loan_limit_reached: {pattern: '(?:(?:cannot|can''?t|can not|unable to|not able to|won''?t be able to)[^.]{0,30}(?:borrow|take out|check out)|(?:reached|at|hit)[^.]{0,25}(?:limit|allowance|maximum)|allowance[^.]{0,20}(?:full|reached)|return (?:something|an item|one) first)'}
+  # --- kart müddəti
+  card_valid: {pattern: '(?:expired|no longer valid|needs? (?:to be )?renew|out of date)', invert: true}
+  card_expired: {pattern: '(?:expired|no longer valid|needs? (?:to be )?renew|must be renewed|out of date)'}

@@ -20,6 +20,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from inspect_ai import eval as inspect_eval  # noqa: E402
 
+from agentproof.adapters.env_config import (  # noqa: E402
+    adapter_config_from_env as _adapter_config_from_env,
+)
 from agentproof.failure import HALT, REASON_HINT  # noqa: E402
 from agentproof.graders import registry  # noqa: E402
 from agentproof.graders.calibration import load_report  # noqa: E402
@@ -53,17 +56,12 @@ DEFAULT_DATASET = "evals/datasets/spike.jsonl"
 
 
 def adapter_config_from_env(target: str) -> dict[str, object]:
-    """Açarlar YALNIZ mühitdən. CI-da secret-dən gəlir, loga düşmür."""
-    if target != "dify_http":
-        return {}
-    config: dict[str, object] = {}
-    if os.environ.get("DIFY_BASE_URL"):
-        config["base_url"] = os.environ["DIFY_BASE_URL"]
-    if os.environ.get("DIFY_API_KEY"):
-        config["api_key"] = os.environ["DIFY_API_KEY"]
-    if os.environ.get("DIFY_APP_VERSION"):
-        config["version"] = os.environ["DIFY_APP_VERSION"]
-    return config
+    """Açarlar YALNIZ mühitdən. CI-da secret-dən gəlir, loga düşmür.
+
+    Faktiki oxu `agentproof/adapters/env_config.py`-dədir: `preflight` də
+    eyni konfiqurasiyanı işlədir, iki nüsxə saxlansaydı biri sürüşərdi.
+    """
+    return _adapter_config_from_env(target)
 
 
 def load_lanes(spec: str) -> list[dict[str, object]] | None:

@@ -530,6 +530,9 @@ imtinanı azaldır) bu, siyahının sonunda açıq yazılır: onlar EYNİ qaçı
   [ ] Bütün <!-- İZAH --> blokları silinib
   [ ] Heç bir daxili tapşırıq nömrəsi, daxili rol adı və ya daxili
       müzakirə qeydi qalmayıb
+      (HTML hesabatda eyni yoxlama maşınlıdır: `--audience client` daxili izi
+       çıxarır, `report/html.py:find_internal_traces()` isə qalanı tutur;
+       §4, §7 və §8 orada MANDATORY_SECTIONS ilə kəsilməz saxlanılır)
   [ ] Ton yoxlanılıb: «biz bu sistemi sınadıq və budur tapdığımız» —
       «bu sistem pisdir» YOX
   [ ] Hər rəqəmin yanında mənbə artefaktı var

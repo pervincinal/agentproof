@@ -1166,8 +1166,8 @@
    "desc": "evals/datasets/COVERAGE.md §9.4: cari dataset çoxnövbəli sınma FAKTINI verir, amma hansı növbədə sındığını yox. Sənəd tələb olunanı özü yazır: eyni sualın 1/3/5/8 növbəli variantları (~20 case) və adapter dəstəyi. Adapter boşluğu artıq BAĞLANIB (COVERAGE §7 — dify_http indi bütün növbələri bir conversation_id ilə göndərir, test_multi_turn.py ilə qorunur), yəni maneə qalmayıb. Gözəlləşdirmədir: mövcud C1 case-ləri rejimi onsuz da göstərir.",
    "role": "dataset-eng",
    "prio": "P3",
-   "status": "backlog",
-   "assignee": null,
+   "status": "done",
+   "assignee": "dataset-eng",
    "dod": "build_full.py eyni sualın 1/3/5/8 növbəli variantlarını üretir; qaçışdan sonra hər sual üçün failure-onset turn hesablana bilir; COVERAGE.md §9.4 yenilənib; büdcə təsiri hesablanıb.",
    "links": [
     "evals/datasets/COVERAGE.md",
@@ -1175,7 +1175,7 @@
     "agentproof/tests/test_multi_turn.py"
    ],
    "created": "2026-08-27T19:12:08",
-   "updated": "2026-08-27T19:12:29",
+   "updated": "2026-09-01T23:45:05",
    "history": [
     {
      "at": "2026-08-27T19:12:08",
@@ -1188,6 +1188,42 @@
      "actor": "po",
      "action": "comment",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T23:05:44",
+     "actor": "dataset-eng",
+     "action": "assigned",
+     "detail": "dataset-eng"
+    },
+    {
+     "at": "2026-09-01T23:05:44",
+     "actor": "dataset-eng",
+     "action": "backlog→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T23:37:00",
+     "actor": "dataset-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T23:37:00",
+     "actor": "dataset-eng",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T23:37:34",
+     "actor": "dataset-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T23:45:05",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
    "comments": [
@@ -1195,6 +1231,16 @@
      "at": "2026-08-27T19:12:29",
      "actor": "po",
      "text": "Asılılıq: AP-013/AP-015 — büdcə və müqayisə səbəbi ilə əsas qaçışdan sonra."
+    },
+    {
+     "at": "2026-09-01T23:37:00",
+     "actor": "dataset-eng",
+     "text": "Deqradasiya əyrisi qurulub, CANLI ölçülüb, büdcə hesablanıb.\n\nDATASET: 5 ailə × 1/3/5/8 növbə = 20 case, generatordan törəyir (build_full.py → CURVE_FAMILIES). Dizayn qaydası: YEGANƏ DƏYİŞƏN MƏSAFƏDİR — faktlar həmişə 1-ci mesajda, sual həmişə sonuncuda, grader/iynə/ciddilik sözbəsöz eyni; yalnız aradakı MƏZMUNSUZ doldurucuların sayı dəyişir (məsafə 0/2/4/7). Testlə məcburi edilib. İynələr yenidən icad edilmir — auditdən keçmiş makrolardır (REJECT, WARRANTY_OVER, cod_available), yəni A-01…A-26 dərsləri miras alınır.\nANALİZATOR: evals/degradation.py — failure-onset turn + orta əyri + ilk nöqtəyə görə düşmə. ÖLÇÜLMƏMİŞİ 'sınmadı' YAZMIR (infrastruktur xətası ayrıca göstərilir).\n--check sinxron: full.jsonl 185 case.\n\nCANLI QAÇIŞ (dify_http · claude-sonnet-5 · 2026-09-01):\n  t1 100% · t3 100% · t5 100% · t8 67%  → görünən düşmə 33%, onset t8 (t01 ailəsi).\n\nAMMA BU MODELİN SINMASI DEYİL — BİZİM İYNƏMİZİN BOŞLUĞUDUR (A-27).\n--repeat 3 ilə saxlanmış üç cavabın hər üçü DÜZGÜN rədd verdi. Biri belə yazdı: «that window has ALREADY closed … a standard return would not be accepted». REJECT-də  arasında zərf yeri yox idi və  alternativi ümumiyyətlə yox idi. Pattern düzəldildi (hər iki istiqamətdə testlə bağlandı), saxlanmış cavablar yenidən qiymətləndirildi: t8 2/3 → 3/3. Nəticə: t01 ailəsində 8 növbəyə qədər DEQRADASİYA YOXDUR, 12 cavabın 11-i düzgün verdikt verdi.\nc03 (precedence) və t07 (zəmanət) ailələri: 8 növbəyə qədər sınma yoxdur.\n\nQALAN BOŞLUQ (grader-eng): t3-dəki son 1 uğursuzluq da modelin deyil — agent markdown vurğusu işlədib («you are **not** within the … window») və  pattern-i pozur. Bu, BÜTÜN regex iynələrinə aid kəsişən qüsurdur (uyğunlaşdırmadan əvvəl markdown təmizlənməli) — paylaşılan qrader qatında həll olunmalıdır, ona görə burada düzəltmədim. Rəqəmi öz xeyrimizə düzəltmirəm: 11/12 yazıldı.\n\nBÜDCƏ (ÖLÇÜLDÜ, COVERAGE.md §12.3): orta case xərci t1 $0.0379 · t3 $0.0781 · t5 $0.1324 · t8 $0.2223. 20 case-in tam qaçışı ~$2.35 (repeat 1), ~$7.06 (repeat 3). Dataset +12% case oldu, qaçış xərci ~+21% artır — artım növbə sayındadır.\nƏMƏLİYYAT QEYDİ: runner/scorer.py aqreqat olmayan qraderi responses[-1] üzərində qaçırır, yəni --repeat 3 xərci 3 dəfə artırır, keçdi/sındı qərarını DƏYİŞMİR. Əyri üçün repeat 1 kifayətdir; təkrarlar yalnız offline yenidən qiymətləndirmə üçün dəyərlidir (A-27 məhz belə tapıldı).\n\nHƏDD AŞILDI: faktiki xərc $2.08, elan olunmuş hədd $2 — $0.08 çox. Gizlətmirəm: üçüncü ailə başlayanda qalıq $0.28 hesablanmışdı, 8 növbəlik case isə $0.36 çəkdi. Üstəlik cəhdlərin bir hissəsi usage qaytarmadı, yəni real xərc bundan da yüksəkdir.\n\nTestlər: agentproof/tests/test_degradation_curve.py (13 test). pytest tam yaşıl, verify_fixtures exit 0."
+    },
+    {
+     "at": "2026-09-01T23:37:34",
+     "actor": "dataset-eng",
+     "text": "DÜZƏLİŞ (yuxarıdakı şərhdə terminal iki iqtibası yeyib):\n\n1. A-27 boşluğu: REJECT iynəsində \"window has closed\" ifadəsi arasında ZƏRF yeri yox idi (agent \"window has ALREADY closed\" yazdı) və \"would not be accepted\" alternativi ümumiyyətlə yox idi. Hər ikisi əlavə olundu, hər iki istiqamətdə test yazıldı (düzgün rədd tutulur; düzgün QƏBUL hələ də TUTULMUR).\n\n2. Qalan boşluq: markdown vurğusu (iki ulduz) sözlə söz arasına düşəndə pattern-i pozur — \"you are (iki ulduz)not(iki ulduz) within the ... window\". Paylaşılan qrader qatında markdown təmizlənməlidir."
     }
    ]
   },
@@ -1975,8 +2021,8 @@
    "desc": "Mövcud yeganə real adapter SSE-yə bağlıdır və bu, məcburiyyətdən doğub: Dify Agent Chat blocking rejimi rədd edir (http_agent.py başlığı, app_generator.py:94). Amma müştərinin öz FastAPI-si, LangGraph-ın /invoke endpoint-i və ya Vercel AI SDK route-u adətən sadə POST -> JSON verir: nə SSE axını, nə conversation_id. Bu, ən aşağı riskli 'ikinci adapter'dir, çünki heç bir framework SDK-sından asılı deyil — yalnız konfiqurasiya edilə bilən cavab sahə xəritəsi lazımdır. Bir dəfə yazılır, bütün ev-istehsalı HTTP hədəflərə yarayır. MÜŞTƏRİ SİQNALI: ilk müştəri öz HTTP servisini göstərirsə bu P0/P1 olur; hədəf Python-daxili obyektdirsə əvəzinə callable adapter (AP-031) üstün gəlir.",
    "role": "harness-eng",
    "prio": "P2",
-   "status": "backlog",
-   "assignee": null,
+   "status": "done",
+   "assignee": "harness-eng",
    "dod": "agentproof/adapters/json_http.py; cavab sahələri konfiqurasiya ilə xəritələnir (text_path, tool_calls_path, retrieved_path, usage_path) — kod dəyişmədən yeni hədəfə qoşulur; retrieved boş gəlirsə retrieval grader-ləri skipped verir, səssiz 0 YOX; usage yoxdursa None (cost_under skipped); AP-028 conformance dəsti keçir; agentproof/testing/ altında mock JSON server + testlər; README-yə 20 sətirlik 'öz sisteminizi qoşun' nümunəsi",
    "links": [
     "agentproof/adapters/http_agent.py",
@@ -1985,16 +2031,52 @@
     "evals/run.py"
    ],
    "created": "2026-08-28T13:38:19",
-   "updated": "2026-08-28T13:38:19",
+   "updated": "2026-09-01T23:45:05",
    "history": [
     {
      "at": "2026-08-28T13:38:19",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:26:36",
+     "actor": "harness-eng",
+     "action": "assigned",
+     "detail": "harness-eng"
+    },
+    {
+     "at": "2026-09-01T22:26:36",
+     "actor": "harness-eng",
+     "action": "backlog→in_progress",
+     "detail": "Bloklayıcı JSON HTTP adapteri — _http_core üzərində, conformance körpüsü ilə"
+    },
+    {
+     "at": "2026-09-01T23:12:53",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T23:12:54",
+     "actor": "harness-eng",
+     "action": "in_progress→review",
+     "detail": "25/25 conformance, 23 unit test, docs/ADAPTERS.md + README bölməsi"
+    },
+    {
+     "at": "2026-09-01T23:45:05",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-01T23:12:53",
+     "actor": "harness-eng",
+     "text": "agentproof/adapters/json_http.py (246 sətir) + _field_map.py (sahə xəritəsi, hədəfdən asılı deyil) + testing/mock_json_agent.py. Nüvə (_http_core) yenidən yazılmadı: backoff/HALT/çoxnövbəli zəncir idxal olunur. CONFORMANCE: 25/25 keçdi (MOCK_GAP üslublu boşluq YOXDUR). Sahələr konfiqurasiya ilə: text_path/usage_path/tool_calls_path/retrieved_path/conversation_id_path + alt-yollar; nöqtəli yol, siyahı indeksi, namizəd siyahısı. Səssiz default yoxdur: usage tapılmasa None (cost_under skipped), usage obyekti var amma token adları tanınmasa yenə None + map_notes[usage_fields_unmapped], retrieved yoxsa [] + fields_present[retrieved]=False, boş mətn empty_answer. conversation_id_path VERİLMƏSƏ çoxnövbəli case multi_turn_unsupported ilə qayıdır, sorğu GÖNDƏRİLMİR (attempts=0) — səssiz tək-növbəli ölçmə yoxdur. Testlər: test_json_http_adapter.py (23) + conformance körpüsü. README-də 'Connect your own system', docs/ADAPTERS.md."
+    }
+   ]
   },
   {
    "id": "AP-031",
@@ -2002,8 +2084,8 @@
    "desc": "LangGraph və LlamaIndex müştəriləri çox vaxt auditə HTTP endpoint vermir: audit obyekti Python prosesinin içindəki qraf/obyektdir. Hazırda şəbəkəsiz yeganə adapter mock_agent.py-dır, o isə real çağırış etmir — sadəcə skriptləşdirilmiş cavab lüğətidir (_match sətir üzrə axtarış). Yəni in-process hədəfi ölçmək üçün müştəri öz sistemini HTTP-yə bükməyə məcbur olur; bu, auditə əlavə gün və müştəri tərəfində müqavimət deməkdir. MÜŞTƏRİ SİQNALI: ilk müştəri LangGraph/LlamaIndex/Vercel AI SDK işlədirsə bu P0 olur; yalnız HTTP hədəflər görsək backlog-da qalır və heç vaxt açılmaya bilər. AP-028-in müqavilə dəsti olmadan yazılmamalıdır.",
    "role": "harness-eng",
    "prio": "P3",
-   "status": "backlog",
-   "assignee": null,
+   "status": "done",
+   "assignee": "harness-eng",
    "dod": "agentproof/adapters/callable_agent.py: create_adapter('callable', fn=..., map_response=...) — fn sync və ya async callable qəbul edir, map_response nəticəni AgentResponse-a çevirir; AP-028 conformance dəsti keçir (xüsusən: fn exception atarsa error/error_class doldurulur, exception qaçışı sındırmır); test olaraq mətn + tool_calls + retrieved qaytaran realistik saxta qraf; docs-da 'hədəfiniz Python obyektidirsə' bölməsi 30 sətirdən qısa nümunə ilə",
    "links": [
     "agentproof/adapters/mock_agent.py",
@@ -2011,16 +2093,46 @@
     "agentproof/runner/agent.py"
    ],
    "created": "2026-08-28T13:38:56",
-   "updated": "2026-08-28T13:38:56",
+   "updated": "2026-09-01T23:45:05",
    "history": [
     {
      "at": "2026-08-28T13:38:56",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:26:36",
+     "actor": "harness-eng",
+     "action": "assigned",
+     "detail": "harness-eng"
+    },
+    {
+     "at": "2026-09-01T23:12:54",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T23:12:54",
+     "actor": "harness-eng",
+     "action": "backlog→review",
+     "detail": "23/25 conformance (2 boşluq CALLABLE_GAP-də adlı), 19 unit test, backoff-un yoxluğu sənədləşdirilib"
+    },
+    {
+     "at": "2026-09-01T23:45:05",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-01T23:12:54",
+     "actor": "harness-eng",
+     "text": "agentproof/adapters/callable_agent.py (247 sətir) + testing/fake_graph.py (yaddaşlı saxta qraf, SDK üslublu istisnalar). CONFORMANCE: 23 keçdi, 2 ADLI skip (CALLABLE_GAP = RATE_LIMIT_THEN_OK, RATE_LIMIT_BURNS_TOKENS) — mock-un 6 boşluğundan kiçikdir, çünki callable REAL çağırış edir. fn sync və ya async; sync fn asyncio.to_thread ilə qaçır (event loop bloklanmır, gecikmə hədəfin öz gecikməsi qalır). Qaytara bilər: AgentResponse / str / dict (FieldMap) / map_response. Çoxnövbəlilik inspect.signature-dan oxunur — fn conversation_id qəbul etmirsə case multi_turn_unsupported, təxmin yoxdur. BACKOFF QƏSDƏN YOXDUR (RetryPolicy(max_retries=0)) və sənədləşdirilib: şəbəkə 429-u yoxdur, fn idempotent olmaya bilər, daxili SDK təkrarı ilə üst-üstə düşərdi. AMMA nüvə işlədilir: HALT hörmət olunur (daxili credit_exhausted bütün qaçışı dayandırır), rate_limit səbəb ADI ilə qalır. İstisna qaçışı sındırmır: callable_exception:<Tip>, status_code/mesaj üzrə təsnif. Testlər: test_callable_adapter.py (19). docs/ADAPTERS.md §2."
+    }
+   ]
   },
   {
    "id": "AP-032",
@@ -2028,8 +2140,8 @@
    "desc": "Satış zəngindən sonra ilk texniki sual budur: 'sizin sisteminizi ümumiyyətlə ölçə bilərikmi?'. Cavab hazırda yalnız tam qaçış qurmaqla alınır — yəni müqavilədən əvvəl bir neçə gün iş. Müqavilədə health() var, amma o yalnız bool qaytarır; evals/run.py --target isə hədəf danışmayana qədər heç nə göstərmir. Əsl sual isə 'canlıdırmı' deyil, 'NƏYİ ölçə bilərik'dir: hədəf retrieved[] vermirsə bütün retrieval grader-ləri (graders/deterministic/retrieval.py) sıradan çıxır, tool_calls vermirsə tools.py/leakage.py, usage vermirsə budget.py. LIM-I09 və LIM-E06 məhz bu cür kor nöqtələrin nəticəsidir. Preflight müştəri hesabatındakı 'nəyi ölçmədik' bölməsinin xammalıdır. MÜŞTƏRİ SİQNALI: siqnaldan asılı deyil, amma dəyəri ilk zəngdə üzə çıxır — zəngdə göstərilə bilən yeganə texniki artefaktdır.",
    "role": "harness-eng",
    "prio": "P2",
-   "status": "backlog",
-   "assignee": null,
+   "status": "done",
+   "assignee": "harness-eng",
    "dod": "python -m agentproof.preflight --target <adapter> 5 zond qaçırır və cədvəl verir: (1) health; (2) tək növbəli sorğuya mətn qaytarırmı; (3) tool_calls görünürmü; (4) retrieved[] görünürmü; (5) usage/token görünürmü. Hər 'yox' üçün hansı grader ailəsinin ADLA sıradan çıxdığı yazılır (məs. 'retrieved yoxdur -> retrieval_hit_at_k, retrieval_precision skipped'); çıxış həm markdown, həm JSON; mock və dify_http üzərində test edilir; hesabat mətni birbaşa müştəri sənədinə köçürülə bilən formadadır",
    "links": [
     "agentproof/adapters/base.py",
@@ -2040,16 +2152,46 @@
     "docs/LIMITATIONS.md"
    ],
    "created": "2026-08-28T13:38:56",
-   "updated": "2026-08-28T13:38:56",
+   "updated": "2026-09-01T23:45:05",
    "history": [
     {
      "at": "2026-08-28T13:38:56",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:26:36",
+     "actor": "harness-eng",
+     "action": "assigned",
+     "detail": "harness-eng"
+    },
+    {
+     "at": "2026-09-01T23:13:16",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T23:13:16",
+     "actor": "harness-eng",
+     "action": "backlog→review",
+     "detail": "7 zond, markdown+JSON, canlı Dify-da qaçırıldı; cost_under boşluğu canlı aşkarlandı"
+    },
+    {
+     "at": "2026-09-01T23:45:05",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-01T23:13:16",
+     "actor": "harness-eng",
+     "text": "agentproof/preflight.py — 'python -m agentproof.preflight --target <adapter>', 7 zond / 3 sorğu: health · answer · tool_calls · retrieved · usage · cost · multi_turn (DoD-dakı 5-in üstünə xərc və çoxnövbəli). 2-6 BİR cavabdan oxunur (əlavə sorğu = eyni məlumat, iki qat pul). Çıxış həm markdown, həm JSON (--out-md/--out-json/--json), exit kodu qapı kimi işlədilə bilər. Hər XEYR üçün sıradan çıxan grader ailəsi ADI ilə: retrieved yoxdur -> retrieval_hit_at_k+precision_at_k, tool_calls yoxdur -> tool_call_matches, xərc hesablanmır -> cost_under. FIELD_GRADERS registry ilə testdə tutuşdurulur — yeni grader bağlanmasa test sınır. ÜÇ STATUS: yes / no (hədəfin məhdudiyyəti) / error-skipped (BİZİM ölçə bilmədiyimiz) — qarışsaydı müştəriyə olmayan məhdudiyyət danışılardı. CANLI TAPINTI (Dify 1.17): usage GƏLİR, model adı gəlmir; cost_under isə qiymət cədvəlində model tapmayanda skipped verir. Ona görə xərc zondu sahəyə deyil, GRADER-in öz qərarına baxır — --model olmadan 6-cı sətir XEYR, --model claude-sonnet-5 ilə bəli ($0.032685). Canlı çıxış: 7/7 bəli, gecikmə min 1953 / median 5306 / maks 9293 ms, 8 retrieval parçası (id-lər Dify segment UUID-ləridir, korpus lövbərləri deyil). Testlər: test_preflight.py (17). docs/PREFLIGHT.md."
+    }
+   ]
   },
   {
    "id": "AP-033",
@@ -2182,8 +2324,8 @@
    "desc": "TRAPS.md-ə görə layihənin əsas silahı bayat/ləğv edilmiş bənd tələsidir (27 ədəd) və rəqəm toqquşmalarıdır (5 qrup / 31 məna). Aurora-da bunları BİZ əkmişik, ona görə harada olduqlarını əvvəlcədən bilirdik — TRAPS.md reyestri məhz bunun etirafıdır. Müştərinin real korpusunda isə bu ziddiyyətlər TƏSADÜFƏN mövcuddur və onları tapmaq auditin ƏSL dəyəridir: müştəri 'bizim sənədlərimiz bir-birini inkar edir' cümləsini eşitmək üçün pul verir. Hazırda bunu tapmağın yeganə yolu sənədləri əl ilə oxumaqdır. Halbuki üç sinif maşınla tapıla bilər: eyni parametrin iki sənəddə fərqli dəyəri; eyni rəqəmin fərqli qaydalarda təkrarı (LIM-I02-nin '30 gün iki fərqli qaydada' hadisəsi məhz budur və o, ölçmənin özünü yanıltdı); supersedes_version / effective_from uyğunsuzluğu (meta.documents strukturu bunu artıq daşıyır). MÜŞTƏRİ SİQNALI: ilk müştərinin korpusu 3-dən çox sənəddirsə dəyəri kəskin artır — kiçik korpusda əl ilə oxumaq daha ucuzdur. AP-034-ün namizəd cədvəli olmadan qaça bilməz.",
    "role": "dataset-eng",
    "prio": "P3",
-   "status": "backlog",
-   "assignee": null,
+   "status": "done",
+   "assignee": "dataset-eng",
    "dod": "target/corpus/conflicts.py AP-034-ün namizəd cədvəli üzərində qaçır və üç hesabat verir: (1) eyni semantik ad / fərqli dəyər; (2) eyni rəqəm / fərqli parametr (rəqəm toqquşması namizədləri); (3) versiya-tarix ziddiyyəti (supersedes/effective_from zənciri qırıqdır); Aurora korpusunda qaçırılır və TRAPS.md-də sənədləşmiş 5 rəqəm toqquşması qrupundan neçəsinin tapıldığı ÖLÇÜLÜR və yazılır; hər aşkarlanan namizəd üçün hər iki mənbə cümləsi iqtibas kimi verilir; nəticə auditorun təsdiqi üçün siyahıdır, avtomatik tapıntı deyil",
    "links": [
     "target/corpus/TRAPS.md",
@@ -2192,16 +2334,52 @@
     "agentproof/graders/canonical.py"
    ],
    "created": "2026-08-28T13:40:21",
-   "updated": "2026-08-28T13:40:21",
+   "updated": "2026-09-01T23:45:05",
    "history": [
     {
      "at": "2026-08-28T13:40:21",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:27:13",
+     "actor": "dataset-eng",
+     "action": "assigned",
+     "detail": "dataset-eng"
+    },
+    {
+     "at": "2026-09-01T22:27:13",
+     "actor": "dataset-eng",
+     "action": "backlog→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:46:01",
+     "actor": "dataset-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:46:01",
+     "actor": "dataset-eng",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T23:45:05",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-01T22:46:01",
+     "actor": "dataset-eng",
+     "text": "target/corpus/conflicts.py + CONFLICTS.md + test_corpus_conflicts.py (20 test).\n\nÜÇ HESABAT (DoD-a uyğun):\n 1) same_concept_different_value — eyni anlayış / fərqli dəyər\n 2) same_number_different_concept — eyni rəqəm / fərqli parametr (AYRI hesabat: 30 gün həm bayat standart, həm canlı Plus pəncərəsidir — A-07/LIM-I02 yanılması təkrarlanmasın)\n 3) version_chain — supersedes/effective_from zənciri (7 qırıq kodu)\n\nÖLÇÜLDÜ (python target/corpus/conflicts.py score):\n · bayat cüt RECALL: 20/25 = 80%. Məxrəc 25-dir, 27 yox: TRAPS §2.3-dəki 2 sətrin bayat dəyəri rəqəm deyil (no DDP / free at any value), rəqəm cütü kimi ölçülə bilməz.\n · tapılmayan 5-in HAMISI extract.py boşluğudur (sıfır sözlə, rəqəm sözlə, siyahı dəyər) — hər ikisi namizədlərdə yoxdur, testdə sübut olunub. Çıxarıla bilən 20 cütdən 20-si tapılır.\n · rəqəm toqquşması RECALL: 5/5 = 100%.\n · bayat tərəfin təxmini: 20 doğru, 0 səhv, 0 qərarsız. Canlı dəyəri bayat işarələmə HEÇ VAXT baş vermir (test ilə qorunur).\n · yalançı müsbət: 8/105 = 7.6% (dar tərif — cütün hər iki tərəfi eyni kanonik parametrə düşür). Sənəddə açıq yazılıb ki, bu 8-in bir hissəsi auditor üçün faydalıdır, amma öz xeyrimizə saymırıq.\n · sıralama: tapılan 20 cütün hamısı ilk 50 sətirdə, 18-i ilk 30-da.\n · eşik süpürüldü (0.18→0.50 cədvəli CONFLICTS.md §4.5); recall 0.18-0.40-da dəyişmir, uçurum 0.45-də — iş nöqtəsi 0.35.\n\nSƏRHƏD: çıxış açarı conflict_candidates:, stale_guess TƏXMİNDİR və dəlili yanındadır, CANONICAL.yaml adına yazılma bloklanır (test).\nAurora zənciri bütövdür → hər qırıq növü SÜNİ mutasiya ilə testdə yoxlanılır, yoxsa '0 problem' heç nəyə baxmamaq demək olardı."
+    }
+   ]
   },
   {
    "id": "AP-036",
@@ -2209,8 +2387,8 @@
    "desc": "build_full.py 150 case-i CANONICAL.yaml-dan TÖRƏDİR və bu, layihənin əsas metodoloji iddiasıdır: 'test halları siyasət sənədindən törədilir, hazır dataset kimi qəbul edilmir' (build_full.py docstring, COVERAGE.md §10). Amma generatorun özü Aurora-ya sabit bağlıdır: REF_DATE = 2026-09-01 sabit kodlanıb (CANONICAL.meta-dan oxunmur), CORPUS yolu sabitdir, etiket->assertion lüğəti Aurora tələ adlarını daşıyır. Nəticədə müştəri korpusunda ya generator yenidən yazılmalıdır, ya da case-lər əl ilə — hər iki halda AP-034-dən qazanılan gün geri itir və metodoloji iddia yalnız Aurora üçün doğru qalır. MÜŞTƏRİ SİQNALI: AP-033 və AP-034 bitmədən mənası yoxdur; ilk real müştəri korpusu gələnə qədər ikinci sınaq korpusunun forması spekulyativdir, ona görə P3.",
    "role": "dataset-eng",
    "prio": "P3",
-   "status": "backlog",
-   "assignee": null,
+   "status": "done",
+   "assignee": "dataset-eng",
    "dod": "build_full.py korpus yolunu və reference date-i CANONICAL.yaml meta bloqundan oxuyur, sabit kod qalmır; etiket->assertion xəritəsi ayrıca konfiqurasiya faylına çıxır (kod dəyişmədən yeni korpusun tələ adlarına uyğunlaşır); repo-ya ikinci, kiçik sınaq korpusu əlavə olunur (3 sənəd, ~10 parametr, sərhəd nöqtələri ilə) və generator onun üzərində qaçıb keçərli jsonl verir; mövcud evals/datasets/full.jsonl BAYT-BAYTINA eyni qalır (build_full.py --check keçir) və test_dataset_full.py sınmır",
    "links": [
     "evals/datasets/build_full.py",
@@ -2219,16 +2397,52 @@
     "agentproof/tests/test_dataset_full.py"
    ],
    "created": "2026-08-28T13:40:21",
-   "updated": "2026-08-28T13:40:21",
+   "updated": "2026-09-01T23:45:05",
    "history": [
     {
      "at": "2026-08-28T13:40:21",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:46:11",
+     "actor": "dataset-eng",
+     "action": "assigned",
+     "detail": "dataset-eng"
+    },
+    {
+     "at": "2026-09-01T22:46:11",
+     "actor": "dataset-eng",
+     "action": "backlog→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T23:05:34",
+     "actor": "dataset-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T23:05:34",
+     "actor": "dataset-eng",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T23:45:05",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-01T23:05:34",
+     "actor": "dataset-eng",
+     "text": "build_full.py parametrləşdirildi + ikinci korpus əlavə olundu.\n\nSABİT KOD GETDİ:\n · REF_DATE → CANONICAL.yaml meta.evaluation_reference_date. Tarix indi YÜKDAŞIYANDIR: _assert_no_future_dates hər case SORĞUSUNU yoxlayır (gözlənilən cavabda gələcək tarix normaldır — zəmanət bitmə tarixi). Sabit tarixlə bu yoxlama mənasız olardı.\n · korpus yolu / çıxış yolu → korpus konfiqurasiyası (+ --corpus-dir, --out).\n · LABEL_ASSERT (59 etiket), BSPEC (36 sərhəd), BFIXTURE, TRAPS.md istinadı → evals/datasets/corpora/<ad>.yaml. Köçürmə PROQRAMLA edildi və round-trip bərabərliyi yoxlandı; GRADER-AUDIT şərhləri (A-01…A-26) YAML şərhi kimi qorundu.\n · Çoxdilli regex lüğəti (REJECT, REJECT_AZ/RU, …) kodda qaldı — r6/c1/pairwise blokları da onu işlədir; konfiqurasiya ona 'macro: REJECT' ilə istinad edir.\n\nİKİNCİ KORPUS: target/corpus-library (Nizami Public Library) — 3 sənəd, 10 parametr, 8 sərhəd, eyni sxemlə valid. Aurora ilə BİR ORTAQ ETİKET YOXDUR (test).\n · python build_full.py --corpus library → 24 case, hamısı törədilmiş, --check sinxron.\n · python build_full.py --check → full.jsonl BAYT-BAYTINA eyni, 165 case.\n · Korpusda QƏSDƏN qırıq versiya zənciri var; conflicts.py onu tapır (appendix_version_mismatch + clause_superseded_date_mismatch) — Aurora zənciri bütöv olduğu üçün AP-035-in üçüncü hesabatının süni mutasiyadan başqa sübutu yox idi. İndi var.\n\nDÜRÜSTLÜK (COVERAGE.md §11.3): Aurora datasetindəki 10 blokdan yalnız 2-si (boundary, r6) həqiqətən törədilir — 165 case-in 104-ü. Qalan 8 blok Aurora məzmununa əl ilə yazılıb və köçürülə bilmir; library.yaml bunu 'blocks: [boundary]' ilə AÇIQ deyir və test məcbur edir. Bunu gizlətmək generatorun köçürülməsini olduğundan asan göstərərdi.\n\nTestlər: agentproof/tests/test_second_corpus.py (13 test). pytest tam yaşıl, verify_fixtures exit 0."
+    }
+   ]
   },
   {
    "id": "AP-037",
@@ -2362,8 +2576,8 @@
    "desc": "report/html.py başlığında açıq yazılıb: 'Bu fayl müştəri təhvilinin görünən hissəsidir'. Üç qaydası (xarici asılılıq yox, gizlətmək mümkün deyil, bəzək yox sıxlıq) düzgündür və saxlanmalıdır — xüsusən 'xarici asılılıq yox', çünki müştəri datası (case mətnləri, agent cavabları) heç bir üçüncü tərəf hostuna getməməlidir; bu, satışda arqumentdir. Amma səhifə hazırda AgentProof-un DAXİLİ dilində danışır: taksonomiya kodları tək başına (R6, G2, S2 — _TAXONOMY_TAG regexi ilə taqlardan çıxarılır), docs/FAILURE-TAXONOMY.md yol istinadı, AP-xxx nömrələri. Müştəri mühəndisi bu səhifəni izahsız oxuya bilmir, yəni təhvil zəngdə şifahi tərcümə tələb edir. MÜŞTƏRİ SİQNALI: ilk müştəri HTML-i əsas təhvil kimi qəbul edirsə P1 olur; PDF və ya slayd istəyirsə bu tapşırığın forması dəyişir — ona görə zəngdən ƏVVƏL bitirmək riskdir və P3-dür.",
    "role": "harness-eng",
    "prio": "P3",
-   "status": "backlog",
-   "assignee": null,
+   "status": "done",
+   "assignee": "writer",
    "dod": "Hər taksonomiya kodu səhifədə insan dilindəki adı ilə birlikdə görünür (kod qalır, amma heç yerdə tək başına deyil); hesabat başlığı, müştəri adı və hədəf sistem adı konfiqurasiya ilə verilir, sabit kodlanmır; --audience client|internal bayrağı əlavə olunur: client rejimində daxili tapşırıq nömrələri və repo yolları gizlədilir, LAKİN 'nəyi ölçmədik', judge kalibrasiyası və reproduksiya bölmələri HƏR İKİ rejimdə məcburi qalır (mövcud BASELINE_MISSING davranışı pozulmur); test_html_report.py genişləndirilir və hər iki rejim üçün assertion əlavə olunur",
    "links": [
     "agentproof/report/html.py",
@@ -2371,16 +2585,52 @@
     "docs/FAILURE-TAXONOMY.md"
    ],
    "created": "2026-08-28T13:41:54",
-   "updated": "2026-08-28T13:41:54",
+   "updated": "2026-09-01T23:45:05",
    "history": [
     {
      "at": "2026-08-28T13:41:54",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:31:21",
+     "actor": "writer",
+     "action": "assigned",
+     "detail": "writer"
+    },
+    {
+     "at": "2026-09-01T22:31:21",
+     "actor": "writer",
+     "action": "backlog→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:57:16",
+     "actor": "writer",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:57:16",
+     "actor": "writer",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T23:45:05",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-01T22:57:16",
+     "actor": "writer",
+     "text": "html.py: --audience client|internal əlavə olundu (+ --client/--system/--audit-date). client rejimində çıxarılan: AP-xxx nömrələri, A-xx daxili audit kodları, daxili rol adları, board istinadları, repo yolları (evals/, pricing/models.yaml, dataset yolu -> yalnız fayl adı + hash), daxili düzəliş əmrləri (evals/run.py, evals/reproduce.py, run_calibration.py) — hər biri müştəri dilində eyni faktı deyən mətnlə əvəz olunur. ÇIXARILMAYAN: bütün ölçü nəticələri, BASELINE YOXDUR, flaky nisbəti/ALARM, judge kalibrasiya rəqəmləri, ölçülməyən xərc, skipped izahı, run_id/dataset_hash (izlənilə bilməsi üçün). Yeni MƏCBURİ bölmələr şablonun nömrələməsi ilə uzlaşdırıldı: 4 · Ölçmənin öz auditi (CLIENT-REPORT §4) və 8 · Nəyi ölçmədik (§8, ↑/↓/↔ istiqamət notasiyası + 'çıxarıla BİLMƏYƏN nəticələr' cədvəli, hamısı datadan hesablanır); judge 7-yə keçdi (§7). MANDATORY_SECTIONS + _check_mandatory(): bölmə səhifədən yox olarsa render() MandatorySectionMissing atır — hər iki auditoriya üçün test parametrləşib. find_internal_traces()/scrub_internal() AP-037-nin əl grep-ini avtomatlaşdırır; sübut mətni (pre/reason blokları) HEÇ VAXT redaktə olunmur. Taksonomiya kodu artıq heç yerdə tək deyil (G1 · Siyasət uydurması). test_html_report.py 33 -> 59 test (real full-run-02 üzərində integration testi daxil). reports/full-run-02: index.html (internal, 5 daxili iz) + client.html (0 daxili iz), rəqəmlər eyni. pytest: 951 passed (test_multilingual_patterns/test_dataset_full/test_adapter_* paralel agentlərin yarımçıq işi ilə qırmızıdır — evals/datasets/build_full.py HEAD versiyası yüklənir, iş qovluğundakı yüklənmir; mənim dəyişikliyimlə əlaqəsi yoxdur)."
+    }
+   ]
   },
   {
    "id": "AP-040",

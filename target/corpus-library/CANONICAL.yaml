@@ -1,0 +1,256 @@
+# ============================================================================
+# Nizami Public Library — canonical policy parameter table
+# ============================================================================
+# İKİNCİ SINAQ KORPUSU (AP-036). Məqsədi Aurora-nı əvəz etmək DEYİL: generatorun
+# (`evals/datasets/build_full.py`) Aurora-ya sabit bağlı OLMADIĞINI sübut
+# etməkdir. Aurora korpusu 96 parametrdir; bu 10-dur və qəsdən kiçikdir.
+#
+# Sxem eynidir (`target/corpus/schema.py`, `docs/CANONICAL-SCHEMA.md`) və
+# `python target/corpus/schema.py validate` ilə yoxlanılır.
+#
+# QƏSDƏN QOYULMUŞ QÜSUR — `membership-and-access.md` sənədinin versiya zənciri
+# QIRIQDIR: baş məlumat `Supersedes: v1.1` deyir, əlavə isə `(v1.0)` damğası
+# daşıyır və bənd `superseded 2026-02-01` deyir (sənəd 2026-01-01-dən
+# qüvvədədir). `target/corpus/conflicts.py` bunu tapmalıdır — Aurora-da zəncir
+# bütöv olduğu üçün üçüncü hesabatın SÜNİ mutasiyadan başqa sübutu yox idi.
+# ============================================================================
+
+meta:
+  company: Nizami Public Library
+  corpus_version: "1.0"
+  generated: 2026-09-01
+  currency: AZN
+  timezone: Asia/Baku
+  language: en
+  evaluation_reference_date: 2026-09-01
+  documents:
+    - {file: lending-and-renewals.md,   id: NPL-POL-LEN, version: "2.0", effective_from: 2026-03-01, supersedes_version: "1.4"}
+    - {file: fines-and-fees.md,         id: NPL-POL-FIN, version: "3.1", effective_from: 2026-05-01, supersedes_version: "3.0"}
+    - {file: membership-and-access.md,  id: NPL-POL-MEM, version: "1.2", effective_from: 2026-01-01, supersedes_version: "1.1"}
+
+# ----------------------------------------------------------------------------
+# Üstünlük nərdivanı — kiçik korpusda da lazımdır: iki qayda eyni anda tətbiq
+# olunanda hansının qazandığı determinist olmalıdır.
+# ----------------------------------------------------------------------------
+precedence_ladder:
+  - {rank: 1, rule: item_excluded_from_lending, source: "lending-and-renewals.md §2.3"}
+  - {rank: 2, rule: hold_placed_by_another_member, source: "lending-and-renewals.md §3.2"}
+  - {rank: 3, rule: standard_loan, source: "lending-and-renewals.md §2.1"}
+
+counting_rules:
+  loan_period:
+    anchor: checkout_date
+    anchor_is_day: 0
+    inclusive_final_day: true
+    calendar_or_business: calendar
+    note: "A loan of N days is on time on elapsed days 0..N inclusive and overdue from N+1."
+  hold_shelf:
+    anchor: notification_date
+    anchor_is_day: 0
+    inclusive_final_day: true
+    calendar_or_business: calendar
+  fine_grace:
+    anchor: due_date
+    anchor_is_day: 0
+    inclusive_final_day: true
+    calendar_or_business: calendar
+    note: "Grace runs on days 1..3 past the due date; from day 4 the fine applies from day 1."
+
+parameters:
+
+  # ==========================================================================
+  # lending-and-renewals.md  (NPL-POL-LEN v2.0)
+  # ==========================================================================
+  - id: loan_period_standard
+    name: Standard loan period
+    value: 21
+    unit: days
+    status: active
+    effective_from: 2026-03-01
+    supersedes: {value: 14, unit: days, doc_version: "1.4", effective_until: 2026-02-28}
+    doc: lending-and-renewals.md
+    section: "§2.1"
+    doc_version: "2.0"
+    applies_when: "standard circulating item; not a reference work, current periodical, or course reserve"
+    precedence_rank: 3
+    boundary:
+      dimension: days_since_checkout
+      points:
+        - {value: 20, expected: on_time}
+        - {value: 21, expected: on_time}
+        - {value: 22, expected: overdue}
+
+  - id: renewal_limit
+    name: Number of renewals allowed on a standard loan
+    value: 2
+    unit: renewals
+    status: active
+    effective_from: 2026-03-01
+    supersedes: {value: 1, unit: renewals, doc_version: "1.4", effective_until: 2026-02-28}
+    doc: lending-and-renewals.md
+    section: "§3.1"
+    doc_version: "2.0"
+    applies_when: "standard loan with no hold placed by another member"
+    boundary:
+      dimension: renewals_already_used
+      points:
+        - {value: 1, expected: renewal_allowed}
+        - {value: 2, expected: renewal_refused}
+        - {value: 3, expected: renewal_refused}
+
+  - id: hold_shelf_days
+    name: Days a reserved item is held at the collection desk
+    value: 5
+    unit: days
+    status: active
+    effective_from: 2026-03-01
+    doc: lending-and-renewals.md
+    section: "§4.1"
+    doc_version: "2.0"
+    applies_when: "member notified that a reserved item is ready for collection"
+    boundary:
+      dimension: days_since_notification
+      points:
+        - {value: 4, expected: hold_collectable}
+        - {value: 5, expected: hold_collectable}
+        - {value: 6, expected: hold_released}
+
+  # ==========================================================================
+  # fines-and-fees.md  (NPL-POL-FIN v3.1)
+  # ==========================================================================
+  - id: overdue_fine_per_day
+    name: Overdue fine per calendar day, per item
+    value: 0.20
+    unit: AZN
+    status: active
+    effective_from: 2026-05-01
+    doc: fines-and-fees.md
+    section: "§1.1"
+    doc_version: "3.1"
+    applies_when: "item is past its due date and outside the grace period"
+    basis: per_item_per_day
+
+  - id: overdue_fine_cap
+    name: Maximum overdue fine on a single item
+    value: 10.00
+    unit: AZN
+    status: active
+    effective_from: 2026-05-01
+    supersedes: {value: 5.00, unit: AZN, doc_version: "3.0", effective_until: 2026-04-30}
+    doc: fines-and-fees.md
+    section: "§1.2"
+    doc_version: "3.1"
+    applies_when: "any single overdue item, regardless of how long it stays out"
+    boundary:
+      dimension: accrued_fine_azn
+      points:
+        - {value: 9.99, expected: fine_accruing}
+        - {value: 10.00, expected: fine_capped}
+        - {value: 10.01, expected: fine_capped}
+
+  - id: fine_grace_period_days
+    name: Grace period after the due date before a fine is charged
+    value: 3
+    unit: days
+    status: active
+    effective_from: 2026-05-01
+    supersedes: {value: 7, unit: days, doc_version: "3.0", effective_until: 2026-04-30}
+    doc: fines-and-fees.md
+    section: "§2.1"
+    doc_version: "3.1"
+    applies_when: "first grace period on this item for this loan; not reset by renewal"
+    boundary:
+      dimension: days_past_due_date
+      points:
+        - {value: 2, expected: within_grace}
+        - {value: 3, expected: within_grace}
+        - {value: 4, expected: fine_applies}
+
+  - id: replacement_fee
+    name: Flat replacement fee for a lost item
+    value: 25.00
+    unit: AZN
+    status: active
+    effective_from: 2026-05-01
+    doc: fines-and-fees.md
+    section: "§3.1"
+    doc_version: "3.1"
+    applies_when: "item declared lost; charged in addition to any accrued overdue fine"
+
+  # ==========================================================================
+  # membership-and-access.md  (NPL-POL-MEM v1.2)
+  # ==========================================================================
+  - id: min_member_age_years
+    name: Minimum age for a standard membership card
+    value: 14
+    unit: years
+    status: active
+    effective_from: 2026-01-01
+    doc: membership-and-access.md
+    section: "§1.1"
+    doc_version: "1.2"
+    applies_when: "card issued in the applicant's own name, without a guardian signature"
+    boundary:
+      dimension: age_at_application
+      points:
+        - {value: 13, expected: junior_card}
+        - {value: 14, expected: standard_card}
+        - {value: 15, expected: standard_card}
+
+  - id: max_concurrent_loans
+    name: Items a member may hold on loan at the same time
+    value: 8
+    unit: items
+    status: active
+    effective_from: 2026-01-01
+    supersedes: {value: 5, unit: items, doc_version: "1.1", effective_until: 2025-12-31}
+    doc: membership-and-access.md
+    section: "§2.1"
+    doc_version: "1.2"
+    applies_when: "counts items on loan; items on hold are not counted"
+    boundary:
+      dimension: items_already_on_loan
+      points:
+        - {value: 7, expected: loan_allowed}
+        - {value: 8, expected: loan_limit_reached}
+        - {value: 9, expected: loan_limit_reached}
+
+  - id: card_validity_months
+    name: Membership card validity
+    value: 12
+    unit: months
+    status: active
+    effective_from: 2026-01-01
+    doc: membership-and-access.md
+    section: "§3.1"
+    doc_version: "1.2"
+    applies_when: "any standard or junior card, counted from the date of issue"
+    boundary:
+      dimension: months_since_issue
+      points:
+        - {value: 11, expected: card_valid}
+        - {value: 12, expected: card_valid}
+        - {value: 13, expected: card_expired}
+
+# ----------------------------------------------------------------------------
+# Rəqəm toqquşmaları — kiçik korpusda da mövcuddur və ölçmənin özünü yanıldır.
+# ----------------------------------------------------------------------------
+colliding_values:
+  - value: 5
+    unit: mixed
+    meanings:
+      - {parameter: hold_shelf_days, status: ACTIVE, unit: days}
+      - {parameter: overdue_fine_cap, status: SUPERSEDED, unit: AZN}
+      - {parameter: max_concurrent_loans, status: SUPERSEDED, unit: items}
+  - value: 14
+    unit: mixed
+    meanings:
+      - {parameter: loan_period_standard, status: SUPERSEDED, unit: days, correct_for: "loans issued on or before 2026-02-28"}
+      - {parameter: min_member_age_years, status: ACTIVE, unit: years, correct_for: "minimum age for a card in the member's own name"}
+
+superseded_index:
+  - {parameter: loan_period_standard, stale_value: 14, doc: lending-and-renewals.md, appendix: "Appendix A.1"}
+  - {parameter: renewal_limit, stale_value: 1, doc: lending-and-renewals.md, appendix: "Appendix A.2"}
+  - {parameter: overdue_fine_cap, stale_value: 5.00, doc: fines-and-fees.md, appendix: "Appendix A.1"}
+  - {parameter: fine_grace_period_days, stale_value: 7, doc: fines-and-fees.md, appendix: "Appendix A.2"}
+  - {parameter: max_concurrent_loans, stale_value: 5, doc: membership-and-access.md, appendix: "Appendix A.1"}

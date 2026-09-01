@@ -32,7 +32,7 @@ import random
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Sequence
 
-from agentproof.failure import HALT, HALTING, REASON_HINT, RETRYABLE
+from agentproof.failure import BAD_REQUEST, HALT, HALTING, REASON_HINT, RETRYABLE
 from agentproof.types import AgentResponse, ToolCall, Usage, RetrievedChunk
 
 # --- backoff (AP-024) ------------------------------------------------------
@@ -48,6 +48,10 @@ BACKOFF_JITTER = 0.1
 #: Zəncir qurula bilmədikdə verilən ad. Susub yeni söhbətlə davam etmək
 #: çoxnövbəli case-i gizlicə tək-növbəliyə çevirmək demək olardı.
 MISSING_CONVERSATION_ID = "conversation_not_returned"
+
+#: Hədəf söhbəti ÜMUMİYYƏTLƏ zəncirləyə bilmir (id sahəsi konfiqurasiya
+#: edilməyib və ya çağırılan funksiya söhbət qəbul etmir).
+MULTI_TURN_UNSUPPORTED = "multi_turn_unsupported"
 
 
 # ============================================================ konfiqurasiya
@@ -129,6 +133,43 @@ def halted_response(context: dict[str, Any] | None = None) -> AgentResponse:
             "hint": REASON_HINT.get(reason, ""),
             "request_sent": False,
             **(context or {}),
+        },
+    )
+
+
+def multi_turn_unsupported_response(
+    n_turns: int, *, detail: str, transport: str = ""
+) -> AgentResponse:
+    """Çoxnövbəli case, zəncirləyə bilməyən hədəf — sorğu GÖNDƏRİLMİR.
+
+    Alternativ iki yol var idi və hər ikisi pisdir:
+
+      * növbələri ayrı-ayrı söhbətlərə göndərmək — case çoxnövbəli görünər,
+        HƏQİQƏTDƏ tək-növbəli ölçülərdi (`COVERAGE.md §7`-dəki səhv);
+      * yalnız son növbəni göndərmək — kontekst itkisi ölçülməmiş qalardı.
+
+    Ona görə cavab ADI ilə qayıdır: grader `skipped` verir, hesabatda isə
+    "bu hədəfdə çoxnövbəli case-lər ölçülmədi" sətri görünür.
+
+    `attempts = 0`: sorğu ümumiyyətlə göndərilmədi (`halted_response` ilə eyni
+    məntiq) — olmayan xərci "ölçülməmiş" kimi göstərmirik.
+    """
+    return AgentResponse(
+        text="",
+        latency_ms=0,
+        attempts=0,
+        error=MULTI_TURN_UNSUPPORTED,
+        # Sorğunun ÖZÜ bu hədəfə uyğun deyil: gözləməklə keçmir, təkrar da
+        # etmir. `bad_request` qəsdən `HALTING`-də deyil — tək növbəli
+        # case-lər normal ölçülməyə davam edir.
+        error_class=BAD_REQUEST,
+        raw={
+            "transport": transport or "none",
+            "multi_turn": True,
+            "multi_turn_supported": False,
+            "n_turns_requested": n_turns,
+            "request_sent": False,
+            "detail": detail,
         },
     )
 

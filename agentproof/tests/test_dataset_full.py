@@ -34,7 +34,7 @@ DATASET = ROOT / "evals" / "datasets" / "full.jsonl"
 BUILDER = ROOT / "evals" / "datasets" / "build_full.py"
 CORPUS = ROOT / "target" / "corpus"
 
-EXPECTED_TOTAL = 165
+EXPECTED_TOTAL = 185   # AP-017: +20 deqradasiya əyrisi case-i (5 ailə × 1/3/5/8 növbə)
 
 
 # ------------------------------------------------------------------ fixtures

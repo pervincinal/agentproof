@@ -235,7 +235,7 @@ python target/corpus/anchors.py verify    # xəritə köhnəlibmi (CI)
 1. ~~27 bayat tələdən 13-ü ayrıca case almadı.~~ **BAĞLANDI (AP-015):** 27/27 tələnin ayrıca case-i var, `stale-answer rate` artıq tam baza üzərindədir (§3). Qalan məhdudiyyət: 27 tələdən 25-i **tək** case ilə örtülüb, yəni tələ üzrə `pass^k` deyil, tək ölçü alınır.
 2. **21 həddin kəsilmə nöqtəsi** ölçülmür, yalnız pozuntu faktı (§2).
 3. **3-yollu kombinator əhatə** yoxdur — yalnız cütlər (§6).
-4. **Çoxnövbəli deqradasiya əyrisi** (`§10 Boşluq 5`, "hansı növbədə sınır") bu dataset-də **yoxdur**: 5 C1 case-i sınma faktını verir, `failure-onset turn`-ü yox. Onun üçün eyni sualın 1/3/5/8 növbəli variantları lazımdır (~20 case) və adapter dəstəyi (§7).
+4. ~~**Çoxnövbəli deqradasiya əyrisi** yoxdur.~~ **BAĞLANDI (AP-017):** 5 ailə × 1/3/5/8 növbə = 20 case (`degradation-curve` teqi), `failure-onset turn` `python evals/degradation.py reports/<run>` ilə hesablanır. Ölçülmüş nəticə və büdcə təsiri **§12**-dədir. Qalan məhdudiyyət: əyri **5 ailə** üzərindədir və məsafə oxu 4 nöqtəlidir (1/3/5/8) — 8 növbədən uzun söhbət ölçülmür.
 5. **`pass^k` / qeyri-determinizm** (`Boşluq 4`) dataset-də deyil, **qaçış rejimindədir** (`--repeat N`). Aqreqat `consistency_at_k` case-ləri `pilot-consistency.jsonl`-dədir, çünki `--repeat` qlobaldır. **Ölçülmüş dəyər (AP-006, 2026-08-27 canlı qaçış, dify_http · claude-sonnet-5 · `--repeat 3`):**
 
    | metrik | dəyər | hesabatdakı rolu |
@@ -271,3 +271,191 @@ python -m pytest agentproof/tests/test_dataset_full.py agentproof/tests/test_anc
 ```
 
 `full.jsonl` **əl ilə redaktə edilmir** — `test_dataset_is_in_sync_with_generator` generatorla fərqi aşkarlayır və qırmızıya düşür.
+
+---
+
+## 11. Korpusdan asılılıq — generator Aurora-ya bağlı DEYİL (AP-036)
+
+§10-un iddiası («CANONICAL.yaml dəyişəndə dataset yenidən qurulur») yalnız bir
+korpusda doğru olsaydı, o, iddia deyil, təsadüf olardı. AP-036 həmin bağı
+qırdı və **ikinci korpusda ölçdü**.
+
+### 11.1. Nə sabit kodlanmışdı, nə oldu
+
+| Əvvəl | İndi |
+|---|---|
+| `REF_DATE = "2026-09-01"` sabit sətir | `CANONICAL.yaml → meta.evaluation_reference_date` |
+| `CORPUS = ROOT / "target" / "corpus"` | konfiqurasiyadakı `corpus_dir` (`--corpus-dir` ilə əvəzlənir) |
+| `OUT = .../full.jsonl` | konfiqurasiyadakı `out` (`--out` ilə əvəzlənir) |
+| `LABEL_ASSERT` — 59 etiket, kodda | `corpora/<ad>.yaml → labels:` |
+| `BSPEC` — 36 sərhəd sorğusu, kodda | `corpora/<ad>.yaml → boundaries:` |
+| `BFIXTURE` — probe→sifariş bağı, kodda | `corpora/<ad>.yaml → fixtures:` |
+| `TRAPS.md#…` sabit istinad | konfiqurasiyadakı `traps_doc` |
+
+Referens tarixi indi **yükdaşıyandır**, dekorativ deyil: `_assert_no_future_dates`
+hər case SORĞUSUNU yoxlayır və qaçış saatından sonrakı tarix generatoru
+saxlayır. Sabit kodlanmış tarixlə bu yoxlama mənasız olardı.
+
+### 11.2. İkinci korpus — Nizami Public Library
+
+`target/corpus-library/` — 3 sənəd, 10 parametr, 8 sərhəd, eyni sxem
+(`target/corpus/schema.py` ilə valid). Aurora ilə **bir ortaq etiket belə
+yoxdur** (test ilə qorunur).
+
+```
+$ python evals/datasets/build_full.py --corpus library
+  korpus         : library  (target/corpus-library)
+  referens tarixi: 2026-09-01  (CANONICAL.meta-dan)
+  cəmi case      : 24  (törədilən: 24)
+    G2 sərhəd (BVA)           24
+
+$ python evals/datasets/build_full.py --check          # Aurora
+  full.jsonl: sinxrondur (165 case)   ← BAYT-BAYTINA eyni
+```
+
+Korpusda **qəsdən qırıq versiya zənciri** var (`membership-and-access.md`:
+əlavə `(v1.0)` damğalıdır, baş məlumat `Supersedes: v1.1` deyir; bənd
+`superseded 2026-02-01` deyir, sənəd 2026-01-01-dən qüvvədədir).
+`target/corpus/conflicts.py` hər ikisini tapır — Aurora zənciri bütöv olduğu
+üçün həmin hesabatın süni mutasiyadan başqa sübutu yox idi.
+
+### 11.3. DÜRÜSTLÜK — nə köçdü, nə köçmədi
+
+Aurora datasetindəki **10 blokdan yalnız 2-si** (`boundary`, `r6`) həqiqətən
+CANONICAL.yaml-dan törədilir. Qalan 8 blok — injection payload-ları,
+sikofansiya dialoqları, bilik boşluqları, pairwise sorğu şablonları — Aurora
+məzmununa **əl ilə** yazılıb və köçürülə bilməz.
+
+Ona görə `library.yaml` yalnız `blocks: [boundary]` elan edir və test bunu
+məcbur edir (`test_config_states_which_blocks_are_derived`). Yəni yeni
+müştəri korpusunda generator **sərhəd qatını pulsuz verir**, qalanı yenə də
+əl işidir. Rəqəmlə: 165 Aurora case-inin **104-ü** törədilmiş bloklardandır (66 sərhəd + 38 bayat bənd) — generator statistikası bunu hər qaçışda çap edir.
+
+**Ölçülmüş qazanc dar oxunuşla:** yeni korpusda 8 həddin 24 case-i kod
+yazmadan alındı; 10 parametrlik korpusda bu, sərhəd qatının **hamısıdır**.
+96 parametrlik korpusda eyni nisbət qalır, çünki iş konfiqurasiyada
+(sual mətni + etiket assertion-ı) yazılır, kodda yox.
+
+---
+
+## 12. Çoxnövbəli deqradasiya əyrisi — «neçənci növbədə sınır?» (AP-017)
+
+`docs/FAILURE-TAXONOMY.md` C1 rejimi ICLR 2026 işinə istinad edir: çoxnövbəli
+söhbətdə orta **39% düşmə**. Bizim 5 C1 case-imiz sınmanın **faktını** verirdi,
+`failure-onset turn`-ü yox — yəni «sistem çoxnövbəlidə pisdir» deyə bilirdik,
+«8-ci növbədən sonra sınır» deyə bilmirdik. Birincisi hesabat cümləsidir,
+ikincisi düzəliş göstərişidir.
+
+### 12.1. Dizayn — yeganə dəyişən MƏSAFƏDİR
+
+5 ailə × 4 nöqtə (1 / 3 / 5 / 8 növbə) = **20 case**, generatordan törəyir
+(`build_full.py → CURVE_FAMILIES`).
+
+| | turns-1 | turns-3 | turns-5 | turns-8 |
+|---|---|---|---|---|
+| faktlar | 1-ci mesaj | 1-ci mesaj | 1-ci mesaj | 1-ci mesaj |
+| məzmunsuz doldurucu | — | 1 | 3 | 6 |
+| sual | eyni mesajda | sonuncu | sonuncu | sonuncu |
+| **fakt→sual məsafəsi** | **0** | **2** | **4** | **7** |
+
+Faktlar, sual, grader, iynə və ciddilik ailə daxilində **sözbəsöz eynidir**
+(testlə məcburi: `test_only_the_distance_changes_inside_a_family`). Doldurucular
+sifariş nömrəsi, rəqəm və siyasət sözü daşımır — daşısaydılar ölçdüyümüz şey
+məsafə deyil, məlumat həcmi olardı.
+
+İynələr **yenidən icad edilmir**: auditdən keçmiş makrolardır (`REJECT`,
+`WARRANTY_OVER`, `cod_available`) — yəni A-01…A-26 dərsləri (morfoloji əhatə,
+söz sərhədi, çılpaq rəqəm yox) avtomatik miras alınır və test bunu yoxlayır.
+
+### 12.2. CANLI QAÇIŞ — ölçülmüş nəticə
+
+`dify_http · claude-sonnet-5 · 2026-09-01` · qaçışlar: `reports/ap017-curve-t01`
+(repeat 3), `reports/ap017-curve-c03`, `reports/ap017-curve-t07`
+
+```
+ailə                                      t1        t3        t5        t8   onset
+----------------------------------------------------------------------------------
+c03-plus-vs-promotional                100%      100%      100%      100%    sınmadı
+t01-standard-window                    100%      100%      100%        0%    t8   ←(*)
+t07-warranty-on-delivery-version       100%          —         —      100%    sınmadı
+----------------------------------------------------------------------------------
+ORTA                                   100%      100%      100%       67%
+İLK NÖQTƏYƏ GÖRƏ DÜŞMƏ                   0%        0%        0%       33%
+```
+
+**(*) Bu düşmə MODELİN sınması DEYİL — bizim iynəmizin boşluğudur (A-27).**
+`--repeat 3` ilə saxlanmış üç cavabın hər üçü DÜZGÜN rədd verdi; biri belə
+yazdı: «that window has **already** closed … a standard return would not be
+accepted». `REJECT` iynəsində `window has closed` arasında zərf yeri yox idi və
+`would not be accepted` alternativi ümumiyyətlə yox idi. Düzəlişdən sonra
+saxlanmış cavablar yenidən qiymətləndirildi:
+
+| nöqtə | düzəlişdən əvvəl | düzəlişdən sonra |
+|---|---|---|
+| t1 | 3/3 | 3/3 |
+| t3 | 2/3 | 2/3 |
+| t5 | 3/3 | 3/3 |
+| **t8** | **2/3** | **3/3** |
+
+**Nəticə: `t01` ailəsində 8 növbəyə qədər deqradasiya YOXDUR** — 12 cavabın
+11-i düzgün verdikt verdi. Ölçülmüş 33% «düşmə» tamamilə iynə boşluğundan
+gəlirdi. Yalançı QIRMIZI buraxılmış tapıntı qədər zərərlidir: düzəltməsəydik
+hesabata olmayan bir C1 sınması yazardıq.
+
+**Hələ də bağlanmamış boşluq (grader-eng üçün).** t3-dəki qalan 1 uğursuzluq
+da modelin deyil, iynənin: agent **markdown vurğusu** işlədib — «you are
+**not** within the … window» — və `not within` ilə `window` arasına `**`
+düşdüyü üçün pattern tutmur. Bu, bütün regex iynələrinə aid **kəsişən** bir
+qüsurdur (uyğunlaşdırmadan əvvəl markdown təmizlənməlidir), ona görə paylaşılan
+qrader qatında həll olunmalıdır, tək case-də yox. Rəqəmi öz xeyrimizə
+düzəltmirik: **11/12** yazılır.
+
+**Nə iddia etmirik.** 3 ailə ölçüldü, 5 deyil; `t07` yalnız uc nöqtələrindədir;
+`t05`-də bir ailə var. Bu, əyrinin **metodunun işlədiyini** göstərir, sistemin
+çoxnövbəli davranışına populyasiya qiyməti vermir. ICLR-in 39% rəqəmi ilə
+müqayisə **aparılmır** — bizim ölçdüyümüz 3 ailədir.
+
+### 12.3. Büdcə təsiri — ÖLÇÜLDÜ
+
+Çoxnövbəli case bahalıdır, çünki hər növbə bütün kontekstlə birlikdə yenidən
+göndərilir. Ölçülmüş orta case xərci (1 təkrar, `claude-sonnet-5`):
+
+| nöqtə | orta xərc | n |
+|---|---:|---:|
+| t1 | $0.0379 | 4 |
+| t3 | $0.0781 | 3 |
+| t5 | $0.1324 | 2 |
+| t8 | $0.2223 | 3 |
+
+* **20 case-in tam qaçışı: ~$2.35** (repeat 1). Dataset 165→185 case oldu
+  (+12% case), qaçış xərci isə **~+21%** artır — çünki artım növbə sayındadır,
+  case sayında yox. Bu, hesabatda açıq yazılmalıdır.
+* `--repeat 3` ilə: **~$7.06**.
+
+**ƏMƏLİYYAT QEYDİ — `--repeat` regex iynələrinə heç nə vermir.**
+`agentproof/runner/scorer.py`: aqreqat olmayan qrader `responses[-1]`-i
+qiymətləndirir, yəni `--repeat 3` xərci **üç dəfə artırır**, keçdi/sındı
+qərarını isə dəyişmir (yalnız `consistency_at_k` tipli qraderlər bütün
+siyahını alır). AP-017 qaçışında bu ölçüldü: `t01` ailəsinə $1.14 xərcləndi,
+qərar isə 4 cavabdan çıxdı. Deqradasiya əyrisi üçün **repeat 1 kifayətdir**;
+təkrarlar yalnız saxlanmış cavabların OFFLINE yenidən qiymətləndirilməsi üçün
+dəyərlidir (A-27 məhz belə tapıldı).
+
+**Bu qaçışın faktiki xərci: $2.08** (elan olunmuş $2 həddindən $0.08 ÇOX).
+Həddin aşılması gizlədilmir: son (üçüncü) ailə başlayanda qalıq $0.28
+hesablanmışdı, real xərc isə $0.36 çıxdı — çünki 8 növbəlik case-in xərci
+qiymətləndirmədən yüksəkdir. Üstəlik cəhdlərin bir hissəsi `usage` qaytarmadı,
+yəni **real xərc bundan da yüksəkdir** (naməlum, sıfır deyil).
+
+### 12.4. Necə ölçülür
+
+```bash
+python evals/run.py --target dify_http --dataset evals/datasets/full.jsonl \
+  --filter 'tag=degradation-curve' --out reports/<run_id>
+
+python evals/degradation.py reports/<run_id>            # cədvəl
+python evals/degradation.py reports/a reports/b --json curve.json
+```
+
+Analizator **ölçülməmişi «sınmadı» yazmır**: infrastruktur xətası olan nöqtə
+`ölçülmədi` göstərilir. Bu fərq itsə hesabat yalançı yaşıl olur.
