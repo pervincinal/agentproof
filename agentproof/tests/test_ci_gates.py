@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from evals import ci_gates, ci_summary  # noqa: E402
 
+from agentproof.graders import registry  # noqa: E402
 from agentproof.graders.calibration import CalibrationReport  # noqa: E402
 from agentproof.types import (  # noqa: E402
     AgentResponse,
@@ -241,6 +242,92 @@ def test_baseline_gate_emits_the_path_when_a_snapshot_exists(tmp_path, capsys):
     (d / "mock@1.0.json").write_text("{}", encoding="utf-8")
     assert ci_gates.main(["baseline", str(d)]) == 0
     assert capsys.readouterr().out.strip().endswith("mock@1.0.json")
+
+
+# --- mərhələ süzgəci: "ən sonuncu" TƏK BAŞINA yanlış seçir -----------------
+def _stage_dir(tmp_path):
+    """cheap (162 case, KÖHNƏ) + judge (3 case, YENİ) snapshot-ları."""
+    d = tmp_path / "baselines"
+    d.mkdir()
+    cheap_ids = [c["id"] for c in _dataset_cases() if c["stage"] == "cheap"]
+    judge_ids = [c["id"] for c in _dataset_cases() if c["stage"] == "judge"]
+
+    def rec(path, ids, stamp):
+        (d / path).write_text(json.dumps({
+            "run_id": path, "started_at": stamp,
+            "results": [{"case_id": i} for i in ids],
+        }), encoding="utf-8")
+
+    rec("cheap@aaa-2026-08-28.json", cheap_ids, "2026-08-28T09:33:31+00:00")
+    rec("judge@bbb-2026-09-01.json", judge_ids, "2026-09-01T10:00:00+00:00")
+    return d, cheap_ids, judge_ids
+
+
+def _dataset_cases():
+    out = []
+    for line in Path("evals/datasets/full.jsonl").read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("//"):
+            continue
+        c = json.loads(line)
+        out.append({"id": c["id"],
+                    "stage": "judge" if registry.kind(c.get("grader", "")) == "judge"
+                             else "cheap"})
+    return out
+
+
+def test_baseline_stage_filter_picks_the_cheap_snapshot_not_the_newer_judge_one(
+    tmp_path, capsys
+):
+    """REQRESSİYA QAPISININ SƏSSİZ BOŞALMASI — məhz bu testin qarşısını aldığı şey.
+
+    judge snapshot-u cheap-dən YENİDİR. `--stage` olmadan tarix qaydası onu
+    seçir və 162 case-lik qaçış 3 case-lik baseline ilə müqayisə olunur:
+    sınan case-lər `new_cases`-ə düşür, qapı heç nə bloklamır.
+    """
+    d, cheap_ids, _ = _stage_dir(tmp_path)
+    assert ci_gates.main(["baseline", str(d), "--require", "--stage", "cheap"]) == 0
+    assert capsys.readouterr().out.strip().endswith("cheap@aaa-2026-08-28.json")
+
+
+def test_baseline_stage_filter_picks_the_judge_snapshot(tmp_path, capsys):
+    d, _, _ = _stage_dir(tmp_path)
+    assert ci_gates.main(["baseline", str(d), "--require", "--stage", "judge"]) == 0
+    assert capsys.readouterr().out.strip().endswith("judge@bbb-2026-09-01.json")
+
+
+def test_baseline_without_stage_still_takes_the_newest(tmp_path, capsys):
+    """Köhnə davranış qorunur (mövcud çağırış yerləri sınmasın), amma xəbərdarlıqla."""
+    d, _, _ = _stage_dir(tmp_path)
+    assert ci_gates.main(["baseline", str(d)]) == 0
+    out = capsys.readouterr()
+    assert out.out.strip().endswith("judge@bbb-2026-09-01.json")
+    assert "--stage" in out.err
+
+
+def test_baseline_stage_gate_blocks_when_that_stage_has_no_snapshot(tmp_path, capsys):
+    """cheap snapshot var, judge yoxdur -> judge qaçışı SƏSSİZ keçməməlidir."""
+    d = tmp_path / "baselines"
+    d.mkdir()
+    cheap_ids = [c["id"] for c in _dataset_cases() if c["stage"] == "cheap"]
+    (d / "cheap@aaa.json").write_text(json.dumps({
+        "run_id": "x", "started_at": "2026-08-28T09:33:31+00:00",
+        "results": [{"case_id": i} for i in cheap_ids],
+    }), encoding="utf-8")
+    assert ci_gates.main(["baseline", str(d), "--require", "--stage", "judge"]) == 1
+    assert capsys.readouterr().out.strip() == ""  # boş yol → `--baseline` ötürülmür
+
+
+def test_baseline_with_unknown_cases_is_not_silently_dropped(tmp_path, capsys):
+    """Mərhələsi müəyyən edilməyən snapshot kənarlaşdırılmır (köhnə artefaktlar)."""
+    d = tmp_path / "baselines"
+    d.mkdir()
+    (d / "legacy@old.json").write_text(json.dumps({
+        "run_id": "x", "started_at": "2026-08-01T00:00:00+00:00",
+        "results": [{"case_id": "case-that-is-not-in-the-dataset"}],
+    }), encoding="utf-8")
+    assert ci_gates.main(["baseline", str(d), "--require", "--stage", "cheap"]) == 0
+    assert capsys.readouterr().out.strip().endswith("legacy@old.json")
 
 
 BASELINE_DIR = Path("evals/baselines")

@@ -95,6 +95,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--max-connections", type=int, default=8)
     p.add_argument("--out", default=None, help="reports/<run_id>/ qovluğu")
     p.add_argument("--fail-on-regression", action="store_true")
+    p.add_argument("--fail-on-repeat-mismatch", action="store_true",
+                   help=("cari qaçış baseline-dan AZ `--repeat` ilə qaçırılıbsa "
+                         "qapını bloklа. Verilməsə qapı bloklamır, amma müqayisə "
+                         "TƏSDİQLƏNMƏMİŞ işarələnir və xəbərdarlıq göstərilir"))
     p.add_argument("--max-pass-rate-drop", type=float, default=0.02)
     p.add_argument("--target-version", default=os.environ.get("AGENTPROOF_TARGET_VERSION", ""))
     p.add_argument("--model", default=os.environ.get("AGENTPROOF_SUT_MODEL", ""),
@@ -347,10 +351,10 @@ def main(argv: list[str] | None = None) -> int:
     # Konfiqurasiya artefaktın İÇİNƏ yazılır — kənar sənədə güvənmək məhz
     # LIM-E06-nın səbəbi idi.
     apply_retrieval(record, retrieval)
-    record_path = out_dir / f"{record.run_id}.json"
-    record_path.write_text(
-        json.dumps(record.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8"
-    )
+    # Qaçışın TƏKRAR sayı artefaktın İÇİNDƏ olmalıdır (AP-043): baseline
+    # `--repeat 3` ilə qurulub, qapı isə tək cəhdlə qaçırılıbsa, «düzəldi»
+    # iddiası ölçülməmişdir — bunu sonradan bilmək üçün rəqəm artefaktda gərək.
+    record.totals["repeat"] = int(args.repeat)
 
     delta = None
     gate_result = None
@@ -361,10 +365,27 @@ def main(argv: list[str] | None = None) -> int:
         else:
             baseline = RunRecord.from_dict(json.loads(baseline_path.read_text()))
             delta = compare(record, baseline)
-            gate_result = gate(delta, GatePolicy(max_pass_rate_drop=args.max_pass_rate_drop))
+            # Yoxlamanın nəticəsi artefaktın İÇİNƏ düşür — `model_check` /
+            # `anchor_check` ilə eyni qayda: xəbərdarlıq PR şərhi ilə birlikdə
+            # itməməlidir.
+            record.totals["repeat_check"] = delta.repeat_check.to_dict()
+            for warning in delta.repeat_check.warnings:
+                print(f"\nXƏBƏRDARLIQ — {warning}", file=sys.stderr)
+            gate_result = gate(
+                delta,
+                GatePolicy(
+                    max_pass_rate_drop=args.max_pass_rate_drop,
+                    fail_on_repeat_mismatch=args.fail_on_repeat_mismatch,
+                ),
+            )
             (out_dir / f"{record.run_id}.pr.md").write_text(
                 render(delta, record, gate_result), encoding="utf-8"
             )
+
+    record_path = out_dir / f"{record.run_id}.json"
+    record_path.write_text(
+        json.dumps(record.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
     print()
     print(render_console(record, delta))

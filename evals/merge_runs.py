@@ -2,6 +2,8 @@
 """Bir neçə qaçışı TƏK RunRecord artefaktına birləşdirir (AP-042 / AP-013).
 
     # yarımçıq qalmış qaçış + onu tamamlayan təkrar qaçış -> baseline
+    # (sxem >= 4 artefaktlarında bayraq LAZIM DEYİL — uyğunluq açarı
+    #  `full_dataset_hash`-dir; bu iki qaçış isə sxem 2/3-dür)
     python evals/merge_runs.py reports/full-run-03 reports/full-run-03b \\
         --merge-across-datasets \\
         --out evals/baselines/dify_http@e60c825c84bbda8a-2026-08-28.json
@@ -77,9 +79,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("paths", nargs="+", help="qaçış qovluqları və ya RunRecord JSON-ları")
     p.add_argument("--out", required=True, help="yazılacaq RunRecord JSON")
     p.add_argument("--merge-across-datasets", action="store_true",
-                   help=("əvəzləmə fərqli `dataset_hash`-ları da keçsin (yalnız case "
+                   help=("əvəzləmə fərqli dataset imzalarını da keçsin (yalnız case "
                          "tərifinin barmaq izi eyni olanda). `--filter` ilə qaçırılan "
-                         "təkrar qaçış üçün lazımdır"))
+                         "təkrar qaçış üçün ARTIQ lazım deyil — uyğunluq açarı "
+                         "`full_dataset_hash`-dir; yalnız sxem <= 3 artefaktlarında "
+                         "və ya dataset faylı həqiqətən dəyişəndə lazım olur"))
     p.add_argument("--allow-skipped", action="store_true",
                    help="birləşmədən sonra ölçülməmiş case qalsa da yaz (baseline üçün TÖVSİYƏ OLUNMUR)")
     args = p.parse_args(argv)
@@ -101,7 +105,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Mənbələr ({len(paths)}):")
     for record, path in zip(records, paths):
         print(
-            f"  - {record.run_id} · {record.started_at} · dataset {record.dataset_hash} · "
+            f"  - {record.run_id} · {record.started_at} · dataset "
+            f"{record.full_dataset_hash or '?'} · seçim {record.dataset_hash} · "
             f"{len(record.results)} nəticə · sxem v{record.schema_version} · {path}"
         )
     print()
@@ -113,7 +118,11 @@ def main(argv: list[str] | None = None) -> int:
             else "log tapılmadı, YOXLANMADI (RunRecord case mətnini saxlamır)"
         )
     )
-    print(f"Birləşmiş qeyd: {merged.run_id} · dataset {merged.dataset_hash}")
+    print(
+        f"Birləşmiş qeyd: {merged.run_id} · dataset "
+        f"{merged.full_dataset_hash or '?'} · seçim {merged.dataset_hash} "
+        f"(uyğunluq açarı: {t['merge']['compatibility_key']})"
+    )
     print(
         f"  case {t['n_cases']} · keçdi {t['n_passed']} · sındı {t['n_failed']} · "
         f"skip {t['n_skipped']} · keçmə {t['pass_rate']:.1%}"

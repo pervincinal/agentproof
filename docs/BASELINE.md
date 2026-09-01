@@ -15,7 +15,9 @@
 | **Retrieval** | `bge-m3` (ollama) · `top_k=8` · reranking yoxdur · `retrieval_check: live` |
 | **`dataset_hash`** | `e60c825c84bbda8a` |
 | **Ölçmə tarixi** | 2026-08-27 → 2026-08-28 |
+| **Mərhələ** | `--stage cheap` — snapshot yalnız determinist grader-ləri əhatə edir |
 | **Case** | **162** (hər biri üçün verdikt var, `skipped` yoxdur) |
+| **Əhatə** | dataset-in **BÜTÜN** cheap mərhələsi (162/162), `165`-in 162-si deyil |
 | **Keçdi / sındı** | 124 / 38 → keçmə dərəcəsi **76.5%** |
 | **`baseline` teqli 39 case** | 36 keçdi / 3 sındı (92.3%) |
 | **Təkrar** | `--repeat 3` (RunRecord-da verdikt tək, cəhdlər `.eval` logundadır) |
@@ -34,6 +36,18 @@ bva-b-13-warranty_aurora_brand_mo-24
 bva-b-21-lockout_failed_attempts-4
 bva-b-21-lockout_failed_attempts-5
 ```
+
+### Judge mərhələsi AYRI snapshot-dur
+
+Dataset-in judge mərhələsi (3 case, hamısı `requires_justification`) bu
+snapshot-a **DAXİL DEYİL** və ola da bilməz: cheap qaçış onları seçmir. Onlar
+üçün ayrıca baseline faylı olmalıdır — bax §6, bənd 1.
+
+| | |
+|---|---|
+| **Fayl** | `dify_http-judge@793e11e791e4b7c4-<tarix>.json` — **HƏLƏ ÖLÇÜLMƏYİB** |
+| **`dataset_hash`** | `793e11e791e4b7c4` (3 judge case) |
+| **Vəziyyət** | judge grader kalibrasiyadan keçir (96.7%, κ=0.95, n=30), qaçış üçün `DIFY_API_KEY` + `ANTHROPIC_API_KEY` lazımdır |
 
 ---
 
@@ -67,6 +81,8 @@ yalançı yaşıldır və reqressiya ölçüsünü sürüşdürərdi.
 ## 3. Təkrar istehsal (bir əmr)
 
 ```bash
+# `--merge-across-datasets` YALNIZ ona görə lazımdır ki, bu iki artefakt
+# sxem 2/3-dür və `full_dataset_hash` daşımır (aşağıda §3.1).
 python evals/merge_runs.py reports/full-run-03 reports/full-run-03b \
     --merge-across-datasets \
     --out evals/baselines/dify_http@e60c825c84bbda8a-2026-08-28.json
@@ -84,13 +100,35 @@ Alət:
 4. birləşmədən sonra **ölçülməmiş case qalarsa yazmır** (`--allow-skipped`
    olmadan) — baseline "bu case ölçülmədi" saxlaya bilməz.
 
-### `--merge-across-datasets` niyə lazımdır
+### 3.1 Dataset-in İKİ imzası (`--merge-across-datasets` niyə ARTIQ lazım deyil)
 
 `runner/task.py`-də `dataset_hash(cases)` **filtrdən SONRAKI** case dəstinə
 görə hesablanır, yəni dataset-in versiyasını yox, **seçilmiş alt dəsti**
 imzalayır. Ona görə `--filter` ilə qaçırılan `full-run-03b`-nin hash-i
-(`916f1c90…`) ana qaçışdan (`e60c825c…`) həmişə fərqlidir və ciddi qayda
-birləşməni bloklayır.
+(`916f1c90…`) ana qaçışdan (`e60c825c…`) həmişə fərqlidir — halbuki case
+tərifləri **bayt-bayt eynidir**. Ciddi qayda birləşməni bloklayırdı və hər
+təkrar qaçış `--merge-across-datasets` tələb edirdi.
+
+Sxem **4**-dən (AP-042) qaçış artefaktı dataset-i **iki** imza ilə yazır:
+
+| sahə | nəyi imzalayır | `--filter` ilə |
+|---|---|---|
+| `full_dataset_hash` | dataset faylı, **filtrdən əvvəl** — dataset **versiyası** | **dəyişmir** |
+| `dataset_hash` | **seçilmiş** alt dəst — "bu qaçışda nə qaçdı" | dəyişir |
+
+Birləşmə uyğunluq açarı `full_dataset_hash`-dir, ona görə "yarımçıq qaçış +
+qalan case-lərin təkrarı" halı **bayraqsız** birləşir. Açar yalnız birləşməyə
+girən **bütün** qaçışlarda varsa işlənir: birində belə yoxdursa (sxem ≤ 3
+artefaktı — sahə ümumiyyətlə yazılmayıb) alət hamısı üçün köhnə
+`dataset_hash` sərhədinə qayıdır. Yarım-yarım müqayisə — birində dataset
+versiyası, digərində seçilmiş alt dəst — iki fərqli kəmiyyəti eyni açar kimi
+göstərmək olardı. Hansı açarın işləndiyi artefaktda görünür:
+`totals["merge"]["compatibility_key"]`.
+
+**Yuxarıdakı əmr sxem ≤ 3 artefaktlarında hələ də `--merge-across-datasets`
+istəyir**: `full-run-03` (sxem 2) və `full-run-03b` (sxem 3) yazılanda bu sahə
+mövcud deyildi. Həmin qaçışlar yeni sxemlə yenidən normallaşdırılanda bayrağa
+ehtiyac qalmır.
 
 Bayraq sərhədi keçir, **amma kor-koranə yox**: birləşmə yalnız case
 **tərifinin barmaq izi** (case dict-in sha256-sı, `.eval` logundan oxunur) hər
@@ -101,7 +139,8 @@ fərqli olan case **heç vaxt** birləşdirilmir.
 
 Birləşmiş qeydin `dataset_hash`-i **case dəstini tam əhatə edən** mənbədən
 götürülür (burada `full-run-03` → `e60c825c84bbda8a`), "ən son qaçış"dan yox:
-25-lik qaçış dəstin yalnız altıda birini imzalayır.
+25-lik qaçış dəstin yalnız altıda birini imzalayır. `full_dataset_hash` də
+həmin mənbədən gəlir.
 
 ---
 
@@ -118,9 +157,26 @@ evals/baselines/<target>@<dataset_hash>-<YYYY-MM-DD>.json
   görünmür.
 * `<YYYY-MM-DD>` — ölçmənin **bitdiyi** gün (ən son mənbə qaçışın tarixi).
 
-Qovluqda bir neçə snapshot ola bilər. `evals/ci_gates.py baseline` **ən
-sonuncunu** seçir; meyar `started_at`, **fayl adı deyil** — ad sxemi
-dəyişəndə leksikoqrafik sıralama səssizcə yanlış faylı seçərdi.
+Mərhələ ayrı fayldadır: judge snapshot-unun adı `<target>-judge@…` olur.
+Səbəb §4-ün altındakı seçim qaydasıdır.
+
+Qovluqda bir neçə snapshot ola bilər. `evals/ci_gates.py baseline` əvvəlcə
+**mərhələyə görə süzür** (`--stage`), sonra qalanlardan **ən sonuncunu**
+seçir; meyar `started_at`, **fayl adı deyil** — ad sxemi dəyişəndə
+leksikoqrafik sıralama səssizcə yanlış faylı seçərdi.
+
+> **`--stage` niyə MƏCBURİDİR.** Tək başına "ən sonuncu" qaydası iki mərhələli
+> qovluqda YANLIŞDIR: judge snapshot-u cheap-dən yenidir, amma cəmi 3 case
+> əhatə edir. Onda 162 case-lik cheap qaçışı 3 case-lik baseline ilə müqayisə
+> olunar, sınan 162 case-in hamısı `new_cases`-ə düşər və **qapı səssizcə
+> boşalar** — CI yaşıl qalar. Ona görə canlı workflow baseline addımına
+> qaçışın öz `--stage`-ini ötürür.
+>
+> Faylın mərhələsi **adından deyil**, artefaktın içindəki case dəstindən
+> çıxarılır (case_id → grader → `registry.kind()`): ad sxemi dəyişəndə qərar
+> dəyişməməlidir. Mərhələsi müəyyən edilə bilməyən köhnə artefakt
+> **kənarlaşdırılmır**. İstənilən mərhələ üçün snapshot yoxdursa qapı
+> `--require` ilə **bloklayır** — susmur.
 
 > **Ölçü qeydi.** Snapshot tam RunRecord-dur (cavab mətnləri, tool çağırışları,
 > retrieval çıxışı daxil) — ~2.6 MB. Debug dəyəri buradadır: `reports/`
@@ -150,9 +206,18 @@ reqressiya sayılmır, amma ayrıca göstərilir.
 
 ## 6. Bu baseline-ın ÖLÇMƏDİYİ şeylər
 
-1. **Dataset-in 3 case-i snapshot-da yoxdur.** `evals/datasets/full.jsonl`
-   hazırda **165** case-dir; `full-run-03` qaçanda 162 idi. Sonradan əlavə
-   olunan üç case heç bir qaçışda ölçülməyib:
+1. **Dataset-in 3 case-i snapshot-da yoxdur — çünki onlar JUDGE mərhələsidir.**
+   `evals/datasets/full.jsonl` **165** case-dir və mərhələ üzrə belə bölünür:
+
+   | mərhələ | case | `dataset_hash` |
+   |---|---|---|
+   | `cheap` | 162 | `e60c825c84bbda8a` ← bu snapshot |
+   | `judge` | 3 | `793e11e791e4b7c4` |
+   | `all` | 165 | `52349c6fd8646214` |
+
+   Snapshot-un hash-i cheap mərhələsinin hash-i ilə **eynidir**: yəni bu
+   snapshot 165-in 162-sini yox, cheap mərhələsinin **hamısını** əhatə edir.
+   Çatışmayan üç case:
 
    ```
    r6j-collision-14-days-price-match
@@ -160,9 +225,28 @@ reqressiya sayılmır, amma ayrıca göstərilir.
    r6j-collision-30kg-domestic-vs-intl
    ```
 
-   Bunlar gələcək müqayisədə `RunDelta.new_cases` kimi görünəcək və sınsalar
-   `still_failing`-ə düşəcək — yəni **reqressiya kimi bloklamayacaqlar**.
-   Növbəti tam qaçışda baseline yenilənməlidir.
+   Üçünün də grader-i `requires_justification`-dır, `registry.kind()` onu
+   `judge` sayır, ona görə `filter_stage(..., "cheap")` onları **atır**. Bu,
+   snapshot-un qüsuru deyil — `--stage cheap` qaçışı onları prinsipcə ölçə
+   bilməz. `--filter id=… --stage cheap` ilə qaçırmaq cəhdi **0 case** seçir və
+   `build_task()` boş dəstdə açıq xəta verir.
+
+   Nəticə eyni qalır: müqayisədə `RunDelta.new_cases` kimi görünürlər və
+   sınsalar `still_failing`-ə düşürlər — yəni **reqressiya kimi
+   bloklamırlar**. Düzəlişi tam qaçış vermir; **ayrıca judge baseline-ı**
+   lazımdır:
+
+   ```bash
+   .venv/bin/python evals/run.py --target dify_http \
+       --dataset evals/datasets/full.jsonl --stage judge --repeat 3 \
+       --out reports/full-run-03c
+   # tək qaçış bütün judge dəstini əhatə edir -> merge_runs.py LAZIM DEYİL
+   cp reports/full-run-03c/<run_id>.json \
+      evals/baselines/dify_http-judge@793e11e791e4b7c4-<tarix>.json
+   ```
+
+   Cheap snapshot-u **əvəz olunmur və silinmir** — iki mərhələ iki ayrı
+   fayldır. Seçimi `evals/ci_gates.py baseline --stage` edir (bax §4).
 
 2. **Flaky nisbəti 19.8%** (`--repeat 3`, 32/162 case). Bu, `FLAKY_ALARM`
    həddindən (10%) yuxarıdır: ölçmənin özü qeyri-sabitdir. Baseline hər case

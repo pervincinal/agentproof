@@ -59,6 +59,14 @@ _SECTION_RE = re.compile(r"^(?P<n>\d+)\.\s+\S")                # "2. Standard re
 _APPENDIX_RE = re.compile(r"^Appendix\s+([A-Z])\b", re.IGNORECASE)
 _APPENDIX_CLAUSE_RE = re.compile(r"^([A-Z])\.(\d+)\b")         # "A.1 The standard return window..."
 
+# Public alias-lar. `target/corpus/extract.py` siyasət sənədini bənd-bənd
+# bölərkən EYNİ qaydaları istifadə edir — iki ayrı bənd parseri saxlamaq
+# lövbərlərin və namizədlərin fərqli bəndlərə düşməsinə aparardı.
+CLAUSE_RE = _CLAUSE_RE
+SECTION_RE = _SECTION_RE
+APPENDIX_RE = _APPENDIX_RE
+APPENDIX_CLAUSE_RE = _APPENDIX_CLAUSE_RE
+
 
 class AnchorError(RuntimeError):
     """Lövbər qatının bütün xətalarının kökü — heç biri sükutla udulmur."""

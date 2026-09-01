@@ -188,6 +188,55 @@ def _newest_baseline(files: list[Path]) -> Path:
     return sorted(files, key=moment)[-1]
 
 
+BASELINE_STAGE_MISSING = (
+    "«{stage}» MƏRHƏLƏSİ ÜÇÜN BASELINE YOXDUR — REQRESSİYA YOXLANILMADI.\n"
+    "`{path}` qovluğunda snapshot var, amma heç biri bu mərhələnin case-lərini\n"
+    "əhatə etmir. Fərqli mərhələnin snapshot-u ilə müqayisə etmək REQRESSİYANI\n"
+    "GİZLƏDƏR: 162 case-lik qaçışı 3 case-lik baseline «keçdi» kimi oxuyar.\n"
+    "Tapılanlar: {found}\n"
+    "Yenidən götürmək: docs/BASELINE.md"
+)
+
+
+def _stages_covered(path: Path, graders: dict[str, str]) -> set[str] | None:
+    """Snapshot-un ƏHATƏ ETDİYİ mərhələlər — case_id -> grader -> mərhələ.
+
+    RunRecord mərhələni SAXLAMIR (sxemdə belə sahə yoxdur), ona görə o,
+    artefaktdakı case dəstindən dataset üzərindən çıxarılır. Fayl adına
+    baxılmır: ad sxemi dəyişəndə səssizcə yanlış qərar verərdi (AP-042).
+
+    `None` = müəyyən edilə bilmədi (fayl oxunmur, ya da case-lər dataset-də
+    yoxdur). Onda snapshot HEÇ BİR mərhələdən kənarlaşdırılmır — köhnə
+    artefaktı susqun şəkildə atmaqdansa saxlamaq təhlükəsizdir.
+    """
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return None
+    stages = {
+        graders[r["case_id"]]
+        for r in data.get("results") or []
+        if isinstance(r, dict) and r.get("case_id") in graders
+    }
+    return stages or None
+
+
+def _dataset_stages(dataset: Path) -> dict[str, str]:
+    """case_id -> mərhələ ("cheap"/"judge"). Dataset oxunmursa boş dict."""
+    out: dict[str, str] = {}
+    try:
+        for line in dataset.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("//"):
+                continue
+            case = json.loads(line)
+            grader = case.get("grader", "")
+            out[case["id"]] = "judge" if registry.kind(grader) == "judge" else "cheap"
+    except (ValueError, OSError, KeyError):
+        return {}
+    return out
+
+
 def cmd_baseline(args: argparse.Namespace) -> int:
     """Baseline YOXDURSA SƏSSİZ KEÇMİR — açıq şəkildə etiraf olunur.
 
@@ -203,15 +252,55 @@ def cmd_baseline(args: argparse.Namespace) -> int:
     """
     directory = Path(args.directory)
     files = sorted(directory.glob("*.json")) if directory.is_dir() else []
+
+    # Mərhələ süzgəci. Qovluqda bir neçə MƏRHƏLƏLİ snapshot olanda "ən sonuncu"
+    # qaydası TƏK BAŞINA yanlışdır: judge baseline-ı cheap baseline-dan yeni
+    # olduğu üçün seçilər və 162 case-lik qaçış 3 case-lik snapshot-la
+    # müqayisə olunardı — qapı səssizcə boşalar.
+    stage = getattr(args, "stage", None)
+    covered: dict[Path, set[str] | None] = {}
+    if files and stage and stage != "all":
+        graders = _dataset_stages(Path(args.dataset))
+        covered = {f: _stages_covered(f, graders) for f in files}
+        # Mərhələsi müəyyən edilməyən (None) snapshot kənarlaşdırılmır.
+        candidates = [f for f in files if covered[f] is None or stage in covered[f]]
+        if not candidates:
+            found = ", ".join(
+                f"{f.name} [{'/'.join(sorted(covered[f] or [])) or '?'}]" for f in files
+            )
+            message = BASELINE_STAGE_MISSING.format(
+                stage=stage, path=directory, found=found
+            )
+            print(message, file=sys.stderr)
+            _emit_summary(
+                f"### ⚠️ «{stage}» üçün baseline yoxdur — REQRESSİYA YOXLANILMADI\n\n"
+                "```\n" + message + "\n```"
+            )
+            print("")
+            return 1 if args.require else 0
+        files = candidates
+
     if files:
         chosen = _newest_baseline(files)
         listing = ", ".join(f.name for f in files)
         print(
             f"Baseline snapshot-ları: {listing}\nSeçildi: {chosen.name}", file=sys.stderr
         )
+        note = ""
+        if not stage and len(files) > 1:
+            # Mərhələ verilməyib: seçim qaçışın mərhələsinə UYĞUN OLMAYA BİLƏR.
+            note = (
+                " ⚠️ `--stage` verilmədi — seçim qaçışın mərhələsinə uyğun"
+                " olmaya bilər."
+            )
+            print(
+                "XƏBƏRDARLIQ: `--stage` verilmədi, seçim yalnız tarixə görədir.",
+                file=sys.stderr,
+            )
         _emit_summary(
             f"**Baseline:** `{chosen.name}` — reqressiya qapısı aktiv."
             + (f" (qovluqda {len(files)} snapshot var)" if len(files) > 1 else "")
+            + note
         )
         print(chosen)
         return 0
@@ -238,6 +327,11 @@ def main(argv: list[str] | None = None) -> int:
     b = sub.add_parser("baseline", help="baseline snapshot-u varmı")
     b.add_argument("directory", nargs="?", default="evals/baselines")
     b.add_argument("--require", action="store_true", help="yoxdursa bloklа (exit 1)")
+    b.add_argument("--stage", default=None, choices=["cheap", "judge", "all"],
+                   help=("snapshot bu mərhələnin case-lərini əhatə etməlidir — "
+                         "qaçışın `--stage`-i ilə EYNİ verilməlidir"))
+    b.add_argument("--dataset", default="evals/datasets/full.jsonl",
+                   help="`--stage` süzgəci üçün case->grader mənbəyi")
     b.set_defaults(func=cmd_baseline)
 
     args = p.parse_args(argv)

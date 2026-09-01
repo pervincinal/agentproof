@@ -231,6 +231,8 @@ class MockDifyServer:
           "usage_before_error": bool,          # `error_event`-dən ƏVVƏL `message_end`
                                                # (tokenlər yandı, cavab sındı)
           "no_message_end": bool,              # `message_end` göndərilmir
+          "no_usage": bool,                    # `message_end` GƏLİR, amma `usage`
+                                               # sahəsi YOXDUR (hədəf token vermir)
           "no_conversation_id": bool,          # event-lərdə `conversation_id` boş gəlir
                                                # (çoxnövbəli zəncirin qırılması)
           "truncate": bool,                    # axın yarımçıq kəsilir
@@ -444,16 +446,18 @@ class MockDifyServer:
 
         if not spec.get("no_message_end"):
             usage_spec = spec.get("usage", {"prompt_tokens": 1800, "completion_tokens": 250})
+            # `no_usage`: axın tam bitir, amma hədəf token hesabı VERMİR.
+            # Boş `usage` sözlüyü YAZILMIR — o, "0 token" kimi oxunardı.
+            metadata: dict[str, Any] = {"retriever_resources": retriever_resources}
+            if not spec.get("no_usage"):
+                metadata["usage"] = _usage_payload(usage_spec)
             events.append(
                 {
                     **base,
                     "event": "message_end",
                     "id": message_id,
                     "files": [],
-                    "metadata": {
-                        "usage": _usage_payload(usage_spec),
-                        "retriever_resources": retriever_resources,
-                    },
+                    "metadata": metadata,
                 }
             )
         return events

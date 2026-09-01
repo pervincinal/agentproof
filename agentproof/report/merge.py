@@ -23,19 +23,35 @@ fərqli iddialardır.
 
 DATASET SƏRHƏDİ
 ---------------
-Əvəzləmə YALNIZ eyni `dataset_hash` daxilində baş verir. Fərqli dataset-lərdən
-gələn eyni `case_id` ayrı-ayrı qalır — case-in mətni dəyişibsə, iki nəticəni
+Əvəzləmə YALNIZ eyni dataset daxilində baş verir. Fərqli dataset-lərdən gələn
+eyni `case_id` ayrı-ayrı qalır — case-in mətni dəyişibsə, iki nəticəni
 birləşdirmək səssiz korlanmadır.
 
-Praktikada bu sərhəd HƏDDİNDƏN ARTIQ dar çıxa bilər: `runner/task.py`-də
-`dataset_hash(cases)` FİLTRDƏN SONRAKI case-lərə görə hesablanır, yəni o,
-dataset-in versiyasını yox, SEÇİLMİŞ ALT DƏSTİ imzalayır. `--filter` ilə
-qaçırılan təkrar qaçışın hash-i ana qaçışdan həmişə fərqlənir. Ona görə
-`allow_cross_dataset` açıq açarı var: verilibsə əvəzləmə hash sərhədini keçir,
-AMMA yalnız case tərifinin barmaq izi (`fingerprint`) hər iki qaçışda eyni
-olduqda. Barmaq izləri fərqlidirsə həmin case HEÇ VAXT birləşdirilmir.
-Barmaq izi ümumiyyətlə yoxdursa (RunRecord-da case mətni saxlanmır) birləşmə
-baş verir, amma xəbərdarlıq hesabata yazılır.
+"Eyni dataset" sualına iki imza cavab verə bilər və onlar EYNİ ŞEY DEYİL:
+
+  * `full_dataset_hash` — dataset faylı FİLTRDƏN ƏVVƏL. Bu, dataset
+    VERSİYASIDIR: `--filter` ilə qaçırılan təkrar qaçışda dəyişmir.
+  * `dataset_hash` — SEÇİLMİŞ alt dəst (filtrdən sonra). `full-run-03`
+    (162 case) və `full-run-03b` (həmin 25-in `--filter` ilə təkrarı) burada
+    HƏMİŞƏ fərqlənir, halbuki case tərifləri bayt-bayt eynidir.
+
+Ona görə uyğunluq açarı `full_dataset_hash`-dir — AMMA yalnız birləşməyə
+girən BÜTÜN qaçışlarda o varsa. Bir mənbədə belə yoxdursa (sxem <= 3
+artefaktı: sahə ümumiyyətlə yazılmayıb) alət hamısı üçün köhnə davranışa,
+`dataset_hash`-ə qayıdır. Yarım-yarım müqayisə etmək — birində tam imza,
+digərində seçim imzası — iki fərqli şeyi eyni açar kimi göstərmək olardı.
+
+Beləliklə "yarımçıq qaçış + qalan case-lərin təkrarı" halında (AP-042-nin əsl
+hadisəsi) `--merge-across-datasets` ARTIQ LAZIM DEYİL: hər iki qaçış eyni
+dataset faylından gəlir, tam imza eynidir, birləşmə öz-özünə baş verir.
+
+Sərhəd HƏQİQƏTƏN keçiləndə — tam imzalar da fərqlidirsə, ya da köhnə
+artefaktlara görə seçim imzalarına düşülübsə — `allow_cross_dataset` açıq
+açarı qalır: verilibsə əvəzləmə hash sərhədini keçir, AMMA yalnız case
+tərifinin barmaq izi (`fingerprint`) hər iki qaçışda eyni olduqda. Barmaq
+izləri fərqlidirsə həmin case HEÇ VAXT birləşdirilmir. Barmaq izi ümumiyyətlə
+yoxdursa (RunRecord-da case mətni saxlanmır) birləşmə baş verir, amma
+xəbərdarlıq hesabata yazılır.
 
 Bu modul `inspect_ai` import ETMİR (STACK.md §6).
 """
@@ -70,11 +86,13 @@ class RunOrigin:
     started_at: str = ""
     dataset_hash: str = ""
     source: str = ""
+    full_dataset_hash: str = ""
+    """Dataset faylının FİLTRDƏN ƏVVƏLKİ imzası; `""` = qaçışda ölçülməyib."""
 
     @property
-    def key(self) -> tuple[str, str, str]:
+    def key(self) -> tuple[str, str, str, str]:
         """Qaçışı eyniləşdirən açar (etiketsiz)."""
-        return (self.run_id, self.started_at, self.dataset_hash)
+        return (self.run_id, self.started_at, self.dataset_hash, self.full_dataset_hash)
 
     @property
     def moment(self) -> datetime | None:
@@ -93,6 +111,7 @@ class RunOrigin:
             "run_id": self.run_id,
             "started_at": self.started_at,
             "dataset_hash": self.dataset_hash,
+            "full_dataset_hash": self.full_dataset_hash,
             "source": self.source,
         }
 
@@ -143,8 +162,9 @@ class MergedCase:
     origins: list[RunOrigin] = field(default_factory=list)
     items: list[Any] = field(default_factory=list)
     dataset_hash: str = ""
+    full_dataset_hash: str = ""
     cross_dataset: bool = False
-    """Bu case başqa `dataset_hash` altında da var — birləşdirilmədi, ayrı qaldı."""
+    """Bu case başqa dataset imzası altında da var — birləşdirilmədi, ayrı qaldı."""
 
     @property
     def origin(self) -> RunOrigin:
@@ -201,6 +221,9 @@ class _Events:
     verərdi və oxucu onları keçərdi. Yekun sətir sayı GÖSTƏRİR, nümunə verir.
     """
 
+    compared_full: bool = False
+    """Uyğunluq açarı `full_dataset_hash` idimi (yoxsa `dataset_hash`-ə düşdük)."""
+
     cross_blocked: dict[str, list[str]] = field(default_factory=dict)
     cross_merged: list[str] = field(default_factory=list)
     cross_unverified: list[str] = field(default_factory=list)
@@ -221,9 +244,9 @@ def merge_items(
     RunRecord-u" rejimi budur.
     """
     outcome = MergeOutcome()
-    events = _Events()
+    events = _Events(compared_full=use_full_dataset_hash(items))
     order: list[str] = []
-    by_case: dict[str, dict[tuple[str, str, str], list[MergeItem]]] = {}
+    by_case: dict[str, dict[tuple[str, str, str, str], list[MergeItem]]] = {}
     for item in items:
         if item.case_id not in by_case:
             by_case[item.case_id] = {}
@@ -241,6 +264,23 @@ def merge_items(
     return outcome
 
 
+def use_full_dataset_hash(items: Iterable[MergeItem]) -> bool:
+    """Uyğunluq açarı `full_dataset_hash` ola bilərmi?
+
+    YALNIZ bütün qaçışlarda o varsa. Bir mənbədə belə boşdursa (sxem <= 3
+    artefaktı) hamısı üçün `dataset_hash`-ə qayıdırıq: birində dataset
+    versiyasını, digərində seçilmiş alt dəsti müqayisə etmək, iki fərqli
+    kəmiyyəti eyni açar kimi göstərmək olardı. Qarışıq mənbələrdə davranış
+    beləcə DƏYİŞMƏMİŞ qalır — köhnə artefakt yeni qaydaya səssizcə düşmür.
+    """
+    seen = False
+    for item in items:
+        seen = True
+        if not item.origin.full_dataset_hash:
+            return False
+    return seen
+
+
 def _sample(ids: Sequence[str], limit: int = 5) -> str:
     head = ", ".join(ids[:limit])
     return head + (f" … (+{len(ids) - limit})" if len(ids) > limit else "")
@@ -254,7 +294,17 @@ def _summarize(events: _Events, allow_cross_dataset: bool) -> list[str]:
         out.append(
             f"{len(ids)} case FƏRQLİ dataset_hash-larda göründü ({listed}) və "
             f"BİRLƏŞDİRİLMƏDİ — ayrı-ayrı sayılır: {_sample(ids)}. "
-            "Eyni id başqa dataset-də başqa case ola bilər; susmaqla birləşdirmək "
+            + (
+                "Müqayisə TAM dataset imzası (`full_dataset_hash`) ilə aparıldı — "
+                "yəni qaçışlar həqiqətən fərqli dataset FAYLLARINDAN gəlir, "
+                "sadəcə fərqli `--filter` deyil. "
+                if events.compared_full
+                else "Müqayisə SEÇİM imzası (`dataset_hash`) ilə aparıldı, çünki "
+                "mənbələrin ən azı birində `full_dataset_hash` yoxdur (sxem <= 3). "
+                "Fərq yalnız `--filter`-dən gəlirsə, qaçışları yeni sxemlə "
+                "yenidən normallaşdır — onda sərhəd öz-özünə aradan qalxır. "
+            )
+            + "Eyni id başqa dataset-də başqa case ola bilər; susmaqla birləşdirmək "
             "səssiz korlanma olardı. Dataset-lərin uyğunluğuna əminsənsə: "
             "--merge-across-datasets"
         )
@@ -286,14 +336,16 @@ def _summarize(events: _Events, allow_cross_dataset: bool) -> list[str]:
     return out
 
 
-def _hash_of(group: Sequence[MergeItem]) -> str:
-    return group[0].origin.dataset_hash
+def _hash_of(group: Sequence[MergeItem], use_full: bool = False) -> str:
+    """Dilimin UYĞUNLUQ açarı: mümkünsə tam dataset imzası, yoxsa seçim imzası."""
+    origin = group[0].origin
+    return origin.full_dataset_hash if use_full else origin.dataset_hash
 
 
-def _by_hash(slices: list[list[MergeItem]]) -> list[list[list[MergeItem]]]:
+def _by_hash(slices: list[list[MergeItem]], use_full: bool) -> list[list[list[MergeItem]]]:
     pools: dict[str, list[list[MergeItem]]] = {}
     for s in slices:
-        pools.setdefault(_hash_of(s), []).append(s)
+        pools.setdefault(_hash_of(s, use_full), []).append(s)
     return [pools[h] for h in sorted(pools)]
 
 
@@ -303,22 +355,26 @@ def _split_pools(
     allow_cross_dataset: bool,
     events: _Events,
 ) -> list[list[list[MergeItem]]]:
-    """Qaçış dilimlərini `dataset_hash` üzrə hovuzlara böl.
+    """Qaçış dilimlərini dataset imzası üzrə hovuzlara böl.
 
-    Bir hovuz = daxilində əvəzləmə İCAZƏLİ olan dilimlər.
+    Bir hovuz = daxilində əvəzləmə İCAZƏLİ olan dilimlər. Açar
+    `full_dataset_hash`-dir (dataset VERSİYASI), o hamıda varsa — yəni yalnız
+    `--filter` ilə fərqlənən təkrar qaçış ayrı hovuza DÜŞMÜR. Əks halda köhnə
+    davranış: `dataset_hash` (seçilmiş alt dəst).
     """
-    hashes = {_hash_of(s) for s in slices}
+    use_full = events.compared_full
+    hashes = {_hash_of(s, use_full) for s in slices}
     if len(hashes) < 2:
         return [slices]
 
     if not allow_cross_dataset:
         events.cross_blocked[case_id] = sorted(h or "?" for h in hashes)
-        return _by_hash(slices)
+        return _by_hash(slices, use_full)
 
     prints = {i.fingerprint for s in slices for i in s if i.fingerprint}
     if len(prints) > 1:
         events.cross_mismatch.append(case_id)
-        return _by_hash(slices)
+        return _by_hash(slices, use_full)
 
     (events.cross_merged if prints else events.cross_unverified).append(case_id)
     return [slices]
@@ -370,6 +426,7 @@ def _collect(case_id: str, pool: list[list[MergeItem]], cross_dataset: bool) -> 
         origins=[g[0].origin for g in groups],
         items=[i.payload for g in groups for i in g],
         dataset_hash=groups[-1][0].origin.dataset_hash,
+        full_dataset_hash=groups[-1][0].origin.full_dataset_hash,
         cross_dataset=cross_dataset,
     )
 
@@ -380,6 +437,7 @@ def origin_of(record: RunRecord, source: str = "") -> RunOrigin:
         run_id=record.run_id,
         started_at=record.started_at,
         dataset_hash=record.dataset_hash,
+        full_dataset_hash=record.full_dataset_hash,
         source=source,
     )
 
@@ -518,17 +576,28 @@ def merge_records(
     ]
     hash_origin = covering[-1][1] if covering else newest_origin
     hashes = sorted({o.dataset_hash for o in origins})
-    if len(hashes) > 1:
+    full_hashes = sorted({o.full_dataset_hash for o in origins})
+    # Uyğunluq açarı `merge_items()` ilə EYNİ qayda ilə seçilir: tam imza
+    # yalnız hamıda varsa. Xəbərdarlıq da məhz həmin açara görə verilir —
+    # əks halda "eyni dataset, fərqli filter" halı hər dəfə səhvən
+    # "mənbələr fərqli dataset-lərdən" kimi oxunardı.
+    used_full = all(o.full_dataset_hash for o in origins)
+    effective = full_hashes if used_full else hashes
+    effective_origin_hash = (
+        hash_origin.full_dataset_hash if used_full else hash_origin.dataset_hash
+    )
+    key_name = "full_dataset_hash" if used_full else "dataset_hash"
+    if len(effective) > 1:
         outcome.warnings.append(
-            "birləşdirilmiş qeydin `dataset_hash`-i "
+            f"birləşdirilmiş qeydin dataset imzası (`{key_name}`) "
             + (
-                f"case dəstini tam əhatə edən qaçışdan götürüldü ({hash_origin.dataset_hash or '?'})"
+                f"case dəstini tam əhatə edən qaçışdan götürüldü ({effective_origin_hash or '?'})"
                 if covering
-                else f"ƏN SON qaçışdan götürüldü ({hash_origin.dataset_hash or '?'}) — "
+                else f"ƏN SON qaçışdan götürüldü ({effective_origin_hash or '?'}) — "
                 "mənbələrin heç biri birləşmiş case dəstini TƏK BAŞINA əhatə etmir"
             )
-            + f"; mənbələrdə: {', '.join(h or '?' for h in hashes)}. "
-            "Bu qeyd BİR dataset imzasını daşımır — müqayisə edərkən "
+            + f"; mənbələrdə: {', '.join(h or '?' for h in effective)}"
+            + ". Bu qeyd BİR dataset imzasını daşımır — müqayisə edərkən "
             "`totals['merge']['sources']`-a bax."
         )
 
@@ -589,6 +658,11 @@ def merge_records(
             "superseded": [e.to_dict() for e in outcome.superseded],
             "warnings": list(outcome.warnings),
             "dataset_hashes": hashes,
+            "full_dataset_hashes": full_hashes,
+            # Hansı imza uyğunluq açarı oldu. `dataset_hash` yazılıbsa,
+            # mənbələrin ən azı birində tam imza YOX idi (sxem <= 3) — yəni
+            # sərhəd köhnə, dar qayda ilə çəkilib.
+            "compatibility_key": key_name,
             "dataset_hash_from": hash_origin.run_id,
             # Faktiki ödənilən məbləğ: əvəz olunmuş cəhdlərin xərci də daxil.
             # `cost_usd` bunu GÖSTƏRMİR (o, qalib nəticələrin xərcidir) — iki
@@ -609,6 +683,7 @@ def merge_records(
         target_version=newest.target_version,
         model=newest.model,
         dataset_hash=hash_origin.dataset_hash,
+        full_dataset_hash=hash_origin.full_dataset_hash,
         started_at=newest.started_at,
         results=kept,
         totals=totals,

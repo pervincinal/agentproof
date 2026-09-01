@@ -10,7 +10,8 @@
     # bir neçə müstəqil qaçışın RunRecord-u da olar
     python evals/reproduce.py reports/runs/a.json reports/runs/b.json
 
-    # yarımçıq qalmış qaçış + onu tamamlayan təkrar qaçış (AP-042)
+    # yarımçıq qalmış qaçış + onu tamamlayan təkrar qaçış (AP-042).
+    # Sxem >= 4 qaçışlarında bayraq lazım deyil; bu iki artefakt sxem 2/3-dür.
     python evals/reproduce.py reports/full-run-03 reports/full-run-03b \
         --merge-across-datasets
 
@@ -21,10 +22,14 @@ tamamlanan qaçışda case-lər İKİQAT sayılmır.
 
   * Qaçışların tarixi eynidirsə (və ya oxunmursa) sıralama yoxdur — nəticələr
     müstəqil CƏHD kimi qalır. `--as-repeats` bunu həmişə məcbur edir.
-  * Əvəzləmə eyni `dataset_hash` daxilində baş verir. `--merge-across-datasets`
-    sərhədi keçir, AMMA yalnız case tərifinin barmaq izi eyni olduqda.
-    (`dataset_hash` filtrdən SONRAKI case dəstinə görə hesablanır, ona görə
-    `--filter` ilə qaçırılan təkrar qaçışın hash-i həmişə fərqlidir.)
+  * Əvəzləmə eyni dataset daxilində baş verir. Uyğunluq açarı
+    `full_dataset_hash`-dir — dataset faylının FİLTRDƏN ƏVVƏLKİ imzası — ona
+    görə `--filter` ilə qaçırılan təkrar qaçış eyni dataset sayılır və
+    `--merge-across-datasets` LAZIM DEYİL. (Açar yalnız bütün mənbələrdə
+    varsa işlənir; sxem <= 3 artefaktında sahə yoxdur və alət köhnə,
+    `dataset_hash` sərhədinə qayıdır.)
+  * `--merge-across-datasets` dataset HƏQİQƏTƏN fərqli olanda sərhədi keçir,
+    AMMA yalnız case tərifinin barmaq izi eyni olduqda.
 
 Çıxış: insan üçün mətn (stdout) + maşın üçün JSON (`--out`, default olaraq
 qovluq verilibsə `<qovluq>/reproduction.json`).

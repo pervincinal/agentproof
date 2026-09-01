@@ -77,6 +77,33 @@ FILTER_SYNTAX_HELP = (
 )
 
 
+def _reject_mixed_syntax(key: str, part: str, values: list[str]) -> None:
+    """`id=a|id=b|id=c` — iki sintaksisin QARIŞIĞI — açıq xəta verir (AP-027).
+
+    `|` DƏYƏRLƏRİ ayırır, şərtləri yox. Açar `|`-dan sonra təkrarlananda parser
+    `id=` açarına `a|id=b|id=c` dəyərini verir: yalnız BİRİNCİSİ uyğun gəlir və
+    qaçış SƏSSİZCƏ 1 case ilə davam edir. 25 case gözlənəndə 1 qaçdı — səssiz
+    azaltma, xəta yox.
+
+    `id=a=b` LEGİTİMDİR və sınmır: açar-dəyər bölgüsü İLK `=`-ə görədir, ona
+    görə xəta yalnız dəyər parçasının önündə TANINAN filter açarı duranda
+    verilir (`...|id=...`), hər `=` işarəsində yox.
+    """
+    for value in values:
+        if "=" not in value:
+            continue
+        prefix = value.split("=", 1)[0].strip()
+        if prefix not in FILTER_KEYS:
+            continue  # dəyərin öz içindəki `=` — məsələn `id=a=b`
+        raise ValueError(
+            f"--filter: qarışıq sintaksis — {part!r} içində `{prefix}=` təkrarlanır.\n"
+            f"  `|` DƏYƏRLƏRİ ayırır, ŞƏRTLƏRİ yox: `{key}=a|{key}=b` yazılmır.\n"
+            f"  Düzgün: --filter '{key}=a|b|c'   (bir açar, VƏ YA)\n"
+            f"  və ya : --filter '{key}=a,{key}=b,{key}=c'   (eyni məna)\n"
+            + FILTER_SYNTAX_HELP
+        )
+
+
 def parse_filter(expr: str | None) -> list[tuple[str, str]]:
     """`tag=policy,severity=high` -> [("tag","policy"), ("severity","high")]
 
@@ -84,6 +111,9 @@ def parse_filter(expr: str | None) -> list[tuple[str, str]]:
     `id=a,id=b,id=c` ilə eynidir (`apply_filter` təkrar açarları VƏ YA ilə
     birləşdirir). `id=a,b,c` isə İŞLƏMİR — vergül şərt ayırıcısıdır — ona görə
     xəta mesajı düzgün formatı göstərir.
+
+    İki sintaksisin QARIŞIĞI (`id=a|id=b`) da AÇIQ xəta verir (AP-027):
+    əvvəllər o, səssizcə tək case seçirdi.
     """
     if not expr:
         return []
@@ -99,6 +129,7 @@ def parse_filter(expr: str | None) -> list[tuple[str, str]]:
         key, raw_value = part.split("=", 1)
         key = key.strip()
         values = [v.strip() for v in raw_value.split("|")]
+        _reject_mixed_syntax(key, part, values)
         if not any(values) or any(not v for v in values):
             raise ValueError(
                 f"--filter: {key!r} açarının dəyəri boşdur ({part!r})\n" + FILTER_SYNTAX_HELP
@@ -132,13 +163,29 @@ def apply_filter(cases: list[Case], expr: str | None) -> list[Case]:
     return [c for c in cases if all(matches(c, k, v) for k, v in by_key.items())]
 
 
+def load_and_select(
+    dataset_path: str | Path,
+    filter_expr: str | None = None,
+    stage: Stage = "all",
+) -> tuple[list[Case], list[Case]]:
+    """`(dataset faylının BÜTÜN case-ləri, seçilmiş alt dəst)`.
+
+    İki dəst AYRICA lazımdır, çünki onların imzaları AYRI suallara cavab verir
+    (AP-042): tam dəstin hash-i dataset VERSİYASIDIR, seçilmiş dəstin hash-i
+    isə "bu qaçışda nə qaçdı". `--filter` ilə qaçırılan təkrar qaçışda ikinci
+    dəyişir, birinci DƏYİŞMİR — birləşmə uyğunluğu məhz birinciyə baxmalıdır.
+    """
+    all_cases = load_cases(dataset_path)
+    return all_cases, filter_stage(apply_filter(all_cases, filter_expr), stage)
+
+
 def select_cases(
     dataset_path: str | Path,
     filter_expr: str | None = None,
     stage: Stage = "all",
 ) -> list[Case]:
     """Qaçırılacaq case dəsti — Task qurmadan əvvəl yoxlanır (boş ola bilər)."""
-    return filter_stage(apply_filter(load_cases(dataset_path), filter_expr), stage)
+    return load_and_select(dataset_path, filter_expr, stage)[1]
 
 
 def _sample_input(case: Case) -> str | list[Any]:
@@ -171,7 +218,7 @@ def build_task(
     reset_url: str | None = None,
     lanes: LanePool | list[dict[str, Any]] | None = None,
 ) -> tuple[Task, list[Case]]:
-    cases = select_cases(dataset_path, filter_expr, stage)
+    all_cases, cases = load_and_select(dataset_path, filter_expr, stage)
     if not cases:
         raise ValueError(
             f"{dataset_path}: filter={filter_expr!r} stage={stage!r} heç bir case seçmədi. "
@@ -197,7 +244,13 @@ def build_task(
         scorer=agentproof_scorer(),
         name="agentproof",
         metadata={
+            # İKİ imza (AP-042). `dataset_hash` — SEÇİLMİŞ dəst (filtrdən
+            # sonra), yəni "bu qaçışda nə qaçdı". `full_dataset_hash` —
+            # dataset faylı olduğu kimi (filtrdən ƏVVƏL), yəni dataset
+            # VERSİYASI. Filtrsiz qaçışda ikisi eyni olur; `--filter` ilə
+            # ayrılır və birləşmə uyğunluğu ikinciyə baxır.
             "dataset_hash": dataset_hash(cases),
+            "full_dataset_hash": dataset_hash(all_cases),
             "stage": stage,
             "adapter": adapter,
             # Hesabatda GÖRÜNMƏLİDİR: izolyasiya var idimi, neçə lane ilə.

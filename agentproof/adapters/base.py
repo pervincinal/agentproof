@@ -9,7 +9,26 @@ Müqavilə şərtləri:
     heç vaxt keçmir.
   - Adapter `latency_ms`-i özü ölçür (wall-clock).
   - Hədəf token istifadəsini vermirsə `usage = None` olur (grader `skipped` verir).
-  - Yeni müştəri = bir adapter faylı, < 150 sətir.
+
+MÜQAVİLƏ BURADA BİTMİR — DAVAMI KODDADIR (AP-028)
+-------------------------------------------------
+Aşağıdakı Protocol cəmi dörd üzv tələb edir. Şərtlərin ÖZÜ isə yuxarıdakı mətn
+idi, yəni sürüşürdü. İndi hər biri icra olunan yoxlamadır:
+`agentproof/adapters/conformance.py`. Yeni adapter üçün ~40 sətirlik
+`ConformanceTarget` körpüsü yazılır və bütün dəst ona qarşı qaçır
+(`agentproof/tests/test_adapter_conformance.py`).
+
+YENİ MÜŞTƏRİ NƏ QƏDƏR KOD DEMƏKDİR (AP-029)
+-------------------------------------------
+Backoff/təkrar, çoxnövbəli `conversation_id` zənciri, növbələrin birləşməsi və
+yanan tokenlərin yığımı hədəfə XAS DEYİL — onlar `adapters/_http_core.py`-dədir
+və yenidən yazılmır. Adapter yalnız öz məftil formatını gətirir; ölçü nümunəsi:
+
+    http_agent.py    196 sətir   HTTP müştərisi + konfiqurasiya
+    _dify_wire.py    334 sətir   Dify SSE formatı (event adları, `dify_error`)
+    mock_agent.py     95 sətir   şəbəkəsiz in-process hədəf
+
+Hədd `test_adapter_layering.py`-də kilidlənib: `http_agent.py` <= 250 sətir.
 """
 
 from __future__ import annotations

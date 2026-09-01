@@ -1,21 +1,39 @@
 #!/usr/bin/env python3
-"""Consistency gate for the Aurora Goods corpus.
+"""Consistency gate for the Aurora Goods corpus — AURORA-SPECIFIC half.
 
 Ground truth is only useful if it is internally consistent. This script
 recomputes every derived number in FIXTURES.yaml from first principles and
 checks it against CANONICAL.yaml. It must exit 0 before any eval case is
 written against these fixtures.
 
+WHAT LIVES WHERE (AP-033).
+  * `target/corpus/schema.py` — the SCHEMA and its validator. Corpus-agnostic:
+    it knows no Aurora name and runs against any CANONICAL.yaml. Documented in
+    `docs/CANONICAL-SCHEMA.md`.
+  * this file — everything that only makes sense for Aurora Goods: the
+    WINDOW_PARAM table, order arithmetic, warranty month arithmetic, the
+    FIXTURES.yaml pairing. A different corpus replaces this file and keeps
+    schema.py untouched.
+
 Usage:  python3 verify_fixtures.py
 """
 import sys, datetime, pathlib
 import yaml
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
+from target.corpus import schema as canonical_schema  # korpusdan asılı olmayan sxem qatı
 
 HERE = pathlib.Path(__file__).parent
 CANON = yaml.safe_load((HERE / "CANONICAL.yaml").read_text(encoding="utf-8"))
 FIX = yaml.safe_load((HERE / "FIXTURES.yaml").read_text(encoding="utf-8"))
 
 errors, checks = [], 0
+
+# --------------------------------------------------------------- schema gate
+# Sxem yoxlaması burada TƏKRARLANMIR — schema.py-dən gəlir. Assertion sayı
+# ayrıca hesablanır ki, iki qatın töhfəsi hesabatda görünsün.
+SCHEMA_REPORT = canonical_schema.validate(CANON)
+errors.extend(f"schema: {f.path}: {f.message} [{f.code}]" for f in SCHEMA_REPORT.errors)
 
 
 def d(v):
@@ -40,21 +58,6 @@ rcases = {c["id"]: c for c in CANON["resolved_return_windows"]}
 wcases = {c["id"]: c for c in CANON["resolved_warranty_periods"]}
 skus = {s["sku"]: s for s in FIX["sku_catalog"]}
 emails = {c["email"]: c for c in FIX["customers"]}
-
-# ---------------------------------------------------------------- parameters
-for pid, p in params.items():
-    for k in ("value", "unit", "status", "doc", "section", "doc_version", "applies_when"):
-        check(k in p, f"{pid}: missing required field '{k}'")
-    if "boundary" in p:
-        pts = p["boundary"]["points"]
-        check(len(pts) >= 3, f"{pid}: boundary needs at least 3 points, has {len(pts)}")
-        vals = [pt["value"] for pt in pts]
-        check(vals == sorted(vals), f"{pid}: boundary points not in ascending order")
-        check(len({pt["expected"] for pt in pts}) >= 2,
-              f"{pid}: boundary points all share one expected outcome — not a boundary")
-
-for s in CANON["superseded_index"]:
-    check(s["parameter"] in params, f"superseded_index references unknown parameter {s['parameter']}")
 
 # ------------------------------------------------------------------- orders
 WINDOW_PARAM = {
@@ -161,7 +164,14 @@ print(f"resolved combos      : {len(rcases)} return + {len(wcases)} warranty")
 print(f"fixture orders       : {len(FIX['orders'])}")
 print(f"fixture customers    : {len(FIX['customers'])}")
 print(f"injection payloads   : {len(FIX['injection_payloads'])}")
-print(f"assertions run       : {checks}")
+print(f"schema assertions    : {SCHEMA_REPORT.checks}"
+      f"  (schema.py, corpus-independent; legacy subset {SCHEMA_REPORT.legacy_checks})")
+print(f"fixture assertions   : {checks}  (Aurora-specific, this file)")
+print(f"legacy assertions    : {SCHEMA_REPORT.legacy_checks + checks}"
+      f"  (the historical 1338 — must not shrink)")
+print(f"assertions run       : {SCHEMA_REPORT.checks + checks}")
+for w in SCHEMA_REPORT.warnings:
+    print(f"WARN  {w.path}: {w.message}  [{w.code}]")
 if errors:
     print(f"\nFAILED — {len(errors)} inconsistencies:")
     for x in errors:

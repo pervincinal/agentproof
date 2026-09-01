@@ -6,7 +6,7 @@ from agentproof.failure import REASON_HINT
 from agentproof.graders.calibration import judge_status
 from agentproof.report.baseline import GateResult
 from agentproof.report.cost import summary_line
-from agentproof.types import UNKNOWN, RunDelta, RunRecord
+from agentproof.types import UNKNOWN, RepeatCheck, RunDelta, RunRecord
 
 
 def skipped_lines(record: RunRecord, bullet: str = "  - ") -> list[str]:
@@ -38,12 +38,54 @@ def halt_lines(record: RunRecord, bullet: str = "  ") -> list[str]:
     ]
 
 
+UNVERIFIED = "təsdiqlənməmiş"
+#: Azərbaycan əlifbasında `i`.upper() -> `İ`; Python `I` verir, ona görə
+#: böyük hərfli forma ƏLLƏ yazılır (`.upper()` «TƏSDIQLƏNMƏMIŞ» çıxarır).
+UNVERIFIED_CAPS = "TƏSDİQLƏNMƏMİŞ"
+
+
 def headline(delta: RunDelta) -> str:
-    return (
+    line = (
         f"{delta.pass_rate_before:.0%} → {delta.pass_rate_after:.0%} · "
         f"{len(delta.broken)} sındı · {len(delta.fixed)} düzəldi · "
         f"{delta.cost_delta:+.2f}$ · p95 {delta.p95_delta_ms / 1000:+.1f}s"
     )
+    # `--repeat` uyğunsuzluğu BAŞLIQDA görünməlidir (AP-043): rəqəmləri oxuyan
+    # adam onların nə qədər ölçmə ilə müdafiə olunduğunu elə burada bilməlidir.
+    return line if delta.verified else f"{line} · ⚠️ {UNVERIFIED_CAPS}"
+
+
+def repeat_line(check: RepeatCheck) -> str:
+    """Bir sətirlik `--repeat` vəziyyəti (footer / konsol üçün)."""
+    cur = "?" if check.current is None else f"{check.current}×"
+    base = "?" if check.baseline is None else f"{check.baseline}×"
+    text = f"təkrar {cur} (baseline {base})"
+    if check.status == "fewer":
+        return f"⚠️ {text} — AZ təkrar, müqayisə {UNVERIFIED}"
+    if check.status == "unknown":
+        return f"⚠️ {text} — NAMƏLUM, müqayisə {UNVERIFIED}"
+    if check.status == "more":
+        return f"{text} — baseline-dan çox təkrar"
+    return text
+
+
+def repeat_block(delta: RunDelta) -> list[str]:
+    """`--repeat` xəbərdarlığı PR şərhinin BAŞINDA — gizlənə bilməz (AP-043)."""
+    check = delta.repeat_check
+    if check.verified or not check.warnings:
+        return []
+    claims = (
+        f"{len(delta.fixed)} «düzəldi» · {len(delta.broken)} «sındı»"
+        if (delta.fixed or delta.broken)
+        else "aşağıdakı fərq iddiaları"
+    )
+    return [
+        f"> ⚠️ **`--repeat` {'uyğunsuzluğu' if check.status == 'fewer' else 'naməlum'} "
+        f"— {claims} TƏSDİQLƏNMƏMİŞDİR.**",
+        ">",
+        f"> {check.warnings[0]}",
+        "",
+    ]
 
 
 def _case_list(record: RunRecord, case_ids: list[str], limit: int = 10) -> list[str]:
@@ -118,6 +160,8 @@ def render(
             "",
         ]
 
+    out += repeat_block(delta)
+
     reasons = skipped_lines(current, bullet="- ")
     if reasons:
         out += ["**Skipped səbəbləri:**", "", *reasons, ""]
@@ -136,12 +180,15 @@ def render(
         out += [f"- {r}" for r in gate_result.reasons]
         out += [""]
 
+    # Az (və ya naməlum) təkrarla ölçülmüş fərq iddiaları BAŞLIQDA işarələnir:
+    # oxucu «1 düzəldi» sətrini kontekstsiz oxumamalıdır (AP-043).
+    mark = "" if delta.verified else f" — ⚠️ {UNVERIFIED_CAPS}"
     if delta.broken:
-        out += [f"### 🔴 Sınan ({len(delta.broken)})", ""]
+        out += [f"### 🔴 Sınan ({len(delta.broken)}){mark}", ""]
         out += _case_list(current, delta.broken)
         out += [""]
     if delta.fixed:
-        out += [f"### 🟢 Düzələn ({len(delta.fixed)})", ""]
+        out += [f"### 🟢 Düzələn ({len(delta.fixed)}){mark}", ""]
         out += [f"- `{cid}`" for cid in delta.fixed[:10]]
         out += [""]
     if delta.flaky:
@@ -173,6 +220,7 @@ def render(
         f"<sub>model: {model_line(current)} · "
         f"retrieval: {retrieval_line(current)} · "
         f"lane: {totals.get('lanes', 1)} · "
+        f"{repeat_line(delta.repeat_check)} · "
         f"xərc ${totals.get('cost_usd', 0):.2f} "
         f"(+${float(totals.get('wasted_cost_usd', 0.0) or 0.0):.2f} yandırılmış) · "
         f"p50 {totals.get('p50_latency_ms', 0) / 1000:.1f}s · "
@@ -325,5 +373,10 @@ def render_console(record: RunRecord, delta: RunDelta | None = None) -> str:
         )
     if delta is not None:
         lines.append(f"  baseline: {headline(delta)}")
+        lines.append(f"  təkrar  : {repeat_line(delta.repeat_check)}")
+        # Xəbərdarlığın TAM mətni konsolda da görünür — PR şərhini açmadan
+        # «düzəldi» yazısına inanmaq üçün səbəb qalmasın (AP-043).
+        for warning in delta.repeat_check.warnings:
+            lines.append(f"            ⚠️ {warning}")
     lines += halt_lines(record)
     return "\n".join(lines)

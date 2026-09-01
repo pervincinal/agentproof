@@ -238,11 +238,18 @@ jobs:
       # canlı qaçış yalnız mütləq rəqəm verir və "reqressiya yoxdur" kimi
       # oxunardı (AP-013). Bir neçə snapshot varsa ƏN SONUNCUSU seçilir —
       # fayl adına yox, `started_at`-a görə.
+      #
+      # `--stage` MÜTLƏQDİR: qovluqda həm cheap, həm judge snapshot-u var və
+      # yalnız tarixə görə seçim yanlış olardı (judge snapshot-u daha yenidir,
+      # amma cəmi 3 case əhatə edir — 162 case-lik qaçışı onunla müqayisə
+      # etmək qapını səssizcə boşaldardı).
       - name: Baseline vəziyyəti
         id: baseline
+        env:
+          AP_STAGE: ${{ inputs.stage }}
         run: |
-          python evals/ci_gates.py baseline evals/baselines --require
-          echo "path=$(python evals/ci_gates.py baseline evals/baselines)" >> "$GITHUB_OUTPUT"
+          python evals/ci_gates.py baseline evals/baselines --require --stage "$AP_STAGE"
+          echo "path=$(python evals/ci_gates.py baseline evals/baselines --stage "$AP_STAGE")" >> "$GITHUB_OUTPUT"
 
       # İstifadəçi girişləri BİRBAŞA `run:` sətrinə yapışdırılmır — `env:`
       # vasitəsilə ötürülür. Əks halda `workflow_dispatch` girişi shell-ə

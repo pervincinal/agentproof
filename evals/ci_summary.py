@@ -54,6 +54,7 @@ def build(
     baseline: RunRecord | None,
     title: str,
     max_pass_rate_drop: float = 0.02,
+    fail_on_repeat_mismatch: bool = False,
 ) -> tuple[str, bool]:
     """`(markdown, qapı keçdi)` qaytarır.
 
@@ -62,7 +63,13 @@ def build(
     """
     if baseline is not None:
         delta = compare(record, baseline)
-        result = gate(delta, GatePolicy(max_pass_rate_drop=max_pass_rate_drop))
+        result = gate(
+            delta,
+            GatePolicy(
+                max_pass_rate_drop=max_pass_rate_drop,
+                fail_on_repeat_mismatch=fail_on_repeat_mismatch,
+            ),
+        )
         return f"## {title}\n\n" + render(delta, record, result), result.passed
 
     body = [
@@ -89,6 +96,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--title", default="AgentProof eval")
     p.add_argument("--max-pass-rate-drop", type=float, default=0.02)
     p.add_argument("--fail-on-regression", action="store_true")
+    p.add_argument("--fail-on-repeat-mismatch", action="store_true",
+                   help=("qaçış baseline-dan AZ `--repeat` ilə ölçülübsə blokla "
+                         "(AP-043). Verilməsə yalnız xəbərdarlıq göstərilir"))
     args = p.parse_args(argv)
 
     record = load(find_record(Path(args.run)))
@@ -104,7 +114,10 @@ def main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
 
-    markdown, passed = build(record, baseline, args.title, args.max_pass_rate_drop)
+    markdown, passed = build(
+        record, baseline, args.title, args.max_pass_rate_drop,
+        fail_on_repeat_mismatch=args.fail_on_repeat_mismatch,
+    )
     if args.out:
         Path(args.out).write_text(markdown, encoding="utf-8")
     print(markdown)

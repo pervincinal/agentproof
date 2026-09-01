@@ -225,7 +225,7 @@ Aşağıdakılar **müqavilələrdir**, implementasiya deyil.
 | `Usage` | `input_tokens`, `output_tokens`, `cached_tokens`, `model` | Dollar burada YOX — `pricing` qatında hesablanır |
 | `GradeResult` | `passed: bool`, `score: float`, `grader: str`, `reason: str`, `evidence: dict` | `reason` insan üçün; `evidence` debug üçün (hansı ifadə tapılmadı və s.) |
 | `CaseResult` | `case_id`, `response`, `grade`, `cost_usd`, `latency_ms`, `attempt` | Bir case-in bir qaçışı |
-| `RunRecord` | `run_id`, `target`, `target_version`, `model`, `dataset_hash`, `started_at`, `results[]`, `totals` | **Bizim sabit sxemimiz** — Inspect log formatından asılı deyil |
+| `RunRecord` | `run_id`, `target`, `target_version`, `model`, `dataset_hash`, `full_dataset_hash`, `started_at`, `results[]`, `totals` | **Bizim sabit sxemimiz** — Inspect log formatından asılı deyil. Dataset İKİ imza ilə yazılır: `dataset_hash` = seçilmiş alt dəst (filtrdən sonra), `full_dataset_hash` = dataset faylı (filtrdən əvvəl, yəni versiya). Sxem ≤ 3-də ikincisi `""` |
 | `RunDelta` | `fixed[]`, `broken[]`, `still_failing[]`, `flaky[]`, `pass_rate_before/after`, `cost_delta`, `p50/p95_delta` | Baseline müqayisəsinin nəticəsi |
 
 ### 8.2 `adapters/base.py` — hədəf sistem müqaviləsi
@@ -322,8 +322,11 @@ merge.py:     merge_records([RunRecord, ...]) -> RunRecord + MergeOutcome
               # eyni case_id bir neçə qaçışda varsa ƏN SON götürülür
               # (meyar started_at; fayl adı və arqument sırası ROL OYNAMIR).
               # Əvəz olunan nəticə SİLİNMİR: `superseded` kimi sayılır.
-              # Əvəzləmə eyni dataset_hash daxilindədir; sərhədi keçmək
-              # üçün case tərifinin barmaq izi eyni olmalıdır (AP-042).
+              # Uyğunluq açarı `full_dataset_hash`-dir (dataset VERSİYASI) —
+              # o, bütün mənbələrdə varsa; yoxsa köhnə `dataset_hash`.
+              # Yəni `--filter` ilə təkrar qaçış bayraqsız birləşir.
+              # Sərhədi HƏQİQƏTƏN keçmək üçün case tərifinin barmaq izi
+              # eyni olmalıdır (AP-042).
 ```
 
 **Baseline snapshot-u** — `evals/baselines/<target>@<dataset_hash>-<tarix>.json`.

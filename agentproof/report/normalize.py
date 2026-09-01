@@ -138,6 +138,9 @@ def normalize_log(
         target_version=target_version,
         model=model,
         dataset_hash=str(task_meta.get("dataset_hash", "")),
+        # Köhnə `.eval` logunda bu açar YOXDUR -> `""` (ölçülmədi). Bu halda
+        # birləşmə köhnə, dar sərhədə düşür (`report/merge.py`).
+        full_dataset_hash=str(task_meta.get("full_dataset_hash", "")),
         started_at=log.eval.created or datetime.now(timezone.utc).isoformat(),
         results=results,
         totals=totals,
@@ -186,6 +189,7 @@ def log_origin(log: EvalLog, source: str = "") -> RunOrigin:
         run_id=log.eval.run_id or "",
         started_at=str(log.eval.created or ""),
         dataset_hash=str(meta.get("dataset_hash", "")),
+        full_dataset_hash=str(meta.get("full_dataset_hash", "")),
         source=source,
     )
 

@@ -148,10 +148,11 @@ def test_run_record_carries_live_retrieval_config():
     payload = json.loads(json.dumps(record.to_dict(), ensure_ascii=False))
     assert payload["embedding_model"] == "bge-m3"
     assert payload["effective_top_k"] == 8
-    # Sxem versiyası artefaktın öz içindədir; AP-024/AP-026 ilə 3-ə qalxdı
-    # (xəta sinfi + xərc bölgüsü). Köhnə 1/2 oxunmağa davam edir — aşağıdakı
+    # Sxem versiyası artefaktın öz içindədir; AP-024/AP-026 ilə 3-ə, AP-042 ilə
+    # 4-ə qalxdı (dataset-in İKİ imzası: seçim + tam fayl). Köhnə 1/2/3
+    # oxunmağa davam edir — aşağıdakı
     # `test_old_schema_version_1_record_still_loads` bunu kilidləyir.
-    assert payload["schema_version"] == SCHEMA_VERSION == 3
+    assert payload["schema_version"] == SCHEMA_VERSION == 4
     # Səbəb izi də artefaktdadır — rəqəmin haradan gəldiyi SÜBUT olunmalıdır.
     assert payload["totals"]["retrieval_check"]["dataset_source"] == "app-config"
 

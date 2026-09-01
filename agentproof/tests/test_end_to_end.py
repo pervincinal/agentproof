@@ -67,6 +67,26 @@ def test_dataset_hash_is_stable_and_content_sensitive():
     assert dataset_hash(cases) != dataset_hash(cases[:-1])
 
 
+def test_task_records_both_the_selection_and_the_dataset_signature():
+    """AP-042: `--filter` seçim imzasını dəyişir, dataset imzasını DƏYİŞMİR.
+
+    Köhnə davranışda yalnız seçim imzası yazılırdı, ona görə filtrlənmiş
+    təkrar qaçış həmişə "başqa dataset" kimi görünürdü (`report/merge.py`).
+    """
+    all_cases = load_cases(DATASET)
+    full, _ = build_task(DATASET, adapter="mock")
+    filtered, subset = build_task(DATASET, adapter="mock", filter_expr="tag=gap")
+
+    assert len(subset) < len(all_cases)
+    # Filtrsiz qaçışda iki imza üst-üstə düşür...
+    assert full.metadata["dataset_hash"] == dataset_hash(all_cases)
+    assert full.metadata["full_dataset_hash"] == dataset_hash(all_cases)
+    # ...filtrlə isə ayrılır: seçim dəyişir, dataset faylı yerində qalır.
+    assert filtered.metadata["dataset_hash"] == dataset_hash(subset)
+    assert filtered.metadata["dataset_hash"] != full.metadata["dataset_hash"]
+    assert filtered.metadata["full_dataset_hash"] == full.metadata["full_dataset_hash"]
+
+
 def test_filter_by_tag_and_severity():
     cases = load_cases(DATASET)
     assert {c.id for c in apply_filter(cases, "tag=gap")} == {
@@ -92,6 +112,8 @@ def test_full_run_grades_all_five_cases(server, tmp_path):
     assert record.totals["n_passed"] == 5
     assert record.totals["pass_rate"] == 1.0
     assert record.dataset_hash == dataset_hash(cases)
+    # Dataset VERSİYASI da artefakta düşür (AP-042) — `.eval` log metadata-sından.
+    assert record.full_dataset_hash == dataset_hash(load_cases(DATASET))
     assert record.target_version == "1.17.0"
 
 

@@ -108,3 +108,173 @@ def test_gate_can_fail_on_cost_and_latency_budgets():
     assert not result.passed
     assert len(result.reasons) == 2
     assert delta.cost_delta == 1.0
+
+
+# ------------------------------------------------- AP-043: `--repeat` uyğunluğu
+#
+# REAL HADİSƏ. Baseline `--repeat 3` ilə qurulmuşdu; qapı `--repeat` OLMADAN
+# (tək cəhd) qaçırıldı və heç bir xəbərdarlıq olmadan «77% → 100% · 1 düzəldi»
+# yazdı. Hədəfin flaky nisbəti 19.8%-dir: TƏK cəhdin keçməsi heç nə sübut
+# etmir — həmin case sadəcə bu dəfə keçmiş ola bilər. Yəni qapı «düzəldi»
+# dedi, halbuki ola bilsin heç nə düzəlməyib. Bu, layihənin təkrarlanan
+# problem sinfidir: ƏSASSIZ YAŞIL.
+
+from agentproof.report.baseline import (  # noqa: E402
+    check_repeat,
+    declared_repeat,
+    observed_repeat,
+    repeat_of,
+)
+from agentproof.report.pr_comment import render, render_console  # noqa: E402
+
+
+def _repeated(case_id: str, passed: bool, attempts: int) -> CaseResult:
+    """`attempt` = case üçün alınmış müstəqil cavabların sayı (normalize.py)."""
+    result = _case(case_id, passed)
+    result.attempt = attempts
+    return result
+
+
+def _run(results: list[CaseResult], pass_rate: float, repeat: int | None = None) -> RunRecord:
+    record = _record(results, pass_rate)
+    if repeat is not None:
+        record.totals["repeat"] = repeat
+    return record
+
+
+def test_fewer_repeats_than_baseline_is_flagged_and_claims_are_unverified():
+    """Tək cəhdlik qaçış `--repeat 3` baseline-ı ilə müqayisə olunur."""
+    baseline = _run([_repeated("a", False, 3)], 0.0, repeat=3)
+    current = _run([_repeated("a", True, 1)], 1.0, repeat=1)
+
+    delta = compare(current, baseline)
+
+    assert delta.fixed == ["a"]  # müqayisə aparılır...
+    assert delta.repeat_check.status == "fewer"
+    assert delta.repeat_check.current == 1 and delta.repeat_check.baseline == 3
+    assert not delta.verified  # ...amma iddia TƏSDİQLƏNMİR
+    assert delta.repeat_check.warnings
+    assert "--repeat 3" in delta.repeat_check.warnings[0]
+
+
+def test_equal_repeat_produces_no_warning():
+    baseline = _run([_repeated("a", False, 3)], 0.0, repeat=3)
+    current = _run([_repeated("a", True, 3)], 1.0, repeat=3)
+
+    delta = compare(current, baseline)
+
+    assert delta.repeat_check.status == "match"
+    assert delta.verified
+    assert delta.repeat_check.warnings == []
+
+
+def test_more_repeats_than_baseline_is_not_a_warning():
+    """Daha çox təkrar = daha güclü ölçmə — iddia zəifləmir."""
+    delta = compare(
+        _run([_repeated("a", True, 5)], 1.0, repeat=5),
+        _run([_repeated("a", False, 3)], 0.0, repeat=3),
+    )
+    assert delta.repeat_check.status == "more"
+    assert delta.verified and delta.repeat_check.warnings == []
+
+
+def test_unknown_baseline_repeat_is_explicit_not_a_silent_pass():
+    """Ölçülə bilməyən baseline `1` sayılmır — NAMƏLUM olduğu açıq yazılır."""
+    baseline = _run([], 0.0)  # nə elan var, nə nəticə — ölçmə yoxdur
+    current = _run([_repeated("a", True, 1)], 1.0, repeat=1)
+
+    delta = compare(current, baseline)
+
+    assert delta.repeat_check.status == "unknown"
+    assert delta.repeat_check.baseline is None
+    assert delta.repeat_check.baseline_source == "unknown"
+    assert not delta.verified
+    assert "NAMƏLUM" in delta.repeat_check.warnings[0]
+    assert "naməlum" in delta.repeat_check.detail
+
+
+def test_repeat_is_measured_from_results_when_the_run_did_not_declare_it():
+    """Köhnə artefaktda `totals["repeat"]` YOXDUR — `attempt` sahəsindən ölçülür."""
+    old = _record([_repeated("a", True, 3)], 1.0)
+    assert declared_repeat(old) is None
+    assert observed_repeat(old) == 3
+    assert repeat_of(old) == (3, "observed")
+
+    delta = compare(_run([_repeated("a", True, 1)], 1.0, repeat=1), old)
+    assert delta.repeat_check.status == "fewer"
+    assert delta.repeat_check.baseline_source == "observed"
+
+
+def test_declared_repeat_wins_over_the_observed_count():
+    record = _run([_repeated("a", True, 1)], 1.0, repeat=3)
+    assert repeat_of(record) == (3, "declared")
+
+
+def test_broken_repeat_value_reads_as_unknown_not_as_one():
+    for junk in (None, "", "üç", 0, -1, True):
+        record = _record([], 1.0)
+        record.totals["repeat"] = junk
+        assert declared_repeat(record) is None, junk
+
+
+def test_repeat_check_is_carried_into_the_artifact_dict():
+    delta = compare(
+        _run([_repeated("a", True, 1)], 1.0, repeat=1),
+        _run([_repeated("a", False, 3)], 0.0, repeat=3),
+    )
+    payload = delta.to_dict()
+    assert payload["verified"] is False
+    assert payload["repeat_check"]["status"] == "fewer"
+    assert payload["repeat_check"]["current"] == 1
+    assert payload["repeat_check"]["baseline"] == 3
+    assert payload["repeat_check"]["warnings"]
+
+
+def test_repeat_mismatch_is_visible_in_pr_comment_and_console():
+    baseline = _run([_repeated("a", False, 3)], 0.0, repeat=3)
+    current = _run([_repeated("a", True, 1)], 1.0, repeat=1)
+    delta = compare(current, baseline)
+
+    markdown = render(delta, current)
+    assert "TƏSDİQLƏNMƏMİŞ" in markdown.splitlines()[2]  # başlıq sətri
+    assert "`--repeat` uyğunsuzluğu" in markdown
+    assert "### 🟢 Düzələn (1) — ⚠️ TƏSDİQLƏNMƏMİŞ" in markdown
+    assert "təkrar 1× (baseline 3×)" in markdown
+
+    console = render_console(current, delta)
+    assert "təkrar" in console and "TƏSDİQLƏNMƏMİŞ" in console
+    assert "təsdiqlənməmiş" in console
+
+
+def test_matching_repeat_leaves_the_report_unmarked():
+    baseline = _run([_repeated("a", False, 3)], 0.0, repeat=3)
+    current = _run([_repeated("a", True, 3)], 1.0, repeat=3)
+    markdown = render(compare(current, baseline), current)
+    assert "TƏSDİQLƏNMƏMİŞ" not in markdown
+    assert "### 🟢 Düzələn (1)" in markdown
+
+
+def test_gate_does_not_block_on_repeat_mismatch_by_default():
+    delta = compare(
+        _run([_repeated("a", True, 1)], 1.0, repeat=1),
+        _run([_repeated("a", False, 3)], 0.0, repeat=3),
+    )
+    assert gate(delta).passed  # xəbərdarlıq var, bloklama yoxdur
+
+
+def test_gate_can_be_told_to_block_on_repeat_mismatch():
+    delta = compare(
+        _run([_repeated("a", True, 1)], 1.0, repeat=1),
+        _run([_repeated("a", False, 3)], 0.0, repeat=3),
+    )
+    result = gate(delta, GatePolicy(fail_on_repeat_mismatch=True))
+    assert not result.passed
+    assert "`--repeat` uyğunsuzluğu" in result.reasons[0]
+
+
+def test_old_artifacts_without_repeat_still_compare():
+    """Sxem <= 4 artefaktı `totals["repeat"]` saxlamır — oxuma sınmamalıdır."""
+    old = RunRecord.from_dict(_record([_case("a", True)], 1.0).to_dict())
+    delta = compare(old, old)
+    assert delta.repeat_check.status == "match"  # hər ikisi 1× (ölçülən)
+    assert delta.verified

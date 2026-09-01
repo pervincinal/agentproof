@@ -126,3 +126,59 @@ def test_cli_help_documents_the_pipe_syntax(capsys):
     out = capsys.readouterr().out
     assert "id=a|b|c" in out
     assert "--skip-anchor-check" in out
+
+
+# ------------------------------- AP-027: iki sintaksisin QARIŞIĞI səssiz keçmir
+#
+# TƏLƏ. `id=a|b|c` (AP-025) və `id=a,id=b` (köhnə) — hər ikisi işləyir. Amma
+# qarışığı, `id=a|id=b|id=c`, xəta VERMİRDİ: parser `id=` açarına
+# `a|id=b|id=c` dəyərini verirdi, yalnız birincisi uyğun gəlirdi və qaçış
+# SƏSSİZCƏ 1 case ilə davam edirdi. 25 case gözlənəndə 1 qaçdı.
+
+
+def test_mixed_syntax_raises_instead_of_silently_selecting_one_case():
+    with pytest.raises(ValueError) as exc:
+        parse_filter("id=a|id=b|id=c")
+    assert "qarışıq sintaksis" in str(exc.value)
+
+
+def test_mixed_syntax_error_shows_both_correct_forms():
+    with pytest.raises(ValueError) as exc:
+        parse_filter("tag=rag|tag=policy")
+    message = str(exc.value)
+    assert "tag=a|b|c" in message
+    assert "tag=a,tag=b,tag=c" in message
+
+
+def test_mixed_syntax_is_caught_for_every_key_and_anywhere_in_the_list():
+    for expr in ("id=a|id=b", "severity=high|severity=low",
+                 "grader=x|grader=y", "tag=a,id=b|id=c"):
+        with pytest.raises(ValueError):
+            parse_filter(expr)
+
+
+def test_mixed_syntax_never_reaches_apply_filter():
+    """Səssiz azaltmanın son nöqtəsi: filtr TƏTBİQ olunmadan dayanır."""
+    cases = _cases()
+    ids = sorted(c.id for c in cases)[:3]
+    mixed = "|".join(f"id={i}" for i in ids)
+    with pytest.raises(ValueError):
+        apply_filter(cases, mixed)
+    # eyni seçim düzgün formada işləyir
+    assert len(apply_filter(cases, "id=" + "|".join(ids))) == 3
+
+
+def test_value_containing_equals_is_still_legitimate():
+    """Açar-dəyər bölgüsü İLK `=`-ə görədir — `id=a=b` sınmır."""
+    assert parse_filter("id=a=b") == [("id", "a=b")]
+    assert parse_filter("id=a=b|c=d") == [("id", "a=b"), ("id", "c=d")]
+    assert parse_filter("tag=x,id=a=b") == [("tag", "x"), ("id", "a=b")]
+
+
+def test_both_documented_syntaxes_survive_the_fix():
+    cases = _cases()
+    ids = sorted(c.id for c in cases)[:3]
+    a, b, c = ids
+    assert {x.id for x in apply_filter(cases, f"id={a}|{b}|{c}")} == set(ids)
+    assert {x.id for x in apply_filter(cases, f"id={a},id={b},id={c}")} == set(ids)
+    assert {x.id for x in apply_filter(cases, f"id={a}")} == {a}

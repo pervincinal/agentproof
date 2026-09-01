@@ -596,6 +596,7 @@ def _origin_from_dict(d: Any) -> RunOrigin:
         run_id=str(d.get("run_id", "")),
         started_at=str(d.get("started_at", "")),
         dataset_hash=str(d.get("dataset_hash", "")),
+        full_dataset_hash=str(d.get("full_dataset_hash", "")),
         source=str(d.get("source", "")),
     )
 

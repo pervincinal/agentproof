@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Iterable
 
-from agentproof.types import CaseResult, RunDelta, RunRecord
+from agentproof.types import CaseResult, RepeatCheck, RunDelta, RunRecord
 
 
 @dataclass
@@ -25,6 +25,14 @@ class GatePolicy:
     max_cost_increase_usd: float | None = None
     max_p95_increase_ms: float | None = None
     treat_flaky_as_regression: bool = False
+
+    fail_on_repeat_mismatch: bool = False
+    """Cari qaçış baseline-dan AZ təkrarla qaçırılıbsa qapını bloklа (AP-043).
+
+    Default `False`: qapı bloklamır, amma müqayisə TƏSDİQLƏNMƏMİŞ işarələnir və
+    xəbərdarlıq konsolda, PR şərhində və artefaktda görünür. CI eyni təkrarı
+    MƏCBUR etmək istəyirsə bunu `True` edir (`--fail-on-repeat-mismatch`).
+    """
 
 
 @dataclass
@@ -52,6 +60,102 @@ def _verdict(results: Iterable[CaseResult]) -> str:
     if len(outcomes) > 1:
         return "flaky"
     return "pass" if outcomes.pop() else "fail"
+
+
+# ----------------------------------------------------------- `--repeat` (AP-043)
+#: `attempt` sahəsi case üçün alınmış MÜSTƏQİL cavabların sayıdır
+#: (`normalize.py`: `attempt=len(responses)`), yəni qaçışın faktiki `--repeat`-i.
+
+
+def declared_repeat(record: RunRecord) -> int | None:
+    """Qaçışın ÖZÜNÜN yazdığı `--repeat` (`totals["repeat"]`) və ya `None`.
+
+    Köhnə artefaktlarda bu açar YOXDUR — onda `None` qayıdır və çağıran
+    tərəf ölçülən dəyərə keçir. Səssiz `1` YAZILMIR: məhz "1 saydıq" fərziyyəsi
+    tək cəhdlik qaçışı baseline ilə eyni səviyyədə göstərərdi.
+    """
+    value = record.totals.get("repeat")
+    if isinstance(value, bool):
+        return None
+    try:
+        n = int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    return n if n >= 1 else None
+
+
+def observed_repeat(record: RunRecord) -> int | None:
+    """Nəticələrdən ÖLÇÜLƏN təkrar sayı — `report/reproduction.py` ilə eyni qayda.
+
+    Ən çox cəhd sayı götürülür: yarıda dayandırılmış tək case bütün qaçışı
+    "tək cəhdlik" göstərməsin. Nəticə yoxdursa ölçmə də yoxdur -> `None`.
+    """
+    attempts = [int(r.attempt) for r in record.results if int(r.attempt) >= 1]
+    return max(attempts) if attempts else None
+
+
+def repeat_of(record: RunRecord) -> tuple[int | None, str]:
+    """`(təkrar sayı, mənbə)` — `declared` | `observed` | `unknown`."""
+    declared = declared_repeat(record)
+    if declared is not None:
+        return declared, "declared"
+    observed = observed_repeat(record)
+    if observed is not None:
+        return observed, "observed"
+    return None, "unknown"
+
+
+_SOURCE_LABEL = {
+    "declared": "qaçışın yazdığı",
+    "observed": "nəticələrdən ölçülən",
+    "unknown": "naməlum",
+}
+
+
+def _side(n: int | None, source: str) -> str:
+    return "naməlum" if n is None else f"{n}× ({_SOURCE_LABEL[source]})"
+
+
+def check_repeat(current: RunRecord, baseline: RunRecord) -> RepeatCheck:
+    """İki qaçış EYNİ sayda təkrarla ölçülübmü (AP-043).
+
+    Az təkrarla qaçırılmış qapı «düzəldi» deyə bilər, halbuki flaky case
+    sadəcə bu dəfə keçib. Müqayisənin özü qadağan olunmur — amma nəticə
+    TƏSDİQLƏNMƏMİŞ kimi işarələnir və səbəb yazılır.
+    """
+    cur, cur_src = repeat_of(current)
+    base, base_src = repeat_of(baseline)
+    check = RepeatCheck(
+        current=cur, baseline=base, current_source=cur_src, baseline_source=base_src
+    )
+    check.detail = f"cari {_side(cur, cur_src)} · baseline {_side(base, base_src)}"
+
+    if cur is None or base is None:
+        check.status = "unknown"
+        missing = [
+            name
+            for name, value in (("cari qaçış", cur), ("baseline", base))
+            if value is None
+        ]
+        check.warnings.append(
+            f"`--repeat` NAMƏLUM ({' və '.join(missing)}) — {check.detail}. "
+            "«düzəldi/sındı» iddiaları TƏSDİQLƏNMƏMİŞDİR: iki qaçışın eyni "
+            "sayda təkrarla ölçüldüyü SÜBUT EDİLƏ BİLMİR."
+        )
+        return check
+
+    if cur < base:
+        check.status = "fewer"
+        check.warnings.append(
+            f"`--repeat` UYĞUNSUZLUĞU — {check.detail}. Cari qaçış baseline-dan "
+            "AZ təkrarla ölçüldü, ona görə «düzəldi/sındı» iddiaları "
+            "TƏSDİQLƏNMƏMİŞDİR: flaky case tək cəhddə təsadüfən keçə (və ya "
+            f"sına) bilər. Yenidən qaçır: `--repeat {base}`."
+        )
+        return check
+
+    check.status = "match" if cur == base else "more"
+    return check
 
 
 def compare(current: RunRecord, baseline: RunRecord) -> RunDelta:
@@ -91,6 +195,9 @@ def compare(current: RunRecord, baseline: RunRecord) -> RunDelta:
         if _verdict(cur[case_id]) == "fail":
             delta.still_failing.append(case_id)
     delta.still_failing = sorted(set(delta.still_failing))
+    # Müqayisə HANSI ölçmə gücü ilə aparıldı (AP-043) — `fixed`/`broken`
+    # siyahıları bundan asılıdır və oxucu bunu görmədən onlara güvənməməlidir.
+    delta.repeat_check = check_repeat(current, baseline)
     return delta
 
 
@@ -118,6 +225,12 @@ def gate(delta: RunDelta, policy: GatePolicy | None = None) -> GateResult:
     if policy.max_p95_increase_ms is not None and delta.p95_delta_ms > policy.max_p95_increase_ms:
         reasons.append(
             f"p95 +{delta.p95_delta_ms:.0f} ms (hədd +{policy.max_p95_increase_ms:.0f} ms)"
+        )
+
+    if policy.fail_on_repeat_mismatch and not delta.repeat_check.verified:
+        reasons.append(
+            f"`--repeat` uyğunsuzluğu ({delta.repeat_check.status}): "
+            f"{delta.repeat_check.detail} — müqayisə təsdiqlənmir"
         )
 
     if policy.treat_flaky_as_regression and delta.flaky:

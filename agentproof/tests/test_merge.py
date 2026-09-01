@@ -34,8 +34,18 @@ LATE = "2026-08-28T09:33:31+00:00"
 
 
 # --------------------------------------------------------------- köməkçilər
-def _origin(run_id: str, started_at: str, dataset_hash: str = "h1") -> RunOrigin:
-    return RunOrigin(run_id=run_id, started_at=started_at, dataset_hash=dataset_hash)
+def _origin(
+    run_id: str,
+    started_at: str,
+    dataset_hash: str = "h1",
+    full_dataset_hash: str = "",
+) -> RunOrigin:
+    return RunOrigin(
+        run_id=run_id,
+        started_at=started_at,
+        dataset_hash=dataset_hash,
+        full_dataset_hash=full_dataset_hash,
+    )
 
 
 def _case(case_id: str, needles=("alpha", "beta")) -> dict:
@@ -80,7 +90,14 @@ def _result(case_id: str, *, passed=True, skipped=False, cost=0.01, latency=100)
     )
 
 
-def _record(results, run_id="r1", started_at=EARLY, dataset_hash="h1", totals=None):
+def _record(
+    results,
+    run_id="r1",
+    started_at=EARLY,
+    dataset_hash="h1",
+    totals=None,
+    full_dataset_hash="",
+):
     graded = [r for r in results if not r.grade.skipped]
     return RunRecord(
         run_id=run_id,
@@ -88,6 +105,7 @@ def _record(results, run_id="r1", started_at=EARLY, dataset_hash="h1", totals=No
         target_version="1.0",
         model="m",
         dataset_hash=dataset_hash,
+        full_dataset_hash=full_dataset_hash,
         started_at=started_at,
         results=list(results),
         totals=totals
@@ -100,7 +118,8 @@ def _record(results, run_id="r1", started_at=EARLY, dataset_hash="h1", totals=No
             "cost_usd": sum(r.cost_usd or 0.0 for r in results),
             "wasted_cost_usd": 0.0,
         },
-        schema_version=3,
+        # Sahəni DAŞIYAN qeyd tərifə görə sxem 4-dür; daşımayan — köhnə 3.
+        schema_version=4 if full_dataset_hash else 3,
     )
 
 
@@ -388,3 +407,141 @@ def test_merge_reads_old_schema_records_without_breaking():
     note = merged.totals["cost_coverage"]["note"]
     assert merged.totals["cost_coverage"]["reconstructed"] is True
     assert "köhnə sxem" in note and "r1" in note
+
+
+# --------------------------------- AP-042: dataset-in İKİ imzası (sxem 4)
+# `dataset_hash` filtrdən SONRAKI dəsti imzalayır, ona görə `--filter` ilə
+# qaçırılan təkrar qaçış həmişə "başqa dataset" kimi görünürdü və birləşmə
+# `--merge-across-datasets` tələb edirdi. `full_dataset_hash` dataset FAYLINI
+# imzalayır — uyğunluq açarı odur.
+FULL = "e60c825c84bbda8a"
+
+
+def test_filtered_rerun_merges_without_the_escape_hatch():
+    """Əsl hadisə: 162-lik qaçış + həmin 25-in `--filter` ilə təkrarı.
+
+    Seçim imzaları FƏRQLİ (162 case vs 25 case), dataset faylı EYNİ. Bayraqsız
+    birləşməlidir — köhnə davranışda bu, `--merge-across-datasets` tələb edirdi.
+    """
+    report = R.from_log_samples(
+        [
+            _sample("c1", _origin("run-a", EARLY, "sel-162", FULL), broken=True),
+            _sample("c1", _origin("run-b", LATE, "sel-25", FULL), ok=True),
+        ]
+    )
+    assert len(report.verdicts) == 1          # birləşdi
+    assert report.verdicts[0].classification == R.STABLE_PASS
+    assert report.n_superseded == 1
+    assert report.warnings == []              # xəbərdarlıq da lazım deyil
+
+
+def test_different_full_dataset_hashes_are_still_blocked():
+    """Dataset faylı HƏQİQƏTƏN dəyişibsə sərhəd yerində qalır."""
+    report = R.from_log_samples(
+        [
+            _sample("c1", _origin("run-a", EARLY, "sel-1", "full-aaa")),
+            _sample("c1", _origin("run-b", LATE, "sel-2", "full-bbb")),
+        ]
+    )
+    assert len(report.verdicts) == 2
+    assert report.n_superseded == 0
+    warning = next(w for w in report.warnings if "FƏRQLİ dataset_hash" in w)
+    assert "TAM dataset imzası" in warning
+
+
+def test_full_dataset_hash_is_used_only_when_every_run_has_it():
+    """Bir mənbədə tam imza yoxdursa (sxem <= 3) HAMISI köhnə açara qayıdır.
+
+    Yarım-yarım müqayisə — birində dataset versiyası, digərində seçilmiş alt
+    dəst — iki fərqli kəmiyyəti eyni açar kimi göstərmək olardı.
+    """
+    report = R.from_log_samples(
+        [
+            _sample("c1", _origin("run-a", EARLY, "sel-162", FULL)),
+            _sample("c1", _origin("run-b", LATE, "sel-25")),   # köhnə artefakt
+        ]
+    )
+    assert len(report.verdicts) == 2          # birləşmədi — sərhəd köhnə qaydadadır
+    warning = next(w for w in report.warnings if "FƏRQLİ dataset_hash" in w)
+    assert "SEÇİM imzası" in warning
+    assert "sxem <= 3" in warning
+
+
+def test_same_selection_hash_still_merges_across_old_artifacts():
+    """Sxem <= 3 davranışı DƏYİŞMİR: eyni seçim imzası birləşməyə davam edir."""
+    report = R.from_log_samples(
+        [
+            _sample("c1", _origin("run-a", EARLY, "sel-25"), broken=True),
+            _sample("c1", _origin("run-b", LATE, "sel-25"), ok=True),
+        ]
+    )
+    assert len(report.verdicts) == 1
+    assert report.n_superseded == 1
+
+
+def test_merge_records_prefers_the_full_dataset_hash_as_the_key():
+    early = _record(
+        [_result("c1", skipped=True), _result("c2")],
+        run_id="r1", started_at=EARLY, dataset_hash="sel-162", full_dataset_hash=FULL,
+    )
+    late = _record(
+        [_result("c1")],
+        run_id="r2", started_at=LATE, dataset_hash="sel-25", full_dataset_hash=FULL,
+    )
+    merged, outcome = merge_records([early, late])
+
+    assert merged.totals["n_cases"] == 2          # c1 İKİ dəfə sayılmadı
+    assert outcome.n_superseded == 1
+    assert merged.totals["n_skipped"] == 0        # skipped nəticə əvəz olundu
+    # Seçim imzaları fərqlidir, amma bu, ARTIQ xəbərdarlıq deyil.
+    assert outcome.warnings == []
+    merge = merged.totals["merge"]
+    assert merge["compatibility_key"] == "full_dataset_hash"
+    assert merge["dataset_hashes"] == ["sel-162", "sel-25"]
+    assert merge["full_dataset_hashes"] == [FULL]
+    # Birləşmiş qeyd hər iki imzanı daşıyır; seçim imzası case dəstini TAM
+    # əhatə edən qaçışdan gəlir (162-lik), tam imza isə dataset versiyasıdır.
+    assert merged.dataset_hash == "sel-162"
+    assert merged.full_dataset_hash == FULL
+    assert merged.schema_version == 4
+
+
+def test_merge_records_warns_when_full_dataset_hashes_differ():
+    early = _record([_result("c1")], run_id="r1", started_at=EARLY,
+                    dataset_hash="s1", full_dataset_hash="full-aaa")
+    late = _record([_result("c2")], run_id="r2", started_at=LATE,
+                   dataset_hash="s2", full_dataset_hash="full-bbb")
+    merged, outcome = merge_records([early, late])
+    assert merged.totals["merge"]["compatibility_key"] == "full_dataset_hash"
+    assert merged.totals["merge"]["full_dataset_hashes"] == ["full-aaa", "full-bbb"]
+    warning = next(w for w in outcome.warnings if "dataset imzası" in w)
+    assert "full_dataset_hash" in warning
+    assert "full-aaa" in warning and "full-bbb" in warning
+
+
+def test_merge_sources_record_both_signatures():
+    early = _record([_result("c1")], run_id="r1", started_at=EARLY,
+                    dataset_hash="sel-162", full_dataset_hash=FULL)
+    late = _record([_result("c2")], run_id="r2", started_at=LATE,
+                   dataset_hash="sel-25", full_dataset_hash=FULL)
+    merged, _ = merge_records([early, late], sources=["a.json", "b.json"])
+    sources = merged.totals["merge"]["sources"]
+    assert [s["dataset_hash"] for s in sources] == ["sel-162", "sel-25"]
+    assert [s["full_dataset_hash"] for s in sources] == [FULL, FULL]
+
+
+def test_schema_3_record_has_no_full_dataset_hash():
+    """Köhnə artefaktda sahə YOXDUR -> `""` (ölçülmədi), uydurulmur."""
+    old = {
+        "schema_version": 3,
+        "run_id": "r1",
+        "target": "dify_http",
+        "dataset_hash": "sel-25",
+        "started_at": EARLY,
+        "results": [],
+        "totals": {},
+    }
+    record = RunRecord.from_dict(old)
+    assert record.dataset_hash == "sel-25"
+    assert record.full_dataset_hash == ""      # `dataset_hash` BURA kopyalanmır
+    assert record.to_dict()["full_dataset_hash"] == ""

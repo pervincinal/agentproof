@@ -403,7 +403,16 @@ class CaseResult:
 #: bölgüsü (`wasted_cost_usd`, `unmeasured_attempts`, `totals["cost_coverage"]`).
 #: `1` və `2` oxunmağa DAVAM EDİR: yeni sahələr default alır və
 #: `cost_coverage.status` onların ölçülmədiyini açıq göstərir.
-SCHEMA_VERSION = 3
+#:
+#: 3 -> 4 (AP-042): dataset İKİ imza ilə yazılır. `dataset_hash` həmişə
+#: olduğu kimi SEÇİLMİŞ case dəstini (`--filter` / `--stage`-dən SONRA)
+#: imzalayır; yeni `full_dataset_hash` isə dataset FAYLINI olduğu kimi
+#: (filtrdən ƏVVƏL) imzalayır, yəni dataset VERSİYASIDIR. `1`, `2` və `3`
+#: oxunmağa DAVAM EDİR: onlarda `full_dataset_hash` YOXDUR və `""` qalır —
+#: "bu qaçışda ölçülmədi". Boş sətir burada da açıq sentineldir: köhnə
+#: artefaktın `dataset_hash`-ini dataset versiyası kimi göstərmək,
+#: filtrlənmiş qaçışda düz yalan olardı.
+SCHEMA_VERSION = 4
 
 
 def _opt_int(value: Any) -> int | None:
@@ -431,6 +440,19 @@ class RunRecord:
     totals: dict[str, Any] = field(default_factory=dict)
     schema_version: int = SCHEMA_VERSION
 
+    # --- dataset İMZALARI (AP-042) ---------------------------------------
+    # `dataset_hash` (yuxarıda) SEÇİLMİŞ alt dəsti imzalayır: `--filter` ilə
+    # qaçırılan təkrar qaçışın imzası ana qaçışdan HƏMİŞƏ fərqlənir, halbuki
+    # case tərifləri bayt-bayt eynidir. Yəni o, dataset VERSİYASI deyil.
+    #
+    # `full_dataset_hash` dataset faylını FİLTRDƏN ƏVVƏL imzalayır — versiyanı
+    # məhz bu daşıyır. İki sahə iki fərqli suala cavab verir: "hansı case-lər
+    # qaçdı" və "hansı dataset-dən". Birləşmə uyğunluğu ikincidən asılıdır
+    # (`report/merge.py`).
+    #
+    # `""` = ÖLÇÜLMƏDİ (sxem <= 3 artefaktı). Ağlabatan dəyər YAZILMIR.
+    full_dataset_hash: str = ""
+
     # --- retrieval konfiqurasiyası (LIM-E06 / AP-019) ---------------------
     # Bu dörd sahə olmadan qaçış artefaktı öz-özünü təsvir etmir: embedder və
     # `top_k` hesabatın ən yük daşıyan parametrləridir, amma kənar sənəddən
@@ -453,6 +475,7 @@ class RunRecord:
             "target_version": self.target_version,
             "model": self.model,
             "dataset_hash": self.dataset_hash,
+            "full_dataset_hash": self.full_dataset_hash,
             "started_at": self.started_at,
             "embedding_model": self.embedding_model,
             "embedding_provider": self.embedding_provider,
@@ -470,6 +493,10 @@ class RunRecord:
             target_version=d.get("target_version", ""),
             model=d.get("model", ""),
             dataset_hash=d.get("dataset_hash", ""),
+            # Sxem <= 3-də bu sahə YOXDUR. `dataset_hash`-i bura kopyalamaq
+            # cazibədardır, amma filtrlənmiş köhnə qaçışda o, dataset
+            # versiyası DEYİL — `""` qalır və birləşmə seçim imzasına düşür.
+            full_dataset_hash=str(d.get("full_dataset_hash", "") or ""),
             started_at=d.get("started_at", ""),
             results=[CaseResult.from_dict(r) for r in d.get("results", [])],
             totals=d.get("totals", {}),
@@ -481,6 +508,63 @@ class RunRecord:
             embedding_provider=str(d.get("embedding_provider") or UNKNOWN),
             effective_top_k=_opt_int(d.get("effective_top_k")),
             reranking_enabled=_opt_bool(d.get("reranking_enabled")),
+        )
+
+
+@dataclass
+class RepeatCheck:
+    """Cari qaçış baseline QƏDƏR təkrarlandımı (`--repeat`, AP-043).
+
+    Hədəfin flaky nisbəti ~20%-dirsə, TƏK cəhdin keçməsi heç nə sübut etmir:
+    həmin case sadəcə bu dəfə keçmiş ola bilər. Baseline `--repeat 3` ilə
+    qurulub, qapı isə `--repeat` OLMADAN qaçırılıbsa, «düzəldi» iddiası
+    ÖLÇÜLMƏYİB — ona görə bu struktur iddiaları TƏSDİQLƏNMƏMİŞ işarələyir.
+
+    `None` = NAMƏLUM. `1` DEYİL: ağlabatan default vermək məhz həmin əsassız
+    yaşılı yenidən doğurardı (UNKNOWN sentinelinin mahiyyəti ilə eyni).
+
+    `*_source`: `declared` — qaçış özü `totals["repeat"]`-də yazıb ·
+    `observed` — nəticələrdən ölçülüb (`CaseResult.attempt`) · `unknown`.
+    """
+
+    current: int | None = None
+    baseline: int | None = None
+    current_source: str = "unknown"
+    baseline_source: str = "unknown"
+    status: str = "unknown"
+    """`match` · `more` · `fewer` · `unknown`."""
+
+    detail: str = ""
+    warnings: list[str] = field(default_factory=list)
+
+    @property
+    def verified(self) -> bool:
+        """Təkrar sayı baseline-dan AZ deyil və hər ikisi bilinir."""
+        return self.status in ("match", "more")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "current": self.current,
+            "baseline": self.baseline,
+            "current_source": self.current_source,
+            "baseline_source": self.baseline_source,
+            "status": self.status,
+            "verified": self.verified,
+            "detail": self.detail,
+            "warnings": list(self.warnings),
+        }
+
+    @staticmethod
+    def from_dict(d: dict[str, Any] | None) -> "RepeatCheck":
+        d = d or {}
+        return RepeatCheck(
+            current=_opt_int(d.get("current")),
+            baseline=_opt_int(d.get("baseline")),
+            current_source=str(d.get("current_source", "unknown")),
+            baseline_source=str(d.get("baseline_source", "unknown")),
+            status=str(d.get("status", "unknown")),
+            detail=str(d.get("detail", "")),
+            warnings=list(d.get("warnings", [])),
         )
 
 
@@ -499,6 +583,15 @@ class RunDelta:
     p95_delta_ms: float = 0.0
     broken_high_severity: list[str] = field(default_factory=list)
 
+    repeat_check: RepeatCheck = field(default_factory=RepeatCheck)
+    """`--repeat` uyğunluğu (AP-043). Az təkrarla qaçırılmış müqayisənin
+    `fixed`/`broken` siyahıları TƏSDİQLƏNMƏMİŞDİR — `verified` bunu deyir."""
+
+    @property
+    def verified(self) -> bool:
+        """`fixed`/`broken` iddiaları ölçmə ilə müdafiə olunurmu."""
+        return self.repeat_check.verified
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "fixed": self.fixed,
@@ -513,4 +606,6 @@ class RunDelta:
             "p50_delta_ms": self.p50_delta_ms,
             "p95_delta_ms": self.p95_delta_ms,
             "broken_high_severity": self.broken_high_severity,
+            "verified": self.verified,
+            "repeat_check": self.repeat_check.to_dict(),
         }

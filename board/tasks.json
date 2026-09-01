@@ -1754,23 +1754,59 @@
    "desc": "AP-025 id=a|b|c sintaksisini elave etdi. Amma id=a|id=b|id=c yazmaq (iki sintaksisin qarisigi) xeta vermir — parser 'id=' acarina 'a|id=b|id=c' deyerini verir, yalniz birincisi uygun gelir ve qacis SESSIZCE 1 case ile davam edir. Menim ozum bu teleye dusdum: 25 case gozleyerken 1 qacdi. Bu, A-19 sinfinden problemdir — sessiz azaltma, xeta yox.",
    "role": "harness-eng",
    "prio": "P2",
-   "status": "backlog",
-   "assignee": null,
+   "status": "done",
+   "assignee": "harness-eng",
    "dod": "Deyer icinde '=' varsa (yeni qarisiq sintaksis) xeta verilir ve duzgun format gosterilir; VE YA secilmis case sayi gozlenilenden azdirsa xeberdarliq; test: id=a|id=b formasi xeta verir",
    "links": [
     "agentproof/runner/task.py"
    ],
    "created": "2026-08-28T13:33:16",
-   "updated": "2026-08-28T13:33:16",
+   "updated": "2026-09-01T22:25:00",
    "history": [
     {
      "at": "2026-08-28T13:33:16",
      "actor": "main",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T21:45:11",
+     "actor": "harness-eng",
+     "action": "assigned",
+     "detail": "harness-eng"
+    },
+    {
+     "at": "2026-09-01T21:45:11",
+     "actor": "harness-eng",
+     "action": "backlog→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T21:57:10",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T21:57:10",
+     "actor": "harness-eng",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:25:00",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-01T21:57:10",
+     "actor": "harness-eng",
+     "text": "parse_filter() artiq qarisiq sintaksisi tutur: her '|' parcasinin onunde TANINAN filter acari (tag|severity|grader|id) dursa aciq ValueError verilir ve her iki duzgun format gosterilir. 'id=a=b' legitim qalir — acar-deyer bolgusu ilk '='-e goredir, deyerin oz icindeki '=' (prefiks acar deyil) toxunulmur. Testler: 6 yeni (test_filter_syntax.py) — qarisiq forma xeta verir (her acar ucun, siyahinin istenilen yerinde), apply_filter-e catmadan dayanir, 'id=a|b|c' ve 'id=a,id=b' sinmir. pytest 937 yasil."
+    }
+   ]
   },
   {
    "id": "AP-028",
@@ -1778,8 +1814,8 @@
    "desc": "base.py-dəki AgentAdapter Protocol yalnız 4 üzv tələb edir (name/version/invoke/health), amma müqavilənin ƏSL şərtləri həmin faylın docstring-ində mətn kimi yaşayır: adapter retry etmir (yeganə istisna rate_limit), latency_ms-i özü ölçür, hədəf token verməsə usage=None, error NƏ baş verdiyini / error_class isə NƏ ETMƏLİ olduğunu deyir (failure.py: rate_limit/credit_exhausted/auth/bad_request/unknown), və səssiz boş cavab qadağandır. Hazırda bu şərtləri yalnız test_http_adapter.py yoxlayır, o da Dify-yə xas formada. İkinci adapter yazılan an müqavilə pozuntusu yalnız canlı qaçışda üzə çıxacaq — yəni müştərinin pulu ilə. MÜŞTƏRİ SİQNALI: bu tapşırıq heç bir siqnaldan ASILI DEYİL — hansı adapter gələcəyindən asılı olmayaraq lazımdır, ona görə Boşluq 1-in ən yüksək prioritetli hissəsidir.",
    "role": "harness-eng",
    "prio": "P1",
-   "status": "backlog",
-   "assignee": null,
+   "status": "done",
+   "assignee": "harness-eng",
    "dod": "agentproof/adapters/conformance.py: hər hansı AgentAdapter nüsxəsini qəbul edən parametrləşdirilmiş pytest dəsti, ən azı 8 ayrı müqavilə şərti (invoke AgentResponse qaytarır; latency_ms adapter tərəfindən doldurulur; usage yoxdursa None, 0 deyil; boş cavab error ilə işarələnir; rate_limit-dən başqa siniflər DƏRHAL qayıdır, retry etmir; error_class failure.py siniflərindən biridir; hədəf əlçatmazsa health() False qaytarır, exception atmır; retrieved[] elementləri RetrievedChunk); mock və dify_http (agentproof/testing/mock_dify serverinə qarşı) hər ikisi keçir; CI-da qaçır; mövcud 875 testin heç biri sınmır",
    "links": [
     "agentproof/adapters/base.py",
@@ -1789,16 +1825,63 @@
     "agentproof/tests/test_http_adapter.py"
    ],
    "created": "2026-08-28T13:37:44",
-   "updated": "2026-08-28T13:37:44",
+   "updated": "2026-09-01T22:25:00",
    "history": [
     {
      "at": "2026-08-28T13:37:44",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T21:49:31",
+     "actor": "harness-eng",
+     "action": "assigned",
+     "detail": "harness-eng"
+    },
+    {
+     "at": "2026-09-01T21:49:31",
+     "actor": "harness-eng",
+     "action": "backlog→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T21:49:31",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:01:48",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:01:48",
+     "actor": "harness-eng",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:25:00",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-01T21:49:31",
+     "actor": "harness-eng",
+     "text": "Başlanıldı. Baseline: pytest 918 passed. http_agent.py = 786 sətir. Plan: agentproof/adapters/conformance.py — adapter-agnostik parametrləşdirilmiş müqavilə dəsti (build_cases fabriki), mock + dify_http (mock_dify serverinə qarşı) hər ikisi ilə qaçır."
+    },
+    {
+     "at": "2026-09-01T22:01:48",
+     "actor": "harness-eng",
+     "text": "BİTDİ. agentproof/adapters/conformance.py (662 sətir) — 25 müqavilə şərti, adapterdən asılı OLMAYAN. Qoşulma nöqtəsi ConformanceTarget körpüsüdür (~40 sətir/adapter): adapter() + arrange(ssenari) + requests_sent(). 12 ssenari + 2 qabiliyyət (unreachable, halts_run).\n\nƏhatə: invoke tip müqaviləsi · JSON artefakt round-trip · name/version · latency_ms adapter ölçür · usage yoxdursa None (+ NƏTİCƏSİ: cost_under skipped verir) · retrieved boş siyahı, None deyil · RetrievedChunk tipləri · boş cavab ADLANIR · error<->error_class cütlüyü (REASONS-dan biri) · attempts · tək növbədə turns boş · auth/bad_request/credit_exhausted TƏKRARLANMIR (hər biri ayrıca) · rate_limit təkrarlanır, backoff ARTIR, sonra uğur · cəhdlər bitəndə səbəb rate_limit qalır · yanan token retry_usage-da · credit_exhausted qaçışı dayandırır · çoxnövbəli: turns, tool_calls BİRLƏŞMƏSİ, usage/latency cəmi, kontekst qorunur · health True/False (exception yox).\n\nagentproof/tests/test_adapter_conformance.py — dify_http (mock_dify HTTP/SSE wire-a qarşı) 25/25 keçir; mock 16/25 keçir, 9 ssenari in-process olduğu üçün mümkün deyil. Boşluq SƏSSİZ DEYİL: MOCK_GAP matris testi ilə kilidlənib (adapter sabah səssizcə dəstəyi ata bilməz) + test_the_real_adapter_runs_every_check.\n\nDəst BOŞ YAŞIL DEYİL: _SloppyAgent (usage 0 + model etiketi = hesabatda '$0.00 keçdi' yalanı, boş cavab səssiz, error_class yox, latency 0) 5 yoxlamada SINIR — pytest.raises ilə sübut edilib.\n\nYan düzəlişlər (hər ikisi additiv): mock_agent.py müqaviləyə uyğunlaşdırıldı (error_class, empty_answer adlandırması, calls sayğacı, delay_ms); mock_dify.py-a 'no_usage' skript açarı (message_end gəlir, usage sahəsi YOX).\n\npytest: 1020 passed, 9 skipped (skip-lər ADLA görünür). CI onsuz da 'python -m pytest' qaçırır."
+    }
+   ]
   },
   {
    "id": "AP-029",
@@ -1806,8 +1889,8 @@
    "desc": "http_agent.py 786 sətirdir, halbuki base.py docstring-i açıq vəd verir: 'Yeni müştəri = bir adapter faylı, < 150 sətir'. Bu vəd hazırda yalandır. Faylda üç ayrı qat var: (a) Dify SSE wire formatı — event adları agent_message/agent_thought/message_end, DIFY_INFRA_ERRORS, dify_error zərfi, TOOL_SEPARATOR; (b) backoff/retry maşını — _backoff_delay, RETRYABLE/HALTING, retry_usage yığımı (AP-024, AP-026); (c) çoxnövbəli söhbət zənciri — conversation_id ötürülməsi, _merge, dropped_scripted_assistant_turns. (b) və (c) Dify-yə xas DEYİL: hər HTTP hədəf üçün eynidir, amma indi hər yeni adapterdə sıfırdan yazılmalıdır və AP-024/AP-026-nın dərsləri itir. MÜŞTƏRİ SİQNALI: AP-028 bitdikdən sonra icra olunur; ilk müştəri HTTP/SSE hədəf gətirirsə P1-ə qalxır, in-process SDK hədəf gətirirsə gözləyir.",
    "role": "harness-eng",
    "prio": "P2",
-   "status": "backlog",
-   "assignee": null,
+   "status": "done",
+   "assignee": "harness-eng",
    "dod": "Backoff/retry, çoxnövbəli zəncir və usage/xərc yığımı Dify-dən asılı olmayan modula (adapters/_http_core.py) köçür; http_agent.py yalnız Dify wire formatını saxlayır və < 250 sətirə düşür; AP-028 conformance dəsti hər ikisində keçir; test_http_adapter.py, test_rate_limit_backoff.py, test_multi_turn.py, test_cost_accounting.py MƏNBƏYİ DƏYİŞMƏDƏN keçir (yəni davranış eyni qalıb, yalnız yeri dəyişib)",
    "links": [
     "agentproof/adapters/http_agent.py",
@@ -1817,16 +1900,74 @@
     "agentproof/tests/test_cost_accounting.py"
    ],
    "created": "2026-08-28T13:38:19",
-   "updated": "2026-08-28T13:38:19",
+   "updated": "2026-09-01T22:25:00",
    "history": [
     {
      "at": "2026-08-28T13:38:19",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:02:00",
+     "actor": "harness-eng",
+     "action": "assigned",
+     "detail": "harness-eng"
+    },
+    {
+     "at": "2026-09-01T22:02:00",
+     "actor": "harness-eng",
+     "action": "backlog→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:02:00",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:22:17",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:22:17",
+     "actor": "harness-eng",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:22:35",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:25:00",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-01T22:02:00",
+     "actor": "harness-eng",
+     "text": "Başlanıldı. AP-028 conformance dəsti hazırdır — refaktordan əvvəl/sonra eyni nəticəni məhz o qoruyacaq. Plan: adapters/_http_core.py — (a) backoff/retry maşını (_backoff_delay, RETRYABLE/HALTING, HALT, retry_usage yığımı), (b) çoxnövbəli zəncir + _merge, (c) usage toplama, (d) ümumi tip çevirmələri. http_agent.py-da yalnız Dify wire formatı qalır: SSE parsinqi, agent_thought, dify_error, DIFY_INFRA_ERRORS, TOOL_SEPARATOR."
+    },
+    {
+     "at": "2026-09-01T22:22:17",
+     "actor": "harness-eng",
+     "text": "BİTDİ. http_agent.py: 786 -> 196 sətir (DoD həddi 250).\n\nÜç qat ayrıldı:\n- agentproof/adapters/_http_core.py (415 s.) — Dify-dən ASILI DEYİL: RetryPolicy + send_with_retry (AP-024 backoff, HALT, retry_usage/measured_retries AP-026), run_conversation (conversation_id zənciri, conversation_not_returned), merge_turns (tool_calls birləşməsi, chunk təkrarsızlığı, usage/latency cəmi), user_turns (skriptli assistant növbələri sayılır), sse_data + tip çevirmələri.\n- agentproof/adapters/_dify_wire.py (334 s.) — YALNIZ məftil formatı: event adları, agent_thought təkrar id, ';' ilə paralel tool, dify_error zərfi, DIFY_INFRA_ERRORS, xəta təsnifatı. Dify sabah event adını dəyişsə, dəyişən fayl budur.\n- agentproof/adapters/http_agent.py (196 s.) — HTTP müştərisi: sorğu gövdəsi, başlıqlar, health, timeout, model etiketi,  sahəsi.\n\nDAVRANIŞ EYNİDİR — sübut:\n1) reports/full-run-03b-in 25 case-i artefaktdan yenidən emal olundu (canlı qaçış YOX). Refaktordan ƏVVƏL çıxarılan normallaşdırılmış nəticə ilə SONRAKI bayt-bayt eynidir (yalnız latency və uuid internlənir; retry_waits_s əvəzinə sayı saxlanılır). Müqayisə həm də DETERMİNİSTDİR (iki ardıcıl qaçış eyni fayl).\n2) Bu sübut daimi testə çevrildi: agentproof/tests/test_adapter_replay.py — 26 test, 0.8 s. Mutasiya ilə yoxlandı: zənciri qıran bir sətir 5 çoxnövbəli case-i sındırır, yəni test boş yaşıl deyil.\n3) test_http_adapter.py, test_multi_turn.py, test_rate_limit_backoff.py, test_cost_accounting.py MƏNBƏYİ DƏYİŞMƏDƏN keçir (git diff boş).\n4) AP-028 conformance dəsti dify_http üçün 25/25 keçir.\n\nƏlavə kilidlər: test_adapter_core.py (19 test) nüvəni HƏDƏFSİZ sürür — send_once sadəcə hazır AgentResponse qaytarır, yəni 'bu məntiq Dify-yə xas deyil' iddiası icra olunur. test_adapter_layering.py (5 test) sərhədi maşınla saxlayır: nüvənin KODUNDA 'dify'/'httpx' yoxdur, wire faylı bağlantı açmır, http_agent.py <= 250 sətir, asyncio.sleep/RETRYABLE/HALT yalnız nüvədə, conformance.py konkret adapter idxal etmir.\n\nbase.py docstring-i düzəldildi: 'yeni müştəri = < 150 sətir' vədi indi faktiki ölçülərlə və qat bölgüsü ilə əvəzləndi (yalan vəd qalmadı).\n\npytest: 1094 passed, 9 skipped (skip-lər mock-un in-process boşluğudur, adı ilə)."
+    },
+    {
+     "at": "2026-09-01T22:22:35",
+     "actor": "harness-eng",
+     "text": "Düzəliş (yuxarıdakı şərhdə bir söz itdi): http_agent.py-da qalan Dify-ə xas sahə \"user\"-dir — söhbət son istifadəçiyə bağlandığı üçün o, növbədən növbəyə dəyişməməlidir."
+    }
+   ]
   },
   {
    "id": "AP-030",
@@ -1916,8 +2057,8 @@
    "desc": "verify_fixtures.py CANONICAL/FIXTURES cütünü 1338 assertion ilə yoxlayır, amma sxemin ÖZÜ heç yerdə yazılmayıb — yalnız həmin skriptin içindən oxunur: parameters[] üçün məcburi sahələr (value, unit, status, doc, section, doc_version, applies_when), boundary.points >= 3 və ən azı 2 fərqli expected, precedence_ladder, counting_rules, superseded_index. Müştəri korpusu qurmağa başlayan an 'hansı sahələr məcburidir' sualının cavabı Python oxumaqdan keçir. İkinci problem: verify_fixtures.py Aurora-ya sərt bağlıdır — WINDOW_PARAM lüğəti korpus parametr adlarını sabit kodlayır, sifariş hesablamaları Aurora sxeminə bağlıdır, yəni başqa korpusda ümumiyyətlə qaçmır. MÜŞTƏRİ SİQNALI: siqnaldan ASILI DEYİL — hər audit bu sxemlə başlayır. Boşluq 2-nin ən aşağı riskli və ən əvvəl görülməli hissəsidir.",
    "role": "dataset-eng",
    "prio": "P2",
-   "status": "backlog",
-   "assignee": null,
+   "status": "done",
+   "assignee": "dataset-eng",
    "dod": "target/corpus/SCHEMA.md (insan üçün) + maşınla oxunan sxem (JSON Schema və ya pydantic model) — parameters, precedence_ladder, counting_rules, superseded_index, meta.documents üçün; verify_fixtures.py-nin KORPUSDAN ASILI OLMAYAN hissəsi (sxem yoxlaması + daxili ardıcıllıq) ayrıca modula köçür və istənilən CANONICAL.yaml üzərində qaçır; Aurora-ya xas hissə (WINDOW_PARAM, sifariş/expected hesablamaları) ayrı faylda qalır; mövcud 1338 assertion hələ də exit 0 verir; sxem pozulmuş süni korpus nümunəsi ilə mənfi test var",
    "links": [
     "target/corpus/verify_fixtures.py",
@@ -1925,16 +2066,52 @@
     "target/corpus/FIXTURES.yaml"
    ],
    "created": "2026-08-28T13:39:38",
-   "updated": "2026-08-28T13:39:38",
+   "updated": "2026-09-01T22:25:00",
    "history": [
     {
      "at": "2026-08-28T13:39:38",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T21:51:09",
+     "actor": "dataset-eng",
+     "action": "assigned",
+     "detail": "dataset-eng"
+    },
+    {
+     "at": "2026-09-01T21:51:09",
+     "actor": "dataset-eng",
+     "action": "backlog→in_progress",
+     "detail": "Sxem korpusdan ayrılır: target/corpus/schema.py (generic) + verify_fixtures.py (Aurora-ya xas) + docs/CANONICAL-SCHEMA.md"
+    },
+    {
+     "at": "2026-09-01T22:03:37",
+     "actor": "dataset-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:03:37",
+     "actor": "dataset-eng",
+     "action": "in_progress→review",
+     "detail": "Sxem + JSON Schema + sened + 35 test; legacy 1338 qorunub"
+    },
+    {
+     "at": "2026-09-01T22:25:00",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-01T22:03:37",
+     "actor": "dataset-eng",
+     "text": "SXEM KORPUSDAN AYRILDI.\n\nYENI FAYLLAR\n- target/corpus/schema.py — korpusdan ASILI OLMAYAN terif + validator + JSON Schema generatoru. Hec bir Aurora adi yoxdur.\n- target/corpus/canonical.schema.json — JSON Schema 2020-12, schema.py-den generasiya olunur (musteri istenilen aletle qacirir).\n- docs/CANONICAL-SCHEMA.md (420 setir) — sahe-sahe cedvel + NIYE sutunu, tam numune, cross-reference qaydalari kod-kod, yeni korpusa baslama ardicilligi.\n- agentproof/tests/test_corpus_schema.py — 35 test.\n\nUC FORMA, BIR MENBE: FieldSpec cedvelleri -> hem senedin cedvelleri, hem JSON Schema, hem validate(). Suruşme mumkun deyil: test_every_schema_field_is_documented senedde yazilmayan sahe olsa sinir; test_emitted_json_schema_file_is_in_sync JSON Schema kohnelese sinir.\n\nSERHED: JSON Schema yalniz FORMANI ifade edir. 'superseded_index movcud parametre baxirmi', 'precedence_rank nerdivanda varmi', 'doc reyestrdedirmi' JSON Schema-da yazila bilmir — onlar validate()-dedir. Ikisi bir yerde tam sxemdir.\n\nREQRESSIYA YOXDUR — OLCULDU:\n  schema assertions : 2303  (legacy subset 807)\n  fixture assertions: 531   (Aurora-ya xas, verify_fixtures.py)\n  legacy assertions : 1338  <- tarixi say TAM qorunub\n  assertions run    : 2834  (+1496 yeni qayda)\nverify_fixtures.py exit 0. Legacy 1338 testle sabitlenib (test_verify_fixtures_still_reports_the_full_legacy_count) — kocurme zamani assertion sayinin azalmasi korpusun sessizce az yoxlanmasi demekdir.\n\nKORPUSDAN ASILI OLMAMA SUBUTU: testde Aurora ile hec bir ortaq adi olmayan korpus (kitabxana qaydalari, EUR, loans.md) qurulur ve TEMIZ kecir. 20 menfi test dagidilmis korpusun DEQIQ kodla sindigini gosterir (boundary.min_points, superseded_index.parameter_has_supersedes, supersedes.value_differs, parameter.doc_version_matches, ladder.rank_gap ...).\n\nTAPINTI (gizledilmedi): referans korpus 1 xeberdarliq verir — RC-12-nin deciding_parameter-i (non_returnable_category) parametr cedvelinde yoxdur, onu nerdivan qaydasi hell edir. Xeta sayilmadi, amma xeberdarliq qaldi ve testle 1 edede sabitlendi ki, ikincisi yaransa gorunsun. docs/CANONICAL-SCHEMA.md §6-da adi ile yazilib.\n\npytest: 1021 passed, 9 skipped. build_full.py --check: sinxron (165 case)."
+    }
+   ]
   },
   {
    "id": "AP-034",
@@ -1942,8 +2119,8 @@
    "desc": "Auditin ən bahalı hissəsi budur. Aurora Goods-un 8 siyasət faylı və 71KB-lıq CANONICAL.yaml-ı TAM ƏL İLƏ yazılıb; müştəri üçün bu iş sıfırdan təkrarlanır və 14 günlük auditi ~25 günə çıxarır, yəni marjanı yeyir. Tam avtomatlaşdırma mümkün deyil — dəyərin doğru olduğunu maşın təsdiq edə bilməz — amma NAMİZƏD çıxarışı mümkündür və alətin yarısı artıq var: graders/canonical.py-dəki extract_quantities / parse_quantity / bənd bölgüsü məhz rəqəm+vahid cütlərini tapır (indi agent cavabında), eyni funksiyalar siyasət mətninə yönəldilə bilər; anchors.py-dəki _CLAUSE_RE / _SECTION_RE / _APPENDIX_RE isə bənd nömrəsini artıq parse edir. Yəni bu tapşırıq yeni ixtira deyil, mövcud iki modulun yeni istiqamətə yönəldilməsidir. MÜŞTƏRİ SİQNALI: siqnaldan asılı deyil (hər audit bunu tələb edir), amma GİRİŞ FORMATI ilk müştəridən sonra dəqiqləşir — md fərz edilir; Confluence/PDF/HTML dəstəyi AYRI tapşırıqdır və indi qurulmamalıdır.",
    "role": "dataset-eng",
    "prio": "P2",
-   "status": "backlog",
-   "assignee": null,
+   "status": "done",
+   "assignee": "dataset-eng",
    "dod": "target/corpus/extract.py: md fayl(lar)ı -> təsdiq gözləyən CANONICAL parametr qaralaması (value, unit, doc, section doldurulur; status, doc_version, applies_when BOŞ buraxılır — bunları insan verir); hər namizədin yanında sənəddəki tam cümlə iqtibas kimi saxlanır (auditor yoxlaya bilsin); Aurora korpusuna qarşı qaçırılır və mövcud CANONICAL.yaml parametrləri ilə müqayisə olunur — recall və false-positive rəqəmi ÖLÇÜLÜR və README-də yazılır ('avtomatik çıxarır' iddiası ölçülmüş rəqəm olmadan yazılmır); heç bir namizəd insan təsdiqi olmadan CANONICAL.yaml-a yazılmır (çıxış ayrı fayla gedir)",
    "links": [
     "agentproof/graders/canonical.py",
@@ -1952,16 +2129,52 @@
     "target/corpus/returns-and-refunds.md"
    ],
    "created": "2026-08-28T13:39:38",
-   "updated": "2026-08-28T13:39:38",
+   "updated": "2026-09-01T22:25:00",
    "history": [
     {
      "at": "2026-08-28T13:39:38",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:03:45",
+     "actor": "dataset-eng",
+     "action": "assigned",
+     "detail": "dataset-eng"
+    },
+    {
+     "at": "2026-09-01T22:03:45",
+     "actor": "dataset-eng",
+     "action": "backlog→in_progress",
+     "detail": "target/corpus/extract.py — namized cixarisi + Aurora uzerinde olculmus recall"
+    },
+    {
+     "at": "2026-09-01T22:17:35",
+     "actor": "dataset-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:17:35",
+     "actor": "dataset-eng",
+     "action": "in_progress→review",
+     "detail": "Recall 85/96=88.5% olculdu, 11 tapilmayan tesnif edildi, serhed testle qorundu"
+    },
+    {
+     "at": "2026-09-01T22:25:00",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-01T22:17:35",
+     "actor": "dataset-eng",
+     "text": "EKSTRAKTOR HAZIR — RECALL OLCULDU.\n\nYENI FAYLLAR\n- target/corpus/extract.py — md siyaset senedi -> parametr namizedleri (draft/score alt-emrleri)\n- target/corpus/EXTRACTION.md — olculmus netice, ablasiya cedveli, tapilmayanlarin sebeb bolgusu\n- agentproof/tests/test_corpus_extract.py — 23 test\n\nOLCULMUS RECALL (Aurora, 8 sened, 96 parametr):\n  RECALL @doc    : 85/96 = 88.5%\n  RECALL @clause : 85/96 = 88.5%  (tapilan her deyer derhal DOGRU bende dusub)\n  namized        : 158\n    aktiv parametre       84 (53.2%)\n    bayat (tele) deyere   24\n    serhed zond noqtesine 29\n    FAYDALI PAY          137/158 = 86.7%  (auditor 21 namizedi atir)\n\nDURUSTLUK — 88.5%-in nece qismi Aurora-ya uygunlasdirilib (ablasiya):\n  yalniz graders/canonical.py (movcud motor)      74.0%\n  + interval naxisi (4-7 business days -> [4,7])  82.3%\n  + kg / saat (14:00) vahidleri                   86.5%\n  + sayilan isimler (attempts/codes/characters)   88.5%\nSon setir (+2 parametr) Aurora-ya baxaraq yazilib. Yeni musteride gozlenilen baslangic ~86%; esas hisse domenden asili deyil. Reqem EXTRACTION.md-de bele yazilib ki, ilk musteride '84%-e dusdu' surpriz olmasin.\n\nTAPILMAYAN 11 — SEBEB BOLGUSU (her biri el ile senedden yoxlandi):\n  zero_expressed_in_words           3  ('There is no return window', 'no minimum order value', 'No restocking fee')\n  non_numeric                       3  (boolean/enum — 'never free', 'not available'; prinsipial olaraq bu aletin isi deyil)\n  qualifier_between_number_and_unit 1  ('3 delivery attempts')\n  unit_synonym_missing              1  ('retried up to 3 times' <-> vahid 'attempts')\n  hyphenated_compound_modifier      1  ('14-calendar-day grace period')\n  enumerated_list_value             1  ('3, 6, or 12 monthly instalments' -> [3,6,12])\n  number_as_word                    1  ('One promotional code per order')\n4-u UCUZ duzelisle tutulur (-> ~92%), 3-u ORTA (-> ~95%), 3-u hec vaxt (reqem deyil). Praktiki tavan ~95%.\nTesnifat KANONIK BENDIN metnine baxir, butun senede yox — sened seviyyeli axtaris kicik reqemlerde (0,1,3) tesadufi setir tapib yanlis diaqnoz qoyurdu.\n\nSERHED KODLA QORUNUR (alet qerar vermir):\n- cixis aciri 'parameters:' DEYIL, 'parameter_candidates:' — sxem validatoru onu heqiqet cedveli kimi REDD edir (test).\n- write_draft CANONICAL.yaml adli fayla yazmaqdan imtina edir (test).\n- status / doc_version / applies_when BOS gelir (test).\n- her namizedde senedden TAM cumle iqtibasi var ve iqtibas menbe faylinda heqiqeten var (test 158 namized uzre yoxlayir).\n- 'likely_superseded' bayragi TEKLIFDIR, qerar deyil.\n\nIKI REAL YALANCI MUSBET TAPILDI VE DUZELDILDI: bend nomresi kemiyyet kimi oxunurdu ('2.3 Business days' -> 2.3 business_day) ve 'UTC+04:00' saat kimi tutulurdu.\n\nTEKER YENIDEN IXTIRA EDILMEDI: motor graders/canonical.py (DEYISMEDI — onun luget genislenmesi qiymetlendirme semantikasini deyiserdi), bend bolgusu anchors.py-nin OZ regexlerinden (public alias elave edildi; iki ayri parser namizedi basqa bende yazardi).\n\nEHATEDEN KENAR: yalniz Markdown. Confluence/PDF/HTML bilerekden qurulmadi.\n\npytest: 1068 passed, 9 skipped. verify_fixtures.py exit 0 (legacy 1338). build_full.py --check: sinxron."
+    }
+   ]
   },
   {
    "id": "AP-035",
@@ -2023,8 +2236,8 @@
    "desc": "FINDINGS.md 74KB-dır və BİZİM tədqiqat sənədimizdir: Aurora Goods adları, AP-xxx tapşırıq nömrələri, daxili müzakirələr, C-01 düzəliş qeydi. Müştəriyə gedən sənəd başqa oxucu üçündür (applied-AI lead / CTO), onların sistemi və terminologiyası ilə danışır və QƏRAR üçün oxunur, arxiv üçün yox. Amma strukturu yenidən icad etməyə ehtiyac yoxdur: FINDINGS.md-nin skeleti düzgündür və hər bölmə bir səbəblə var — §1 xülasə, §2 metodologiya (SUT + korpus + reproduksiya qapısı), §3 təsdiqlənmiş tapıntılar, §4 ölçmənin öz auditi, §5 qeyri-determinizm, §8 nəyi ölçmədik, §9 flaky case-lər. §4 və §8 satılan şeyin ÖZÜDÜR: müştəri 'siz öz alətinizin harada yanıldığını da yazmısınız' cümləsinə görə audit alır, tapıntı siyahısına görə yox. MÜŞTƏRİ SİQNALI: siqnaldan ASILI DEYİL — struktur mövcud sənəddən çıxarılır, uydurulmur. Boşluq 3-ün ən aşağı riskli hissəsidir.",
    "role": "writer",
    "prio": "P2",
-   "status": "backlog",
-   "assignee": null,
+   "status": "done",
+   "assignee": "writer",
    "dod": "docs/templates/CLIENT-REPORT.md: doldurulacaq yerlər açıq işarələnib; hər bölmənin başında 2-3 cümləlik 'bu bölmə niyə var və bura NƏ YAZILMIR' qeydi; §-ölçmənin öz auditi və §-nəyi ölçmədik MƏCBURİ kimi işarələnib (məlumat yoxdursa bölmə silinmir, xəbərdarlığa çevrilir — report/html.py-dəki eyni qayda); Aurora auditi bu şablona köçürülərək bir tam nümunə çıxarılır və şablonun doldurula bildiyi sübut olunur; nümunədə heç bir AP-xxx nömrəsi və daxili rol adı qalmır",
    "links": [
     "FINDINGS.md",
@@ -2033,16 +2246,52 @@
     "docs/writeup.md"
    ],
    "created": "2026-08-28T13:41:06",
-   "updated": "2026-08-28T13:41:06",
+   "updated": "2026-09-01T22:25:00",
    "history": [
     {
      "at": "2026-08-28T13:41:06",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T21:57:24",
+     "actor": "writer",
+     "action": "assigned",
+     "detail": "writer"
+    },
+    {
+     "at": "2026-09-01T21:57:24",
+     "actor": "writer",
+     "action": "backlog→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:14:05",
+     "actor": "writer",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:14:05",
+     "actor": "writer",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:25:00",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-01T22:14:05",
+     "actor": "writer",
+     "text": "docs/templates/CLIENT-REPORT.md (517 sətir) + docs/templates/EXAMPLE-client-report.md (1005 sətir) yazıldı. Skelet FINDINGS.md-dən çıxarıldı, 12 bölmə + Əlavə A. Hər bölmənin başında blockquote ilə 'bu bölmə niyə var' + 'bura NƏ YAZILMIR' qeydi var. §4 (ölçmənin öz auditi) və §8 (nəyi ölçmədik) MƏCBURİ kimi işarələnib: hər ikisinin başında niyə kəsilmək istəndiyi VƏ niyə kəsilmədiyi ayrıca abzasla yazılıb, və 'məlumat yoxdursa bölmə silinmir, xəbərdarlığa çevrilir' qaydası report/html.py-dəki BASELINE_MISSING davranışına istinadla verilib. §7 (judge) şərti-məcburidir: judge işlədilibsə kalibrasiya rəqəmi olmadan dərc olunmur. Doldurulacaq yerlər {{ikiqat mötərizə}}, işarələr [ÖLÇÜLDÜ]/[NAMƏLUM], yazana təlimatlar <!-- İZAH --> bloklarındadır və yekun yoxlama siyahısı sənədin sonundadır. Nümunə Aurora auditinin BÜTÜN tapıntıları ilə doldurulub (4 F + 5 OPS + judge 3 case + flaky 25 + §8-in 9 məhdudiyyəti + 10 sətirlik 'çıxarıla bilməyən nəticələr' cədvəli). Nümunədə AP-xxx nömrəsi və daxili rol adı YOXDUR — grep ilə yoxlandı; daxili sənəd adları (TRIAGE/GRADER-AUDIT) də çıxarılıb, istinadlar yalnız müştəriyə çatdırılan qaçış artefaktlarınadır."
+    }
+   ]
   },
   {
    "id": "AP-038",
@@ -2050,8 +2299,8 @@
    "desc": "FINDINGS.md tapıntıları TƏSVİR edir (F-1..F-4, OPS-01..OPS-05, VALID-01..03), amma 'nə etməli' sualını müştərinin öz mühəndisinə buraxır. 3-6 min dollarlıq auditin alıcısı üçün dəyər məhz burdadır: hesabat oxunub rəfə qoyulursa, ikinci audit satılmır. Material hazırdır və uydurulmamalıdır: F-1 (bilik bazasında olmayan mövzuda siyasət uydurulur, eskalasiya yoxdur), F-2 (əkilmiş billing anomaliyasına uydurulmuş izah + mübahisə birtərəfli bağlanır), F-3 (beynəlxalq sifarişə domestik son tarix tətbiq olunur), F-4 (bilik bazasında AÇIQ yazılmış qaydaya haqsız imtina), OPS-03 (tətbiq səviyyəsindəki top_k səssizcə iqnor edilir, faktiki default 2). Hər birinin düzəlişi FƏRQLİ qatdadır — bu ayrımın özü müştəri üçün dəyərdir. MÜŞTƏRİ SİQNALI: siqnaldan asılı deyil, amma 'hansı qat' sütununun dəyərləri müştərinin stack-ından asılıdır — ilk 3 zəngdən sonra sütun siyahısı dəqiqləşə bilər.",
    "role": "analyst",
    "prio": "P2",
-   "status": "backlog",
-   "assignee": null,
+   "status": "done",
+   "assignee": "writer",
    "dod": "Hər tapıntı üçün sabit sxem müəyyən olunur: DÜZƏLİŞ (hansı qat: prompt / retrieval konfiqurasiyası / tool sxemi / guardrail / bilik bazası mətni), TƏXMİNİ ƏMƏK, YOXLAMA (düzəlişdən sonra hansı case id-lər yaşıla dönməlidir — mövcud full.jsonl id-ləri), RİSK (düzəliş nəyi sındıra bilər); Aurora-nın 4 F-tapıntısı və 5 OPS-tapıntısı bu sxemlə tam doldurulur; sxem AP-037 şablonunda ayrıca bölmə kimi yer alır; heç bir sətirdə ölçülməmiş effekt vədi (məs. 'bu, dəqiqliyi %20 artırır') yazılmır",
    "links": [
     "FINDINGS.md",
@@ -2060,16 +2309,52 @@
     "docs/FAILURE-TAXONOMY.md"
    ],
    "created": "2026-08-28T13:41:06",
-   "updated": "2026-08-28T13:41:06",
+   "updated": "2026-09-01T22:25:00",
    "history": [
     {
      "at": "2026-08-28T13:41:06",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:14:09",
+     "actor": "writer",
+     "action": "assigned",
+     "detail": "writer"
+    },
+    {
+     "at": "2026-09-01T22:14:09",
+     "actor": "writer",
+     "action": "backlog→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:16:47",
+     "actor": "writer",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:16:47",
+     "actor": "writer",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:25:00",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-01T22:16:47",
+     "actor": "writer",
+     "text": "Sxem təyin olundu və tam doldurruldu. SXEM (hər bənd üçün dörd sahə + başlıqda tapıntı istinadı): QAT · ƏMƏK [TƏXMİN] · YOXLAMA (mövcud full.jsonl case id-ləri) · RİSK. Qat dəyərləri: prompt / retrieval konfiqurasiyası / tool sxemi / guardrail / bilik bazası mətni / arxitektura / infrastruktur / ölçmə qatı / proses — sxem docs/templates/CLIENT-REPORT.md §10-da ayrıca bölmə kimidir. TƏTBİQ: docs/templates/EXAMPLE-client-report.md §10 — 16 bənd (D-1..D-16), 4 F-tapıntısının hamısı (F-1: D-1/2/3, F-2: D-4/5, F-3: D-6/7/15, F-4: D-8/9) və 5 OPS-tapıntısının hamısı (OPS-01: D-11, OPS-02: D-12, OPS-03: D-10, OPS-04: D-13, OPS-05: D-14) + D-16 korpusun öz ziddiyyəti. Bütün yoxlama case id-ləri full.jsonl-a qarşı grep ilə təsdiqləndi. Ölçülməmiş effekt vədi YOXDUR — bölmənin başında açıq qadağa var, D-15 'yalnız dəstəkləyici' kimi işarələnib (ucuz olub mexanizmi bağlamayan bənd bahalını təxirə salmasın), D-16-nın yoxlaması isə qəsdən 'yaşıl olacaq' deyil, 'ÖLÇÜLƏ BİLƏN hala düşəcək' formasındadır. Əks istiqamətə çəkən üç bənd (D-1 vs D-3/D-8) ayrıca qeyd olunub: eyni qaçışda ölçülməlidir."
+    }
+   ]
   },
   {
    "id": "AP-039",
@@ -2103,8 +2388,8 @@
    "desc": "3-6 min dollarlıq qiymət hələ heç bir ölçülmüş məsrəfə söykənmir — yəni ilk qiymət danışığı təxminlə aparılacaq. Halbuki repo-da real data VAR: reports/ altında 20 qaçış qovluğu (pilot, full-run-01..03, retry-lər, judge-01, kalibrasiya), AP-026-dan sonra xərc uçotu sınan və skipped sorğuları da sayır (wasted_cost_usd), report/cost.py hesablamanı saxlayır. Eyni zamanda LIM-E11 açıq deyir ki, qaçışın FAKTİKİ xərci tam ölçülə bilmir və mövcud rəqəmlər xərci AŞAĞI göstərir — model bu qeyd-şərtlə qurulmalıdır, yoxsa qiymət döşəməsi yanlış çıxar. Ən böyük xərc maddəsi isə heç yerdə yazılmayıb: AP-021 triage-ı 29 stable-fail case-in cavabının ƏL İLƏ oxunması idi, AP-005 isə əl ilə triage. Bu saatlar hər müştəridə TƏKRARLANIR. MÜŞTƏRİ SİQNALI: siqnaldan asılı deyil və ilk zəngə GİRMƏZDƏN ƏVVƏL lazımdır — qiymət sualı ilk zəngdə gəlir.",
    "role": "analyst",
    "prio": "P1",
-   "status": "backlog",
-   "assignee": null,
+   "status": "done",
+   "assignee": "writer",
    "dod": "docs/AUDIT-COST.md: Aurora auditinin geriyə dönük hesabı — model xərci reports/ artefaktlarından çıxarılır (LIM-E11 qeyd-şərti açıq yazılır), qaçış sayı və təkrar sayı, hər mərhələ üçün insan saatı; hansı mərhələlərin HƏR müştəridə təkrarlandığı və hansının bir dəfəlik olduğu ayrılır (korpus qurma vs harness qurma); buradan çıxan qiymət döşəməsi bir cümlə ilə yazılır (hansı qiymətdən aşağı marja mənfidir); artefaktdan gələn rəqəm ilə təxmin AYRICA işarələnir — heç bir təxmin ölçmə kimi göstərilmir; AP-034 və AP-036-nın hansı gün qənaətini vəd etdiyi bu modelə qarşı yoxlanılır",
    "links": [
     "reports/full-run-03",
@@ -2114,16 +2399,52 @@
     "FINDINGS.md"
    ],
    "created": "2026-08-28T13:41:54",
-   "updated": "2026-08-28T13:41:54",
+   "updated": "2026-09-01T22:25:00",
    "history": [
     {
      "at": "2026-08-28T13:41:54",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T21:47:01",
+     "actor": "writer",
+     "action": "assigned",
+     "detail": "writer"
+    },
+    {
+     "at": "2026-09-01T21:47:01",
+     "actor": "writer",
+     "action": "backlog→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T21:57:19",
+     "actor": "writer",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T21:57:19",
+     "actor": "writer",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:25:00",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-01T21:57:19",
+     "actor": "writer",
+     "text": "docs/AUDIT-COST.md yazıldı (530 sətir). Ölçülən model xərci: SUT $26.2280 (20 RunRecord totals.cost_usd cəmi) + judge/kalibrasiya $0.3729 (judge-cache meta tokenlərindən) = $26.6009; bugünkü $3/$15 rejimində dəqiq x1.5 = $39.7149. ÜÇ kor nöqtə acıq yazıldı: (1) full-run-03b-də 120 cəhdin 45-i usage qaytarmadı (LIM-E11), (2) full-run-01 147 case / 65 dəq CANCELLED — RunRecord YOX, xərci NAMƏLUM; audit-live də eyni, (3) YENİ: judge xərci totals.cost_usd-a ümumiyyətlə daxil deyil (normalize.py yalnız AgentResponse-dan yığır) — bu LIM-E11-də sadalanmayıb. Miqyaslama bazası $0.068-0.096/case (3 təkrar), 150x3 = $15.30-21.53 bugünkü rejimdə, 300x3 = $30.61-43.07; judge qatı qaçış xərcinin 0.34-0.42%-i. Əmək SAATI NAMƏLUM olaraq qaldı — board yalnız 21/43 tapşırığı əhatə edir və 2026-08-27T19:02-də qurulub, yəni korpus/harness fazaları ümumiyyətlə board-a düşməyib; onun yerinə ölçülən HƏCM verildi (96 parametr, 1338 assertion, 4121 sətir korpus; 29 case x 3 cəhd = 87 cavab mətni əl ilə oxundu; 30 etiket). AP-034-ün '14 gün -> 25 gün' iddiasının repo-da artefakt mənbəyi YOXDUR — bu açıq yazıldı və gün qənaəti vədi qadağan edildi. Qiymət döşəməsi rəqəmlə deyil, düsturla verildi (dosheme = $40 model + H x R) + break-even həssaslıq cədvəli."
+    }
+   ]
   },
   {
    "id": "AP-041",
@@ -2224,8 +2545,8 @@
    "desc": "Baseline --repeat 3 ile qurulub (cehd-seviyyesinde tesnifat), amma qapini --repeat OLMADAN (tek cehd) qacirdim ve heç bir xeberdarliq olmadi: 'baseline: 77% -> 100% · 1 duzeldi'. Flaky nisbeti 19.8% oldugu ucun TEK cehdin kecmesi hec ne subut etmir — hemin case sadece bu defe kecmis ola biler. Yeni qapi 'duzeldi' deyir, halbuki ola bilsin hec ne duzelmeyib.",
    "role": "harness-eng",
    "prio": "P1",
-   "status": "todo",
-   "assignee": null,
+   "status": "done",
+   "assignee": "harness-eng",
    "dod": "Cari qacisin repeat sayi baseline-inkinden azdirsa ACIQ xeberdarliq verilir ve 'duzeldi/sindi' iddialari 'tesdiqlenmemis' kimi isarelenir; VE YA qapi eyni repeat teleb edir; test: repeat 1 vs baseline repeat 3 -> xeberdarliq",
    "links": [
     "agentproof/report/baseline.py",
@@ -2233,16 +2554,52 @@
     "reports/gate-live"
    ],
    "created": "2026-08-28T14:28:30",
-   "updated": "2026-08-28T14:28:30",
+   "updated": "2026-09-01T22:25:00",
    "history": [
     {
      "at": "2026-08-28T14:28:30",
      "actor": "main",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-01T21:45:06",
+     "actor": "harness-eng",
+     "action": "assigned",
+     "detail": "harness-eng"
+    },
+    {
+     "at": "2026-09-01T21:45:11",
+     "actor": "harness-eng",
+     "action": "todo→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T21:57:09",
+     "actor": "harness-eng",
+     "action": "comment",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T21:57:10",
+     "actor": "harness-eng",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T22:25:00",
+     "actor": "main",
+     "action": "review→done",
+     "detail": "artefaktla yoxlanildi"
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-01T21:57:09",
+     "actor": "harness-eng",
+     "text": "RunRecord artiq `totals[\"repeat\"]` saxlayir (evals/run.py); baseline.py-da check_repeat() elan edilmis reqemi, o yoxdursa neticelerden olculeni (CaseResult.attempt) muqayise edir. Cari qacis baseline-dan AZ tekrarla olculubse status='fewer' -> RunDelta.verified=False: basliq, 'Duzelen/Sinan' bolme adlari ve footer '⚠️ TESDIQLENMEMIS' isarelenir; xeberdarliq konsolda (render_console), PR serhinde (repeat_block) ve artefaktda (totals['repeat_check']) gorunur. Baseline-da tekrar hec cur olculmurse status='unknown' — aciq NAMELUM, sessiz kecme yox. Opsional GatePolicy.fail_on_repeat_mismatch / --fail-on-repeat-mismatch bloklayir (default: yalniz xeberdarliq). Real sinaq: reports/gate-live + evals/baselines/dify_http@e60c825c84bbda8a-2026-08-28.json -> '77% -> 100% ... ⚠️ TESDIQLENMEMIS', 'cari 1x (neticelerden olculen) · baseline 3x'. Testler: 13 yeni (test_baseline.py). pytest 937 yasil."
+    }
+   ]
   }
  ]
 }

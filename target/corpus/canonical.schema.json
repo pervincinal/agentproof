@@ -1,0 +1,670 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentproof.dev/schema/canonical-1.0.json",
+  "title": "AgentProof CANONICAL policy-parameter table",
+  "description": "Audit üçün həqiqət cədvəli. Bu fayl target/corpus/schema.py-dən GENERASİYA OLUNUR — əl ilə redaktə etmə. Çarpaz istinad qaydaları JSON Schema-da ifadə oluna bilmir; onlar üçün `python target/corpus/schema.py validate <fayl>` qaçırılmalıdır.",
+  "x-schema-version": "1.0",
+  "type": "object",
+  "required": [
+    "meta",
+    "parameters",
+    "precedence_ladder",
+    "counting_rules"
+  ],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "properties": {
+        "company": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Hesabatın kimə aid olduğunu göstərir; birdən çox müştəri korpusu eyni maşında qarışmasın deyə."
+        },
+        "corpus_version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Korpus dəyişdikdə baseline diff-in nəyə qarşı müqayisə etdiyi bilinsin — versiyasız korpusda reqressiya izah oluna bilmir."
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "Pul vahidli parametrlərin vahidi bununla tutuşdurulur; səhv valyuta astanası səssiz yanlış cavab verir."
+        },
+        "evaluation_reference_date": {
+          "type": "string",
+          "format": "date",
+          "description": "PİNLƏNMİŞ qiymətləndirmə saatı. Bu olmasa 'neçə gün keçib' sualının cavabı divar saatından asılı olur və eyni case sabah başqa nəticə verir — reproduksiya itir."
+        },
+        "timezone": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Gün sərhədi (`23:59`) hansı zonada bağlanır. Cut-off tipli parametrlərdə sərhəd testi bundan asılıdır."
+        },
+        "language": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Sənədlərin əsas dili — çoxdilli çıxarışda vahid seçimi."
+        },
+        "generated": {
+          "type": "string",
+          "format": "date",
+          "description": "Cədvəlin yığıldığı tarix — auditin izi."
+        },
+        "documents": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Korpusun sənəd reyestri. Hər parametrin `doc` sahəsi bura baxır; reyestrsiz 'hansı versiya qüvvədədir' sualı cavabsızdır.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Sənəd faylının adı — parametrlərin `doc` sahəsi bununla eyni yazılır."
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Sabit sənəd kodu; fayl adı dəyişsə də istinad qırılmır."
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Qüvvədə olan versiya. Parametrin `doc_version` sahəsi bununla tutuşdurulur — uyğunsuzluq korpusun yarısının bayat olduğunu göstərir."
+              },
+              "effective_from": {
+                "type": "string",
+                "format": "date",
+                "description": "Bu versiyanın qüvvəyə mindiyi tarix. Temporal sual ('sifariş keçən il verilib') yalnız bununla cavablandırıla bilər."
+              },
+              "supersedes_version": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Əvəz olunan versiya — sənəd əlavəsindəki bayat bəndlərin hansı versiyaya aid olduğunu bağlayır."
+              }
+            },
+            "additionalProperties": true,
+            "required": [
+              "file",
+              "id",
+              "version",
+              "effective_from"
+            ]
+          }
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "company",
+        "corpus_version",
+        "currency",
+        "evaluation_reference_date",
+        "documents"
+      ]
+    },
+    "parameters": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "Sabit maşın açarı. Bütün çarpaz istinadlar (`superseded_index`, `colliding_values`, `resolved_*`) buna baxır."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "İnsan üçün ad — hesabatda göstərilir."
+          },
+          "value": {
+            "type": [
+              "string",
+              "number",
+              "integer",
+              "boolean",
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": [
+                "string",
+                "number",
+                "integer",
+                "boolean"
+              ]
+            },
+            "description": "DOĞRU cavab. Qiymətləndirici agentin cavabını bununla tutuşdurur, agentin tapdığı mətnlə YOX — bütün korpusun mövcudluq səbəbi budur. İnterval dəyər siyahı kimi yazılır: `[4, 7]` = 4-7 vahid."
+          },
+          "unit": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Vahid ailəsi. Vahidsiz `14` cavabı `14 gün`, `14 %` və `14 AZN` ilə eyni sayılardı — ölçmə mənasını itirərdi."
+          },
+          "status": {
+            "enum": [
+              "active",
+              "superseded"
+            ],
+            "description": "`active` HƏQİQƏTİ, `superseded` TƏLƏNİ təyin edir. Bu sahə olmadan 'sədaqətlə sitat gətirilmiş bayat cavab' düzgün sayılır."
+          },
+          "doc": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Dəyərin yaşadığı sənəd — `meta.documents[].file` ilə eyni. Retrieval lövbəri və auditorun yoxlaması bundan asılıdır."
+          },
+          "section": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Bənd nömrəsi (`§2.1`). Auditorun bir dəqiqədə yoxlaya bilməsi üçün; həm də `doc#clause` lövbərinə çevrilir."
+          },
+          "doc_version": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Dəyərin götürüldüyü sənəd versiyası. Sənəd yenilənəndə hansı parametrlərin yenidən oxunmalı olduğu yalnız bununla bilinir."
+          },
+          "applies_when": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Dəyərin QÜVVƏDƏ OLDUĞU şərtlər — nəsr dilində, tam. Eyni rəqəm korpusda bir neçə yerdə olur; şərt yazılmasa 'hansı 14 gün' sualı cavabsız qalır və case şərt seçməsini deyil, sətir uyğunluğunu ölçür."
+          },
+          "effective_from": {
+            "type": "string",
+            "format": "date",
+            "description": "Bu dəyərin qüvvəyə mindiyi tarix — versiyalar arası keçiddə hansı dəyərin tətbiq olunduğunu təyin edir."
+          },
+          "supersedes": {
+            "type": "object",
+            "description": "ƏVƏZ OLUNMUŞ dəyər. Bu blok olmadan bayat-bənd tələsi (korpusun ən dəyərli hissəsi) ümumiyyətlə qurula bilmir: agentin sənəd əlavəsindən tapdığı köhnə rəqəmin yanlış olduğunu maşın bilməz.",
+            "properties": {
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "integer",
+                  "boolean",
+                  "null",
+                  "array"
+                ],
+                "items": {
+                  "type": [
+                    "string",
+                    "number",
+                    "integer",
+                    "boolean"
+                  ]
+                },
+                "description": "KÖHNƏ dəyər — sənəd əlavəsində hələ də yazılı olan rəqəm. Tələnin özü budur."
+              },
+              "doc_version": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Köhnə dəyərin aid olduğu versiya — tələnin hansı mətn parçasından gəldiyini auditor yoxlaya bilsin."
+              },
+              "effective_until": {
+                "type": "string",
+                "format": "date",
+                "description": "Köhnə dəyərin son qüvvədə olduğu gün. Temporal case-lər ('2025-də verilən sifariş') yalnız bununla qurulur."
+              },
+              "unit": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Köhnə dəyərin vahidi, aktivdən fərqlidirsə."
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Köhnə dəyər rəqəm deyilsə (`əvvəllər limit yox idi`) izah burada."
+              }
+            },
+            "additionalProperties": true,
+            "required": [
+              "value",
+              "doc_version"
+            ]
+          },
+          "boundary": {
+            "type": "object",
+            "description": "Sərhəd zondu. Astana parametrində səhvlərin böyük hissəsi off-by-one-dır; N-1/N/N+1 nöqtələri olmadan bu sinif ölçülmür.",
+            "properties": {
+              "dimension": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Sərhədin ölçüldüyü kəmiyyət — hansı girişi dəyişdiyimizi adlandırır, yoxsa nöqtələr şərhsiz rəqəmdir."
+              },
+              "points": {
+                "type": "array",
+                "minItems": 3,
+                "description": "Ən azı 3 zond nöqtəsi (N-1, N, N+1) və ən azı 2 fərqli nəticə. Hamısı eyni nəticə verirsə bu sərhəd deyil — sınmayan testdir.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": [
+                        "string",
+                        "number",
+                        "integer",
+                        "boolean",
+                        "null",
+                        "array"
+                      ],
+                      "items": {
+                        "type": [
+                          "string",
+                          "number",
+                          "integer",
+                          "boolean"
+                        ]
+                      },
+                      "description": "Zond nöqtəsinin girişi."
+                    },
+                    "expected": {
+                      "type": [
+                        "string",
+                        "number",
+                        "integer",
+                        "boolean",
+                        "null"
+                      ],
+                      "description": "Həmin girişdə gözlənilən nəticə."
+                    }
+                  },
+                  "additionalProperties": true,
+                  "required": [
+                    "value",
+                    "expected"
+                  ]
+                }
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "dimension",
+              "points"
+            ]
+          },
+          "precedence_rank": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "`precedence_ladder`-dəki pillə. Bir neçə qayda eyni anda tətbiq olunanda hansının qazandığını determinist edir."
+          },
+          "basis": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Faiz/pul dəyərinin nəyin üzərindən hesablandığı."
+          },
+          "timezone": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Yalnız vaxt tipli dəyərlər üçün zona."
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Auditor üçün qeyd — qiymətləndirməyə təsir etmir."
+          },
+          "anchor": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Retrieval gold lövbəri (`doc.md#2.1`), varsa."
+          },
+          "cross_reference": {
+            "type": [
+              "string",
+              "number",
+              "integer",
+              "boolean",
+              "null"
+            ],
+            "description": "Digər sənədə istinad."
+          },
+          "derived_from": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Dəyər başqa parametrlərdən çıxırsa, mənbə `id`-ləri. Mənbə dəyişəndə hansı törəmə dəyərin yenidən hesablanacağını göstərir."
+          },
+          "derived_totals": {
+            "type": [
+              "object",
+              "array"
+            ],
+            "description": "Hesablanmış cəmlər."
+          },
+          "version_governed_by": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Hansı tarixdəki versiyanın hökm sürdüyü (`temporal_applicability` qarşılığı)."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "value",
+          "unit",
+          "status",
+          "doc",
+          "section",
+          "doc_version",
+          "applies_when"
+        ]
+      }
+    },
+    "precedence_ladder": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Pillə nömrəsi; 1-dən başlayır və boşluqsuz artır. İlk uyğun pillə qazanır, aşağıdakılar heç qiymətləndirilmir."
+          },
+          "rule": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Pillənin maşın adı — parametrlər buna istinad edir."
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Pillənin sənəddəki mənbəyi. Mənbəsiz nərdivan auditorun deyil, korpus müəllifinin fikridir."
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "rank",
+          "rule",
+          "source"
+        ]
+      }
+    },
+    "counting_rules": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "anchor": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Saymanın başladığı hadisə (çatdırılma/sifariş/göndəriş tarixi). Eyni 14 gün fərqli lövbərdən sayılanda fərqli cavab verir — korpusun ən çox yayılan gizli ziddiyyəti budur."
+          },
+          "anchor_is_day": {
+            "type": "integer",
+            "description": "Lövbər günü 0-dırmı, 1-dirmi."
+          },
+          "inclusive_final_day": {
+            "type": "boolean",
+            "description": "Son gün daxildirmi."
+          },
+          "calendar_or_business": {
+            "enum": [
+              "calendar",
+              "business"
+            ],
+            "description": "Təqvim, yoxsa iş günü. Bu seçim 5 günlük pəncərəni 7 günə çevirir."
+          },
+          "closes_at": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Pəncərənin bağlandığı yerli vaxt."
+          },
+          "unit": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Saymanın vahidi (gün/ay)."
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "description": "İnsan üçün izah."
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "anchor"
+        ]
+      }
+    },
+    "superseded_index": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "parameter": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Tələnin bağlandığı aktiv parametrin `id`-si. Mövcud olmayan parametrə baxan tələ heç vaxt qiymətləndirilmir."
+          },
+          "stale_value": {
+            "type": [
+              "string",
+              "number",
+              "integer",
+              "boolean",
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": [
+                "string",
+                "number",
+                "integer",
+                "boolean"
+              ]
+            },
+            "description": "Sənəddə hələ də yazılı olan köhnə dəyər."
+          },
+          "doc": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Köhnə dəyərin oxunduğu sənəd."
+          },
+          "appendix": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Sənəd əlavəsindəki dəqiq yer."
+          },
+          "not_true_from": {
+            "type": "string",
+            "format": "date",
+            "description": "Köhnə dəyərin yanlış olduğu ilk gün."
+          },
+          "unit": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Köhnə dəyərin vahidi."
+          },
+          "trap": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Tələ kodu — hesabatda case ilə bağlanır."
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "parameter",
+          "stale_value",
+          "doc"
+        ]
+      }
+    },
+    "colliding_values": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": [
+              "string",
+              "number",
+              "integer",
+              "boolean",
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": [
+                "string",
+                "number",
+                "integer",
+                "boolean"
+              ]
+            },
+            "description": "Korpusda bir neçə mənası olan rəqəm."
+          },
+          "unit": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Ortaq vahid; mənalar fərqli vahiddədirsə `mixed`."
+          },
+          "meanings": {
+            "type": "array",
+            "minItems": 2,
+            "description": "Həmin rəqəmin ən azı 2 fərqli mənası. Bir mənası olan rəqəm toqquşma deyil — case sətir uyğunluğu ilə keçərdi.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "parameter": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Mənanın aid olduğu parametr `id`-si."
+                },
+                "status": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Bu mənanın aktiv, yoxsa bayat olduğu."
+                },
+                "correct_for": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Bu mənanın doğru olduğu şərt."
+                },
+                "unit": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Mənaya xas vahid (`unit: mixed` halında)."
+                }
+              },
+              "additionalProperties": true,
+              "required": [
+                "parameter"
+              ]
+            }
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "value",
+          "meanings"
+        ]
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Boşluğun sabit kodu."
+          },
+          "topic": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Korpusda CAVABI OLMAYAN mövzu."
+          },
+          "question_examples": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "Boşluğu tetikləyən real suallar — uydurma (hallüsinasiya) yalnız konkret sual verildikdə ölçülə bilir."
+          },
+          "correct_behaviour": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "Yeganə doğru davranışlar (məlumat yoxdur / insana ötür). Yazılmasa qiymətləndirici 'boş cavab'la 'düzgün imtina'nı ayıra bilmir."
+          },
+          "forbidden_in_answer": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "Cavabda görünsə uydurma sayılan şeylər."
+          },
+          "why_it_retrieves_something": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Boşluğun QONŞU məzmunu olduğunu göstərir — boş retrieval verən boşluq çox asandır və heç nə ölçmür."
+          },
+          "nearest_distractor": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Agentin yanlış ümumiləşdirə biləcəyi ən yaxın fakt."
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "id",
+          "topic",
+          "question_examples",
+          "correct_behaviour"
+        ]
+      }
+    },
+    "temporal_applicability": {
+      "type": "object"
+    },
+    "value_measurement": {
+      "type": "object"
+    }
+  },
+  "patternProperties": {
+    "^resolved_[a-z0-9_]+$": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Kombinasiyanın sabit kodu — fixture-lar buna istinad edir."
+          },
+          "deciding_parameter": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Kombinasiyanı həll edən parametr. İnsan mühakiməsi olmadan çox şərtli sualı qiymətləndirməyə imkan verən sahə budur."
+          },
+          "deciding_rank": {
+            "type": "integer",
+            "description": "Qazanan nərdivan pilləsi."
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Nə üçün məhz bu pillənin qazandığı."
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "id"
+        ]
+      }
+    }
+  },
+  "additionalProperties": false
+}
