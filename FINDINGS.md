@@ -50,6 +50,13 @@ tam şəkildə baş verir (0 çağırış → «bu mənim səlahiyyətimdən kə
 F-3-də isə çağırış olur, amma sorğu kontekstdəki fakta bağlanmadığı üçün üstün
 qayda gətirilmir. Mexanizm təhlili: `docs/ARCHITECTURE.md §5.5, §6`.
 
+**Hesabatın bir mənfi nəticəsi də var — §4-A.** Əsas qaçışdan sonra ayrıca bir
+qaçışla (2026-09-01, $2.08) çoxnövbəli deqradasiya əyrisini ölçdük; taksonomiyamızın
+C1 rejimi ICLR 2026 işinə istinadla **39% düşmə** gözlədirdi. Ölçdüyümüz 3 ailədə
+8 növbəyə qədər deqradasiya **tapılmadı**: xam rəqəmdəki 33% düşmə tamamilə öz
+pattern boşluğumuzdan gəlirdi və düzəlişdən sonra 12 saxlanmış cavabın **11-i**
+düzgündür. Gözlədiyimizi tapmadıq — və bunu §4-A-da olduğu kimi yazırıq.
+
 > **Nə DEYİLƏ BİLMƏZ.** Bu rəqəmlər bir konfiqurasiya, bir model, bir embedder
 > və süni korpus üçün etibarlıdır. Mütləq mənada ekstrapolyasiya (“production-da
 > hər N cavabdan biri belə olacaq”) §8-də sadalanan səbəblərə görə qadağandır.
@@ -652,6 +659,157 @@ Praktik nəticə üç cümlədədir:
 4. **Grader səhvini hədəfin səhvi kimi göstərmək uydurma tapıntıdır.** Bu
    layihədə qayda belədir: hər tapıntının arxasında cavabdan **birbaşa sitat**
    və reproduksiya statusu olmalıdır; sitatsız təsnifat dərc olunmur.
+
+---
+
+## 4-A. MƏNFİ NƏTİCƏ — çoxnövbəli deqradasiya axtardıq, ölçdüyümüz şəraitdə tapmadıq (AP-017)
+
+**Bu bölmə tapıntı deyil və §3-ün say-hesabına daxil deyil.** §3 sistemin
+sındığı yerləri sadalayır; bu bölmə **sınmadığı** bir yeri sadalayır — özü də
+məhz sınacağını gözlədiyimiz yerdə. Mənfi nəticə ona görə dərc olunur ki,
+gözlədiyimizi tapmamağımız oxucunun bilməli olduğu şeydir; «ölçmədik» yazsaq
+və ya susduqsa, əlimizdəki ən dəyərli sübutu itirərik.
+
+**Ayrıca qaçışdır.** `dify_http` · `claude-sonnet-5` · **2026-09-01** · 20 case ·
+faktiki xərc **$2.08** · `reports/ap017-curve-t01`, `-c03`, `-t07`. Bu, əsas
+`full-run-02` qaçışı deyil, ona görə §1-in rəqəmlərinə qarışmır. Bölmənin məhz
+§4-dən sonra durmasının səbəbi var: mexanizm §4-ün mexanizminin eynisidir —
+**ölçmə aləti hədəfdən əvvəl sındı**.
+
+### 4-A.1 Nə gözlənilirdi
+
+`docs/FAILURE-TAXONOMY.md` C1 rejimi (çoxnövbəli itki) ICLR 2026 Outstanding
+Paper-ə istinad edir: 200 000+ simulyasiya edilmiş söhbətdə **orta 39%
+performans düşməsi**. Mövcud 5 C1 case-imiz sınmanın **faktını** verirdi,
+`failure-onset turn`-ü yox — «sistem çoxnövbəlidə pisdir» deyə bilirdik,
+«N-ci növbədən sonra sınır» deyə bilmirdik. AP-017 həmin boşluq üçün quruldu.
+
+### 4-A.2 Metod — yeganə dəyişən MƏSAFƏDİR
+
+5 ailə × 4 nöqtə (1 / 3 / 5 / 8 növbə) = **20 case**, generatordan törəyir
+(`evals/datasets/build_full.py → CURVE_FAMILIES`).
+
+| | turns-1 | turns-3 | turns-5 | turns-8 |
+|---|---|---|---|---|
+| faktlar | 1-ci mesaj | 1-ci mesaj | 1-ci mesaj | 1-ci mesaj |
+| məzmunsuz doldurucu | — | 1 | 3 | 6 |
+| sual | eyni mesajda | sonuncu | sonuncu | sonuncu |
+| **fakt→sual məsafəsi** | **0** | **2** | **4** | **7** |
+
+Ailə daxilində faktlar, sual, grader, iynə və ciddilik **hərfbəhərf eynidir** —
+bu, testlə məcburidir (`test_only_the_distance_changes_inside_a_family`).
+Doldurucular sifariş nömrəsi, rəqəm və siyasət sözü daşımır; daşısaydılar
+ölçdüyümüz şey məsafə deyil, məlumat həcmi olardı. Ona görə iki nöqtə
+arasındakı fərqi **məsafədən başqa heç nə izah edə bilməz**.
+
+### 4-A.3 Xam nəticə — «t8-də sındı»
+
+`python evals/degradation.py reports/ap017-curve-t01 reports/ap017-curve-c03 reports/ap017-curve-t07`:
+
+```
+ailə                                      t1        t3        t5        t8   onset
+----------------------------------------------------------------------------------
+c03-plus-vs-promotional                100%      100%      100%      100%    sınmadı
+t01-standard-window                    100%      100%      100%        0%    t8
+t07-warranty-on-delivery-version       100%          —         —      100%    sınmadı
+----------------------------------------------------------------------------------
+ORTA                                   100%      100%      100%       67%
+İLK NÖQTƏYƏ GÖRƏ DÜŞMƏ                   0%        0%        0%       33%
+```
+
+Bu rəqəmlə dayansaydıq, hesabatda bir cümlə olardı: «C1 təsdiqləndi — 8-ci
+növbədə 33% düşmə, onset t8». Cümlə **yalan olardı**.
+
+### 4-A.4 Düzəliş — düşmə modelin deyil, bizim iynəmizin idi (A-27)
+
+`--repeat 3` sayəsində t8 nöqtəsinin **üç cavabı da** saxlanılmışdı. Hər üçü
+əl ilə oxundu: **hər üçü düzgün rədd verdikti verdi.** Üçüncüsü belə yazdı:
+
+> «the standard window is **14 calendar days**. You're at **20 days**, so that
+> window has already closed — a standard return would not be accepted.»
+
+Bu, doğru cavabdır. Tutmayan şey `REJECT` iynəsi idi:
+`window (?:has |is )?(?:closed|expired|…)` alternativində **zərf üçün yer yox
+idi** (`window has already closed`), və `would not be accepted` variantı
+ümumiyyətlə yox idi (yalnız `cannot accept … return` var idi). Pattern hər iki
+istiqamətli testlə genişləndirildi, saxlanmış cavablar **offline yenidən
+qiymətləndirildi** (yeni qaçış yox — eyni sübut, yeni assertion):
+
+| nöqtə | düzəlişdən əvvəl | düzəlişdən sonra |
+|---|---|---|
+| t1 | 3/3 | 3/3 |
+| t3 | 2/3 | 2/3 |
+| t5 | 3/3 | 3/3 |
+| **t8** | **2/3** | **3/3** |
+| **cəmi** | **10/12** | **11/12** |
+
+**Xam rəqəmin necə yarandığı ayrıca dərsdir.** t8-in birinci və ikinci cavabı
+(`outside the standard return window`, `outside the window`) **köhnə pattern-ə
+də** uyğun gəlirdi; qaçışda «0%» yazılmasının səbəbi odur ki,
+`agentproof/runner/scorer.py:42` aqreqat olmayan qrader üçün yalnız
+`responses[-1]`-i qiymətləndirir — yəni nöqtənin verdikti **tək cavabdan**
+çıxdı, üçündən yox. Deqradasiya əyrisi üçün `--repeat` xərci üç dəfə artırdı,
+qərarı isə dəyişmədi (`t01` ailəsinə $1.14). Təkrarların yeganə faydası bu
+oldu: **saxlanmış cavablar sayəsində səhvimizi sonradan tuta bildik.**
+
+**Artefakt hələ köhnə verdikti daşıyır.** `reports/ap017-curve-t01/*.json`
+faylında t8 hələ də `passed: false`-dur, çünki düzəliş offline aparıldı və
+qaçış təkrarlanmadı; yuxarıdakı `degradation.py` çıxışı da ona görə 0% göstərir.
+Bunu gizlətmirik — düzəldilmiş rəqəm cədvəldədir, artefakt isə olduğu kimi qalır.
+
+### 4-A.5 Əsl nəticə
+
+**Ölçülən 3 ailədə 8 növbəyə qədər deqradasiya YOXDUR.** `t01` ailəsinin
+12 saxlanmış cavabından **11-i** düzgün verdikt verdi; `c03` və `t07` ailələri
+bütün ölçülmüş nöqtələrdə keçdi. Ölçülən 33% «düşmə» **tamamilə** iynə
+boşluğundan gəlirdi.
+
+Yalançı QIRMIZI buraxılmış tapıntı qədər zərərlidir: düzəltməsəydik, hesabata
+**olmayan bir C1 sınması** yazardıq — üstəlik ən çox gözlədiyimiz yerdə, yəni
+təsdiq yanlılığının ən güclü olduğu nöqtədə.
+
+### 4-A.6 Qalan 1/12 də modelin deyil — və bu boşluq HƏLƏ AÇIQDIR
+
+t3-dəki yeganə uğursuzluq da agentin deyil, iynənindir: agent **markdown
+vurğusunu verdikt ifadəsinin içinə** qoydu —
+
+> «So actually you are **not** within the standard return window — it closed on
+> 2026-08-26.»
+
+`(?:no longer|not) within[^.]{0,30}window` pattern-i tutmur, çünki `not` ilə
+`within` arasına `**` düşüb. Bu, **tək case-in problemi deyil**: bütün regex
+iynələrinə aid kəsişən qüsurdur və paylaşılan qrader qatında həll olunmalıdır
+(uyğunlaşdırmadan əvvəl markdown normallaşdırılmalıdır), case yamağı ilə yox.
+**Açıq bənd; rəqəmi öz xeyrimizə düzəltmirik: 11/12 yazılır.**
+
+Eyni cavabda ikinci, daha kiçik bir müşahidə var və onu da gizlətmirik: cavab
+səhv cümlə ilə başlayır («Yes — you're within the standard 14-day return
+window»), sonra öz-özünü düzəldir. Yekun verdikt doğrudur, amma müştəri üçün
+oxunuşu qüsurludur — bunu «təmiz keçid» kimi təqdim etmirik.
+
+### 4-A.7 Nə iddia ETMİRİK
+
+- **3 ailə ölçüldü, 5 yox.** `t07` yalnız uc nöqtələrindədir (t1, t8); t3 və t5
+  nöqtələri infrastruktur xətası ilə qiymətləndirilmədi. `t05` ailəsi bir
+  nöqtədədir.
+- **Maksimum 8 növbədir.** 8-dən sonra nə baş verdiyi barədə heç nə deyə
+  bilmərik.
+- **Bir model, bir platforma, bir embedder, bir korpus.** `claude-sonnet-5` ·
+  Dify 1.17.0 · `bge-m3` · süni korpus.
+- **Bu, ICLR nəticəsini TƏKZİB ETMİR.** Laban və b. 200 000+ söhbətdə, altı
+  generasiya tapşırığında, natamam-spesifikləşdirilmiş sharded promptlarla
+  ölçdü. Bizim doldurucularımız **məzmunsuzdur** — yəni biz *məsafəni* ölçdük,
+  onlar *natamam spesifikasiyanı* ölçdü. Bunlar eyni test deyil. Yeganə düzgün
+  formulyasiya budur: **bizim şəraitimizdə təkrarlanmadı.** 39% ilə heç bir
+  ədədi müqayisə aparmırıq.
+- Bu nəticə əyrinin **metodunun işlədiyini** göstərir; sistemin çoxnövbəli
+  davranışına populyasiya qiyməti vermir.
+
+**Mənbələr.** `evals/degradation.py` · `evals/datasets/COVERAGE.md` §12 ·
+`evals/datasets/build_full.py` (A-27 qeydi) · `docs/FAILURE-TAXONOMY.md` C1 ·
+`docs/LIMITATIONS.md` `LIM-C04` / `LIM-I10` / `LIM-I11`.
+
+---
 
 ## 5. Qeyri-determinizm
 

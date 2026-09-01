@@ -52,7 +52,7 @@ ROOT = Path(__file__).resolve().parents[2]
 #   «you are **not** within the … window»  → yalnız `no longer within` var idi
 #   «a standard return would not be accepted» → yalnız `cannot accept … return`
 # Ölçüldü: düzəlişdən əvvəl t01 ailəsinin 12 cavabından 10-u tutulurdu,
-# sonra 12-si. Yalançı QIRMIZI buraxılmış tapıntı qədər zərərlidir: hesabata
+# sonra 11-i. Yalançı QIRMIZI buraxılmış tapıntı qədər zərərlidir: hesabata
 # olmayan bir C1 sınması yazardıq.
 REJECT = (
     r"(?:not eligible|no longer eligible|isn'?t eligible|is not eligible|ineligible|"

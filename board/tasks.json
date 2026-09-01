@@ -1,5 +1,5 @@
 {
- "seq": 43,
+ "seq": 44,
  "tasks": [
   {
    "id": "AP-001",
@@ -2850,6 +2850,34 @@
      "text": "RunRecord artiq `totals[\"repeat\"]` saxlayir (evals/run.py); baseline.py-da check_repeat() elan edilmis reqemi, o yoxdursa neticelerden olculeni (CaseResult.attempt) muqayise edir. Cari qacis baseline-dan AZ tekrarla olculubse status='fewer' -> RunDelta.verified=False: basliq, 'Duzelen/Sinan' bolme adlari ve footer '⚠️ TESDIQLENMEMIS' isarelenir; xeberdarliq konsolda (render_console), PR serhinde (repeat_block) ve artefaktda (totals['repeat_check']) gorunur. Baseline-da tekrar hec cur olculmurse status='unknown' — aciq NAMELUM, sessiz kecme yox. Opsional GatePolicy.fail_on_repeat_mismatch / --fail-on-repeat-mismatch bloklayir (default: yalniz xeberdarliq). Real sinaq: reports/gate-live + evals/baselines/dify_http@e60c825c84bbda8a-2026-08-28.json -> '77% -> 100% ... ⚠️ TESDIQLENMEMIS', 'cari 1x (neticelerden olculen) · baseline 3x'. Testler: 13 yeni (test_baseline.py). pytest 937 yasil."
     }
    ]
+  },
+  {
+   "id": "AP-044",
+   "title": "Coxnovbeli deqradasiya: menfi netice hesabata elave olunsun",
+   "desc": "AP-017 (cox-novbeli deqradasiya eyrisi) gozlenilenin eksini verdi: olculen 3 ailede 8 novbeye qeder deqradasiya YOXDUR (12 t01 cavabindan 11-i duzgun). Xam netice t8 67% idi, lakin dusme bizim REJECT pattern-imizin bosluğu ucun idi (zerflik yeri / 'would not be accepted' varianti); pattern duzeldilib, saxlanmis cavablar yeniden qiymetlendirilib: t8 2/3 -> 3/3. Menfi netice FINDINGS.md, docs/FAILURE-TAXONOMY.md (C1), docs/writeup.md ve docs/LIMITATIONS.md-e derc olunmalidir.",
+   "role": "writer",
+   "prio": "P1",
+   "status": "done",
+   "assignee": null,
+   "dod": "1) FINDINGS.md-de ayrica 'menfi netice' formasi (metod, xam reqem, pattern duzelisi, duzelisden sonraki reqem, mehdudiyyet). 2) FAILURE-TAXONOMY.md C1-e qeyd: ICLR sitati qalir, bizim olcme tesdiqlemedi. 3) writeup.md-e qisa abzas movcud struktur daxilinde. 4) LIMITATIONS.md-e ehate (3 aile, 8 novbe max) + scorer.py responses[-1] / --repeat qeydi. 5) Acig bosluq: markdown vurgusu verdikt ifadesinin icinde regex uygunlugunu pozur.",
+   "links": [],
+   "created": "2026-09-01T23:46:23",
+   "updated": "2026-09-01T23:57:07",
+   "history": [
+    {
+     "at": "2026-09-01T23:46:23",
+     "actor": "writer",
+     "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-01T23:57:07",
+     "actor": "writer",
+     "action": "in_progress→done",
+     "detail": "FINDINGS.md: yeni §4-A menfi netice bolmesi (+ §1-de isare). FAILURE-TAXONOMY.md: C1-e 'bizim olcmemiz tesdiqlemedi' bendi + Bosluq 5-e 'faktiki icra shared prompt DEYIL' qeydi. writeup.md: 'Half our tests were lying' bolmesine bir abzas. LIMITATIONS.md: LIM-C04 qismen bagli+ehate, yeni LIM-I10 (markdown vurgusu regexi pozur, ACIQ) ve LIM-I11 (scorer responses[-1], --repeat qerari deyismir), §5 xerite + §6 cedvel yenilendi. Reqemler saxlanmis cavablardan mustaqil yoxlandi: duzelisden evvel 10/12, sonra 11/12; t8 2/3 -> 3/3. build_full.py:55 serhinde 'sonra 12-si' yazilib - sehvdir, 11 olmalidir (ayrica task acildi)."
+    }
+   ],
+   "comments": []
   }
  ]
 }

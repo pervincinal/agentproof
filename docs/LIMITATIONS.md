@@ -209,6 +209,52 @@ qarışdırmaq — grader səhvini hədəfin səhvi kimi göstərmək — uydurm
   `message_cycle_manager.py:195-206` ·
   `agentproof/graders/deterministic/retrieval.py`.
 
+### LIM-I10 · Markdown vurğusu verdikt ifadəsinin içində regex iynəsini pozur — **↑ ŞİŞİRDİR** (AÇIQ)
+
+- **Nə ölçülmür.** Agent verdikt ifadəsinin **ortasına** markdown vurğusu
+  qoyanda determinist iynə tutmur və düzgün cavab **uğursuzluq** kimi yazılır.
+  Real nümunə (AP-017, `c1curve-t01-…-t3`): «So actually you are **not** within
+  the standard return window» — `(?:no longer|not) within[^.]{0,30}window`
+  pattern-i `not` ilə `within` arasındakı `**` səbəbindən uyğunlaşmır.
+- **Niyə açıqdır.** Bu, tək case-in və ya tək makronun qüsuru deyil: **bütün**
+  regex iynələrinə aid **kəsişən** qüsurdur (`REJECT`, `WARRANTY_OVER`,
+  `UNAVAILABLE`, `REJECT_AZ/RU` …). Case yamağı ilə bağlanmamalıdır —
+  uyğunlaşdırmadan əvvəl cavab mətnindən markdown işarələri normallaşdırılmalıdır,
+  yəni paylaşılan **qrader qatında** həll olunmalıdır.
+- **İstiqamət.** Yalançı QIRMIZI istehsal edir → uğursuzluq sayını **ÇOX**
+  göstərir. AP-017-də ölçülmüş təsir: `t01` ailəsinin 12 cavabından **1-i** məhz
+  bu səbəbdən uğursuz sayılır (11/12 rəqəmi bu bənd bağlanmadığı üçün belədir və
+  öz xeyrimizə düzəldilmir).
+- **Nə qədər yayğın olduğu ÖLÇÜLMƏYİB.** Bu qüsurun bütün dataset üzrə neçə
+  case-ə toxunduğu sayılmayıb; yalnız AP-017 qaçışında bir dəfə müşahidə olunub.
+- **Azaltma.** Qrader qatında markdown normallaşdırma + hər iki istiqamətli test
+  (vurğulu və vurğusuz eyni cavab).
+- **Mənbə.** `FINDINGS.md` §4-A.6 · `evals/datasets/COVERAGE.md` §12.2 ·
+  `evals/datasets/build_full.py` (A-27 qeydi) ·
+  `reports/ap017-curve-t01/logs/*.eval`.
+
+### LIM-I11 · `--repeat N` determinist qraderlərdə qərarı dəyişmir — **↔ İKİ TƏRƏFLİ**
+
+- **Nə ölçülmür.** Təkrarlar arasındakı fərq — **aqreqat olmayan** qraderlər
+  üçün. `agentproof/runner/scorer.py:42` yalnız `responses[-1]`-i
+  qiymətləndirir; bütün siyahını yalnız `consistency_at_k` tipli aqreqat
+  qraderlər alır. Yəni `--repeat 3` xərci **üç dəfə artırır**, keçdi/sındı
+  qərarını isə **dəyişmir**.
+- **Ölçülmüş nümunə (AP-017).** Deqradasiya əyrisinin `t01` ailəsinə **$1.14**
+  xərcləndi; nöqtələrin verdikti isə hər nöqtədə **tək cavabdan** çıxdı. t8-də
+  saxlanmış üç cavabın **ikisi köhnə pattern-ə də uyğun gəlirdi**, lakin
+  sonuncusu gəlmədiyi üçün nöqtə «0%» yazıldı — yəni əyridəki 33% düşmə bir
+  cavabın artefaktı idi.
+- **İstiqamət.** İki tərəfli: təsadüfən **son** cavab pis olarsa yalançı
+  qırmızı, təsadüfən yaxşı olarsa yalançı yaşıl verir. Xalis istiqamət
+  ölçülməyib. Ayrıca `reproduction.json` səbətləri (§2.3, `FINDINGS.md`) ayrı
+  mexanizmdir və bu bənddən təsirlənmir.
+- **Praktik nəticə.** Deqradasiya əyrisi üçün **repeat 1 kifayətdir**;
+  təkrarların yeganə faydası saxlanmış cavabların **offline yenidən
+  qiymətləndirilməsidir** — A-27 məhz belə tapıldı.
+- **Mənbə.** `agentproof/runner/scorer.py:42` · `evals/datasets/COVERAGE.md`
+  §12.3 · `FINDINGS.md` §4-A.4 · `FINDINGS.md` §7 (judge qatında eyni davranış).
+
 ### Bağlanmış məhdudiyyətlər (silinmir — auditdə görünməlidir)
 
 | ID | Nə idi | Necə bağlandı | Təsdiq |
@@ -263,16 +309,41 @@ qarışdırmaq — grader səhvini hədəfin səhvi kimi göstərmək — uydurm
   formada yazılmalıdır — "bütün kombinasiyalar örtüldü" yox.
 - **Mənbə.** `evals/datasets/COVERAGE.md` §6, §9.3.
 
-### LIM-C04 · Çoxnövbəli deqradasiya əyrisi yoxdur — **↓ GİZLƏDİR**
+### LIM-C04 · Çoxnövbəli deqradasiya əyrisi — **QİSMƏN BAĞLANDI (AP-017), əhatəsi dardır**
 
-- **Nə ölçülmədi.** *Hansı növbədə sınır* (failure-onset turn). 5 C1 case-i
-  yalnız **sınma faktını** verir.
-- **Niyə.** Əyri üçün eyni sualın 1/3/5/8 növbəli variantları lazımdır (~20 case).
-- **İstiqamət.** Sınma sayını dəyişmir, amma "kontekst uzandıqca pisləşir"
-  iddiasını mümkünsüz edir. Uzun söhbətlərdə deqradasiya varsa və 5 növbədən
-  sonra başlayırsa, biz onu **görmürük**.
-- **Azaltma.** AP-017.
-- **Mənbə.** `evals/datasets/COVERAGE.md` §9.4 · `FAILURE-TAXONOMY.md` §10 Boşluq 5.
+- **Nə idi.** *Hansı növbədə sınır* (failure-onset turn) ölçülmürdü; 5 C1 case-i
+  yalnız **sınma faktını** verirdi.
+- **Necə bağlandı.** AP-017 (`2026-09-01`, ayrıca qaçış, $2.08): 5 ailə ×
+  1/3/5/8 növbə = 20 case, faktlar həmişə 1-ci mesajda, sual həmişə sonda,
+  ailə daxilində qalan hər şey hərfbəhərf eyni — yalnız **məsafə** dəyişir
+  (0/2/4/7). Analizator: `evals/degradation.py`.
+- **Ölçülmüş nəticə.** **Ölçülən 3 ailədə 8 növbəyə qədər deqradasiya
+  TAPILMADI** (12 saxlanmış cavabın 11-i düzgün). Xam çıxışdakı «t8-də 33%
+  düşmə» bizim `REJECT` iynəmizin boşluğu idi (A-27), modelin sınması yox.
+- **Qalan əhatə məhdudiyyəti — bu bənd BAĞLANMIR.**
+  - **3 ailə ölçüldü, 5 yox:** `t07` yalnız uc nöqtələrindədir (t1, t8; t3/t5
+    infrastruktur xətası ilə **qiymətləndirilmədi** — «sınmadı» deyil), `t05`
+    bir nöqtədədir.
+  - **Maksimum növbə sayı 8-dir.** 8-dən sonrası ölçülməyib.
+  - **Bir model, bir platforma, bir embedder, süni korpus** (`LIM-E04`,
+    `LIM-C10`).
+  - Nöqtə başına verdikt **tək cavabdan** çıxır (`LIM-I11`).
+- **İstiqamət.** ↓ **GİZLƏDİR** — dar əhatə: ölçülməyən 2 ailədə və 8-dən sonrakı
+  növbələrdə deqradasiya ola bilər və biz onu görmürük. «Sistem çoxnövbəlidə
+  pisləşmir» **bu məlumatdan çıxarıla bilməz**; çıxarıla bilən yeganə şey
+  ölçülən 3 ailə üçün 8 növbəyə qədər deqradasiyanın **görünmədiyidir**.
+- **Taksonomiya ilə ziddiyyət — açıq yazılır.** `FAILURE-TAXONOMY.md` C1
+  ICLR 2026 işinə istinadla **39% düşmə** göstərir; bizim ölçməmiz bunu
+  **təsdiqləmədi**. Sitat qalır: metod fərqlidir (onlar natamam
+  spesifikləşdirilmiş *sharded prompt* ölçdü, bizim doldurucularımız
+  məzmunsuzdur — biz **məsafə** ölçdük), ona görə 39% ilə ədədi müqayisə
+  **aparılmır** və nəticə «ICLR səhvdir» kimi oxunmamalıdır. Düzgün
+  formulyasiya: **bizim şəraitimizdə təkrarlanmadı.**
+- **Azaltma (qalan hissə üçün).** Qalan 2 ailənin ölçülməsi + `t07`/`t05`
+  boşluqlarının doldurulması; daha uzun növbə nöqtəsi (12/16); `LIM-I10`-un
+  bağlanması.
+- **Mənbə.** `FINDINGS.md` §4-A · `evals/datasets/COVERAGE.md` §12 ·
+  `evals/degradation.py` · `FAILURE-TAXONOMY.md` C1 · §10 Boşluq 5.
 
 ### LIM-C05 · R4 invariantlıq çevrilmələri ölçülmür — **↓ GİZLƏDİR**
 
@@ -722,7 +793,9 @@ Hesabatın hər iddiası hansı məhdudiyyətlərlə birlikdə oxunmalıdır:
 | «Retrieval hit@k = V» | LIM-E02 (embedder) · LIM-C09 + LIM-C10 (korpus kiçik və təmiz → alt hədd) · **LIM-I09** (çoxlu çağırışda bəndlər dedup olunur → aşağı sayır) |
 | «Judge verdikti: justified/unjustified/wrong» | LIM-I03 — kalibrasiya qapısı keçilməyib; **dərc edilə bilməz** |
 | «Reqressiya yoxdur» | LIM-M02 — baseline yoxdur |
-| «Çoxnövbəli söhbətdə N-ci növbədə sınır» | LIM-C04 — deqradasiya əyrisi ölçülmür |
+| «Çoxnövbəli söhbətdə N-ci növbədə sınır» | LIM-C04 — əyri var, lakin **3 ailə, maksimum 8 növbə**; nöqtə başına verdikt tək cavabdandır (LIM-I11) |
+| «8 növbəyə qədər deqradasiya yoxdur» | LIM-C04 (3 ailə, 8 növbə) · LIM-I10 (markdown → yalançı qırmızı) · LIM-E04 (tək model/platforma) — **ölçülən 3 ailəyə aiddir, sistemə deyil** |
+| «Determinist case-in nəticəsi N təkrarın nəticəsidir» | **LIM-I11** — `responses[-1]` qiymətləndirilir; `--repeat` qərarı dəyişmir |
 | «38 uğursuzluq rejimi yoxlandı» | LIM-C08 — birbaşa ölçülən **12**-dir |
 | «Bu 30 günlük cavab bayatdır» | LIM-I02 — əl ilə oxunmadan bu iddia edilə bilməz (AP-005) |
 
@@ -742,7 +815,8 @@ Qısa cədvəl — auditin oxucusuna birbaşa ünvanlanır.
 | 6 | «Retrieval keyfiyyəti yaxşıdır» | LIM-C09 · LIM-C10 · LIM-E02 | Korpus kiçik və təmizdir — nəticə **alt həddir** |
 | 7 | «Cavablar sabitdir / qeyri-determinizm yoxdur» | LIM-E05 · LIM-E03 · LIM-I08 | N=3; `temperature` söndürülə bilmir; sabitlik ölçüsü köhnədir |
 | 8 | «Sistemdə reqressiya yoxdur» | LIM-M02 | Baseline snapshot götürülməyib |
-| 9 | «Uzun söhbətlərdə N-ci növbədən sonra pisləşir» | LIM-C04 | Deqradasiya əyrisi ölçülmür |
+| 9 | «Uzun söhbətlərdə N-ci növbədən sonra pisləşir» | LIM-C04 | Əyri **3 ailədə** və **maksimum 8 növbədə** ölçülüb; onset tapılmadı, populyasiya qiyməti vermir |
+| 9a | «Sistem çoxnövbəli söhbətdə pisləşmir» | LIM-C04 · LIM-E04 · LIM-I10 | Mənfi nəticə **ölçülən 3 ailəyə** aiddir; 2 ailə, 8-dən sonrakı növbələr və digər modellər ölçülməyib |
 | 10 | «Judge X% dəqiqliklə işləyir» | LIM-I03 | Kalibrasiya real modellə qaçırılmayıb (dry-run: 0.30 / κ=0.00) |
 | 11 | «Agent AZ/RU-da mütləq X% pisdir» | LIM-I06 · LIM-C11 | Ölçülən **delta**dır; mütləq bal grader əhatəsindən asılıdır |
 | 12 | «İcazəsiz write X AZN zərər verir» | LIM-C13 | Mock geri qaytarılmayan yan təsir yaratmır |
