@@ -1,0 +1,64 @@
+# Render Blueprint — AgentProof sayti
+#
+# Render Dashboard -> New -> Blueprint -> bu repo-nu sec -> Apply.
+# Deploy-dan sonra unvan: https://agentproof-site.onrender.com
+#
+# BU BLUEPRINT TAM MUSTEQILDIR: bir statik servis, baza yox, env deyiseni yox,
+# pul yox. Basqa layihelerin (pomodoro, performai) hec bir resursuna toxunmur.
+#
+# NIYE STATIK: sehifeler el ile yazilmis HTML-dir, build zenciri yoxdur.
+# Bu, temenna deyil — auditor saytinin ozu de auditore bilen olmalidir.
+# npm asililigi olmayan iki fayli ziyaretci de, biz de eyni gozle oxuyuruq,
+# ve sinacaq bir build addimi yoxdur.
+#
+# NIYE region/plan yazilmayib: Render statik saytlari qlobal CDN-den verir,
+# onlarin regionu ve tarifi yoxdur. Yatmirlar da — pomodoro-dakı 15 deqiqelik
+# yuxu problemi burada movcud deyil.
+#
+# OZ DOMENIN OLANDA: asagidaki `domains` bloku serhle acilir, sonra DNS
+# CNAME-i Render-in verdiyi unvana yonlendirilir. Render sertifikati ozu alir.
+
+services:
+  - type: web
+    name: agentproof-site
+    runtime: static
+
+    # Repo koku Python layihesidir; sayt yalniz bu alt qovluqdur.
+    staticPublishPath: ./site
+
+    # Build addimi yoxdur, amma Render bos bir emr gozleyir.
+    buildCommand: "echo 'statik sayt — build yoxdur'"
+
+    # Yalniz site/ deyisende yeniden deploy olsun. Kod, dataset ve hesabat
+    # kommitleri (gunde bir necesi) bos deploy tetiklemesin.
+    buildFilter:
+      paths:
+        - site/**
+
+    # PR onizlemesi lazim deyil — tek adam, tek branch.
+    pullRequestPreviewsEnabled: false
+
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      # Sehife ucuncu terefe hec ne gondermir; yalniz Google Fonts-dan
+      # sriftler gelir. Siyaset bunu aciq yazir ki, ziyaretci yoxlaya bilsin.
+      - path: /*
+        name: Content-Security-Policy
+        value: >-
+          default-src 'self';
+          style-src 'self' https://fonts.googleapis.com;
+          font-src https://fonts.gstatic.com;
+          img-src 'self' data:;
+          script-src 'none';
+          frame-ancestors 'none';
+          base-uri 'self';
+          form-action 'none'
+
+    # domains:
+    #   - agentproof.io
+    #   - www.agentproof.io

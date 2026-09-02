@@ -100,6 +100,8 @@ h3{font-size:17px;margin:28px 0 9px}
 .price .d{font-size:14px;line-height:1.5;color:var(--ink-2)}
 .price.lead{background:var(--panel)}
 .note{font-size:14.5px;color:var(--ink-2);max-width:64ch}
+.note.gap{margin-top:18px}
+p.last{margin-bottom:0}
 
 /* ---- lists ---- */
 ul.plain{list-style:none;margin:0 0 16px;padding:0;max-width:64ch}
