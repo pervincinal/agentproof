@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rules of engagement — AgentProof</title>
+<meta name="description" content="The seven rules we follow when we test a publicly available AI agent, and what we do with what we find.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="./">AgentProof</a>
+    <ul>
+      <li><a href="index.html#method">Method</a></li>
+      <li><a href="index.html#pricing">Pricing</a></li>
+      <li><a href="rules.html">Rules of engagement</a></li>
+      <li><a href="https://github.com/pervincinal/agentproof">Code</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>Rules of engagement</h1>
+    <p class="sub">Sometimes we test a publicly available agent before anyone has hired us, and send the company what we found. These are the rules we follow when we do, and they are not negotiable.</p>
+  </div>
+</header>
+
+<section class="tight">
+  <div class="wrap">
+    <p>An auditor's credibility survives exactly one breach of this kind. So we publish the constraints rather than describe them, and we build them into the tooling: the pre-audit profile in our harness enforces the request budget in code and aborts the run if it is exceeded. A rule that lives only in a document is a rule that gets broken on a busy day.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="head"><span class="lab">The seven rules</span><h2>What we will and will not do</h2></div>
+
+    <div class="rule-item">
+      <span class="n">01</span>
+      <div>
+        <h3>Public surfaces only</h3>
+        <p>We test the demo, sandbox or trial that you have deliberately made available to anyone. We do not create accounts to get further in, we do not use credentials, and we do not go behind an authentication boundary of any kind.</p>
+        <div class="why">If we had to work to get in, we are no longer testing what you published.</div>
+      </div>
+    </div>
+
+    <div class="rule-item">
+      <span class="n">02</span>
+      <div>
+        <h3>Your terms of service decide</h3>
+        <p>We read the terms before the first request. Where automated access is prohibited, we either test by hand within the terms or we do not test at all. Where the terms are ambiguous, we treat them as prohibiting.</p>
+        <div class="why">The narrow reading is the only one we are entitled to make on your behalf.</div>
+      </div>
+    </div>
+
+    <div class="rule-item">
+      <span class="n">03</span>
+      <div>
+        <h3>A single session, thirty requests, human pace</h3>
+        <p>One conversation thread, a hard cap of thirty requests, no parallelism, and rate limiting well below anything your infrastructure would notice. We never test availability, latency under load, or anything else that costs you capacity.</p>
+        <div class="why">A stranger's curiosity should never show up on your dashboards.</div>
+      </div>
+    </div>
+
+    <div class="rule-item">
+      <span class="n">04</span>
+      <div>
+        <h3>No real personal data, in or out</h3>
+        <p>Every input is synthetic. We never enter a real person's details, and we never attempt to reach another user's data, session or record — not to prove it is possible, not as a demonstration, not at all. If we come across someone else's data by accident, we stop, tell you, and delete it.</p>
+        <div class="why">A finding is not worth a single real person's information.</div>
+      </div>
+    </div>
+
+    <div class="rule-item">
+      <span class="n">05</span>
+      <div>
+        <h3>You hear it first, and privately</h3>
+        <p>Findings go to the company they concern before they go anywhere else. Directly, in full, with the transcripts and the reproduction log attached, and with no conditions on what you do next.</p>
+        <div class="why">Disclosure that starts anywhere else is not disclosure, it is leverage.</div>
+      </div>
+    </div>
+
+    <div class="rule-item">
+      <span class="n">06</span>
+      <div>
+        <h3>Nothing is published without written consent</h3>
+        <p>We never name you, quote you, or describe your system publicly without your written agreement. This holds whether you buy anything, disagree with the findings, or never reply to us at all. Silence is not consent, and there is no deadline after which it becomes consent.</p>
+        <div class="why">The alternative is a business built on the threat of publication, and that is a different business.</div>
+      </div>
+    </div>
+
+    <div class="rule-item">
+      <span class="n">07</span>
+      <div>
+        <h3>The findings are yours, free, either way</h3>
+        <p>Whatever we found is handed over in full with its artifacts, at no cost and with nothing withheld to create a reason to hire us. If you never speak to us again, you still keep everything.</p>
+        <div class="why">Withholding half a finding to sell the other half would make us a worse auditor and a worse company.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="head"><span class="lab">Beyond the seven</span><h2>Three more commitments</h2></div>
+    <ul class="plain">
+      <li><strong>We will not accept payment to suppress a finding.</strong> We will delay publication indefinitely at your request — rule six already guarantees that — but a finding we have reported to you is never un-reported</li>
+      <li><strong>Security issues get a different path.</strong> If we stumble onto something that looks like a genuine security defect rather than a correctness one, we stop testing immediately, report it through your security contact or <code>security.txt</code>, and follow whatever disclosure policy you publish</li>
+      <li><strong>We do not sell your findings to anyone.</strong> Not to your competitors, not as market research, not in aggregate</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="head"><span class="lab">Opt out</span><h2>Ask us to stop</h2></div>
+    <p>If you would rather we did not test your public agent, tell us and we will stop, delete what we have collected, and add you to a list we check before every engagement. You do not need to give a reason and we will not ask for one.</p>
+    <div class="callout">
+      <span class="lab">One line is enough</span>
+      <p>Email <a href="mailto:yusifli.pervin@gmail.com">yusifli.pervin@gmail.com</a> with your domain. We will confirm within two working days, and the confirmation will tell you exactly what we had collected and that it is gone.</p>
+    </div>
+  </div>
+</section>
+
+<section class="tight">
+  <div class="wrap">
+    <div class="contact">
+      <h2>Questions about any of this</h2>
+      <p style="margin-bottom:0">If something here is unclear, or you think a rule should be stricter, say so. These rules have been rewritten before and will be again.</p>
+      <dl class="rows">
+        <dt>Email</dt><dd><a href="mailto:yusifli.pervin@gmail.com">yusifli.pervin@gmail.com</a></dd>
+        <dt>LinkedIn</dt><dd><a href="https://www.linkedin.com/in/yusifoff/">linkedin.com/in/yusifoff</a></dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>AgentProof — independent audits of AI agents.</span>
+    <span>Harness and findings released under Apache&nbsp;2.0 · <a href="index.html">Home</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

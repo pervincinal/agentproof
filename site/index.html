@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentProof — independent audits of AI agents</title>
+<meta name="description" content="We test whether your AI agent gives the right answer, and we only report a failure that reproduced three times out of three. Fixed price, 14 days.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="./">AgentProof</a>
+    <ul>
+      <li><a href="#method">Method</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="rules.html">Rules of engagement</a></li>
+      <li><a href="https://github.com/pervincinal/agentproof">Code</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>Independent audits of AI agents.</h1>
+    <p class="sub">We test whether your agent gives the <span class="mark">right answer</span> — and we report a failure only after it has reproduced three times out of three, for the same reason each time.</p>
+  </div>
+</header>
+
+<section class="tight">
+  <div class="wrap">
+    <p>Your enterprise customers added an AI section to their security questionnaire. SOC&nbsp;2 does not answer it, and both sides now fill these forms in with an AI. When everyone automates the paperwork, the paperwork stops being evidence.</p>
+    <p>What survives is an artifact: a transcript, a run hash, a reproduction log, produced by someone with no stake in the result. That is what we sell.</p>
+  </div>
+</section>
+
+<section id="deliverable">
+  <div class="wrap">
+    <div class="head"><span class="lab">The deliverable</span><h2>What you get</h2></div>
+    <ul class="plain">
+      <li>A written report naming every failure we could reproduce, with the exact input that caused it</li>
+      <li>The full transcript and run hash behind each one, so your engineers can replay it</li>
+      <li>The reproduction log: three attempts per case, and the reason each attempt failed</li>
+      <li>An ordered remediation list — what to fix first, and what we would re-test to confirm</li>
+      <li>Everything we could <strong>not</strong> measure about your system, stated explicitly</li>
+      <li>A document your customer's procurement team can put in a file</li>
+    </ul>
+    <p class="note">Findings we could not reproduce are named as unreproduced and excluded from the count. They are still handed over — we just do not let you act on them.</p>
+  </div>
+</section>
+
+<section id="method">
+  <div class="wrap">
+    <div class="head"><span class="lab">Method</span><h2>Four steps, one gate</h2></div>
+    <div class="steps">
+
+      <div class="step">
+        <span class="n">01</span>
+        <div class="c">
+          <h3>We build ground truth you cannot argue with</h3>
+          <p>Standard RAG metrics reward an answer that faithfully quotes a stale clause. So we do not grade against the retrieved text — we grade against a canonical file that decides what is true before the agent ever runs. Traps go in both directions: sometimes the outdated number is the generous one.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="n">02</span>
+        <div class="c">
+          <h3>We ask the questions your customers will</h3>
+          <p>Conflicting policies. A clause superseded last quarter. A question in Russian against a rule written in English. Boundary values one day either side of a threshold. And a user trying to talk the agent into a discount it is not allowed to give.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="n">03</span>
+        <div class="c">
+          <h3>We audit our own grader before we trust it</h3>
+          <p>A grader that looks correct fails in both directions. Ours once marked a textbook injection <em>refusal</em> as a failure, because the pattern matched the agent quoting the payload it was rejecting. Every failure is read by hand before it is written down. Where a rule needs judgement, the model judging it is calibrated against human labels first.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <span class="n">04</span>
+        <div class="c">
+          <h3>Nothing enters the report until it repeats</h3>
+          <p>Each failing case is run three times. If it does not fail all three times for the same reason, it does not become a finding. On our own reference audit this gate removed 24 of 29 candidate failures — a report without it would have been mostly noise.</p>
+          <span class="stamp">Reproduced 3 / 3</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="evidence">
+  <div class="wrap">
+    <div class="head"><span class="lab">Evidence</span><h2>The reference audit is public</h2></div>
+    <p>We ran the method against a support agent we built ourselves, published the findings, the limitations and the code, and left the corrections visible. You can check the work before you hire us.</p>
+    <div class="figs">
+      <div class="fig"><div class="v">192</div><div class="k">graded cases across two corpora</div></div>
+      <div class="fig"><div class="v">29 → <em>5</em></div><div class="k">candidate failures that survived the reproduction gate</div></div>
+      <div class="fig"><div class="v">96.7%</div><div class="k">judge agreement with human labels · Cohen's κ 0.95</div></div>
+      <div class="fig"><div class="v">43</div><div class="k">limitations documented, each with its direction of bias</div></div>
+      <div class="fig"><div class="v">1&nbsp;278</div><div class="k">tests guarding the harness itself</div></div>
+      <div class="fig"><div class="v">4</div><div class="k">published findings — and one published negative result</div></div>
+    </div>
+    <p class="note" style="margin-top:18px">The negative result matters as much as the findings: our own taxonomy predicted that multi-turn conversations degrade accuracy. We measured it and found no degradation. We published that too, and corrected the taxonomy rather than the data. <a href="https://github.com/pervincinal/agentproof">Read the full report and finding register</a>.</p>
+  </div>
+</section>
+
+<section id="independence">
+  <div class="wrap">
+    <div class="head"><span class="lab">Independence</span><h2>Who we are not owned by</h2></div>
+    <p>Between March 2025 and May 2026 the AI evaluation tooling market consolidated into the hands of the vendors being evaluated. OpenAI acquired Promptfoo. Anthropic absorbed Humanloop and the product was wound down. Cisco is folding Galileo into Splunk.</p>
+    <p>An audit is worth what its independence is worth, so ours is stated plainly and can be checked:</p>
+    <ul class="plain">
+      <li>No model vendor owns, funds, or has a commercial relationship with this practice</li>
+      <li>No implementation work. We do not build agents, so we never audit our own code</li>
+      <li>Built on <a href="https://github.com/UKGovernmentBEIS/inspect_ai">Inspect AI</a> from the UK AI Safety Institute, not on a tool a model vendor bought</li>
+      <li>The harness, the graders and the reproduction gate are public under Apache&nbsp;2.0 — you can audit our filter</li>
+    </ul>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="wrap">
+    <div class="head"><span class="lab">Pricing</span><h2>Fixed price, stated up front</h2></div>
+    <div class="prices">
+      <div class="price lead">
+        <span class="t">Reproduction audit · 14 days</span>
+        <span class="amt">$4,500</span>
+        <span class="d">One system, one version. Every reproduced failure with its artifacts, plus the remediation list.</span>
+      </div>
+      <div class="price">
+        <span class="t">Full audit · 4–6 weeks</span>
+        <span class="amt">from $14,000</span>
+        <span class="d">Corpus built for your domain, re-test after your fix, and a written attestation of what was measured.</span>
+      </div>
+      <div class="price">
+        <span class="t">Regression watch · monthly</span>
+        <span class="amt">$2,500</span>
+        <span class="d">The same dataset on every release, with a report on what changed since the last one.</span>
+      </div>
+    </div>
+    <p class="note"><strong>50% on signature.</strong> Re-testing after your fix is a separate line, never bundled into the first price. Introductory pricing while we build our first public references.</p>
+
+    <div class="callout">
+      <span class="lab">If we find nothing</span>
+      <p>You pay half and keep the corpus. A clean result is a real result — but note that this term gives us an incentive to find failures. We know that, and we are not hiding it. What holds us back is the three-out-of-three gate, and the code behind that gate is public. Audit our filter before you trust our findings.</p>
+    </div>
+  </div>
+</section>
+
+<section id="scope">
+  <div class="wrap">
+    <div class="head"><span class="lab">Scope</span><h2>What we do not do</h2></div>
+    <ul class="plain no">
+      <li><strong>We do not build or fix your agent.</strong> We re-test after you fix it. Independence is the product; we cannot sell it twice</li>
+      <li><strong>We do not do penetration testing.</strong> We test whether the agent is <em>wrong</em>, not whether it can be broken into — an agent that quotes a stale refund policy passes every red-team test</li>
+      <li><strong>We do not issue compliance certificates.</strong> Our report is evidence you can hand to an auditor or a customer; it is not a conformity assessment</li>
+      <li><strong>We do not publish anything about you without written consent.</strong> See the <a href="rules.html">rules of engagement</a></li>
+    </ul>
+  </div>
+</section>
+
+<section id="fit">
+  <div class="wrap">
+    <div class="head"><span class="lab">Fit</span><h2>Who this is for</h2></div>
+    <p>Teams of roughly 20 to 150 people selling an AI agent into banking, insurance, healthcare, telecoms or legal — where a wrong answer costs money and someone has to sign that it works.</p>
+    <p>The usual trigger is one of four: an enterprise deal stalled on a security questionnaire, a proof-of-concept that keeps failing for reasons nobody can pin down, an incident you had to explain, or an investor or insurer who asked for evidence.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="contact">
+      <h2>Start with a conversation, not a contract</h2>
+      <p style="margin-bottom:0">Twenty minutes. Tell us what broke and how you found out. If an audit is not the right thing for you, we will say so — and we do not do the implementation work, so we have no reason to talk you into one.</p>
+      <dl class="rows">
+        <dt>Email</dt><dd><a href="mailto:yusifli.pervin@gmail.com">yusifli.pervin@gmail.com</a></dd>
+        <dt>LinkedIn</dt><dd><a href="https://www.linkedin.com/in/yusifoff/">linkedin.com/in/yusifoff</a></dd>
+        <dt>Code</dt><dd><a href="https://github.com/pervincinal/agentproof">github.com/pervincinal/agentproof</a></dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>AgentProof — independent audits of AI agents.</span>
+    <span>Harness and findings released under Apache&nbsp;2.0 · <a href="rules.html">Rules of engagement</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
