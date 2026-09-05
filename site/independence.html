@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Independence — AgentProof</title>
+<meta name="description" content="Who owns, funds and supplies this audit practice, what we use, and what would have to change for this page to change.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="/">AgentProof</a>
+    <ul>
+      <li><a href="/#method">Method</a></li>
+      <li><a href="/#pricing">Pricing</a></li>
+      <li><a href="/sample-report">Sample report</a></li>
+      <li><a href="/rules">Rules of engagement</a></li>
+      <li><a href="https://github.com/pervincinal/agentproof">Code</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>Independence</h1>
+    <p class="sub">An audit is worth exactly what its independence is worth. So rather than claim it, this page states the facts that make it checkable — and what would have to change for the page to change.</p>
+  </div>
+</header>
+
+<section class="tight">
+  <div class="wrap">
+    <p>Between March 2025 and May 2026 the tooling market for evaluating AI moved into the hands of the companies whose models are being evaluated. Eight acquisitions in fourteen months, the fastest consolidation any AI tooling category has been through.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="head"><span class="lab">What happened</span><h2>The evaluation layer changed owners</h2></div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Tool</th><th>Acquired by</th><th>When</th><th>What became of it</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Weights &amp; Biases</td><td>CoreWeave</td><td class="m">Mar 2025</td><td>Bundled with GPU cloud</td></tr>
+          <tr><td class="k">Velvet</td><td>Arize AI</td><td class="m">Mar 2025</td><td>Folded in</td></tr>
+          <tr><td class="k">Humanloop</td><td>Anthropic</td><td class="m">Aug 2025</td><td>Product wound down</td></tr>
+          <tr><td class="k">Statsig</td><td>OpenAI</td><td class="m">Sep 2025</td><td>Founder became OpenAI CTO</td></tr>
+          <tr><td class="k">Langfuse</td><td>ClickHouse</td><td class="m">Jan 2026</td><td>Continues, open source</td></tr>
+          <tr><td class="k">Promptfoo</td><td>OpenAI</td><td class="m">Mar 2026</td><td>Integrated into OpenAI Frontier</td></tr>
+          <tr><td class="k">Helicone</td><td>Mintlify</td><td class="m">Mar 2026</td><td>Maintenance mode</td></tr>
+          <tr><td class="k">Galileo</td><td>Cisco</td><td class="m">May 2026</td><td>Folding into Splunk</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Two of those buyers sell the models being tested. That is not an accusation of bad faith — it is a structural fact, and a buyer who needs a verdict that did not come from a supplier now has fewer places to get one.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="head"><span class="lab">The facts</span><h2>What we are and are not</h2></div>
+    <ul class="plain">
+      <li><strong>Ownership.</strong> A one-person practice. No investors, no parent company, no model vendor holds any stake</li>
+      <li><strong>Funding.</strong> Self-funded. No grant, no vendor programme, no credits from a model provider</li>
+      <li><strong>Referral fees.</strong> None taken, in either direction. We are not paid to recommend any tool, model or platform</li>
+      <li><strong>Implementation.</strong> We do not build agents. There is no version of this where we audit our own work, and no upsell that a finding could be pointed toward</li>
+      <li><strong>Payment.</strong> Never tied to the number of findings — no bonus, no success fee. Paying per finding produces findings</li>
+      <li><strong>Licence.</strong> Harness, graders and reproduction gate are Apache 2.0 and public</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="head"><span class="lab">Suppliers</span><h2>What we use, and the one choice worth explaining</h2></div>
+    <p>Independence does not mean using nothing. It means the things we depend on are named, and the dependency is bounded.</p>
+    <ul class="plain">
+      <li><strong>Inspect AI</strong> — the eval framework, from the UK AI Safety Institute, MIT licensed. Our adapters, graders and reporting sit on top of it</li>
+      <li><strong>A frontier model as the system under test</strong>, whichever the client uses. We do not select it and we have no preference to defend</li>
+      <li><strong>A second model as judge</strong>, only where a rule needs judgement — roughly 2% of cases — and only after it agrees with human labels at 96.7% (Cohen's κ 0.95). An uncalibrated judge's output is never published</li>
+    </ul>
+    <p>We chose Inspect AI over <code>promptfoo</code> in August 2026, before writing a line of the harness, because promptfoo had been acquired by OpenAI five months earlier. The tool is good. It is simply not the right foundation for a practice whose entire product is a verdict that does not come from a model vendor.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="head"><span class="lab">Verification</span><h2>Do not take our word for it</h2></div>
+    <ul class="plain">
+      <li><strong>Re-run our filter.</strong> The reproduction gate is <code>evals/reproduce.py</code>. Every audit hands over the raw run artifacts, so you can apply your own filter to our data</li>
+      <li><strong>Read what we got wrong.</strong> The finding register carries a correction: we published a mechanism for F-3 that the artifact did not support, and the correction is still there rather than edited away</li>
+      <li><strong>Read the negative result.</strong> Our own taxonomy predicted that multi-turn conversations degrade accuracy. We measured it, found no degradation, and published that instead of the finding we expected</li>
+      <li><strong>Read what we did not measure.</strong> 43 limitations are documented, each with the direction it biases the result — whether it hides failures or invents them</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="head"><span class="lab">Change</span><h2>What would make this page wrong</h2></div>
+    <p>Any of the following, and this page changes on the same day the arrangement starts — not when someone asks:</p>
+    <ul class="plain">
+      <li>Taking investment, credits or a grant from a model vendor or an eval tooling company</li>
+      <li>Taking a referral fee for recommending any tool, model or platform</li>
+      <li>Doing implementation work for a client we also audit</li>
+      <li>Any payment arrangement that varies with the number of findings</li>
+    </ul>
+    <p>If you find this page out of date, that is itself a finding. <a href="mailto:yusifli.pervin@gmail.com">Tell us</a> and it gets corrected in public, the way the F-3 correction was.</p>
+  </div>
+</section>
+
+<section class="tight">
+  <div class="wrap">
+    <div class="contact">
+      <h2>Something here you want to check</h2>
+      <p class="last">Ask. A question about our independence is the right question to ask an auditor, and it will not be treated as an awkward one.</p>
+      <dl class="rows">
+        <dt>Email</dt><dd><a href="mailto:yusifli.pervin@gmail.com">yusifli.pervin@gmail.com</a></dd>
+        <dt>Code</dt><dd><a href="https://github.com/pervincinal/agentproof">github.com/pervincinal/agentproof</a></dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>AgentProof — independent audits of AI agents.</span>
+    <span>Harness and findings released under Apache&nbsp;2.0 · <a href="/">Home</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

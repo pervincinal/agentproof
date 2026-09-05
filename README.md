@@ -1,6 +1,25 @@
 # AgentProof
 
-An audit of a RAG support agent — **and of the eval suite built to test it**.
+**Independent audits of AI agents.** We test whether an agent gives the right
+answer, and we report a failure only after it has reproduced three times out of
+three, for the same reason each time.
+
+This repository is the method, and the reference audit run against it. It is
+the whole thing — harness, graders, corpus, findings, the limitations, and the
+corrections — so that a buyer can check the work before hiring anyone, and an
+engineer can lift whatever is useful under Apache 2.0.
+
+> **Who this is for.** If you sell an AI agent into banking, insurance,
+> healthcare, telecoms or legal, your customers' procurement now asks a
+> question SOC 2 does not answer: does the agent actually answer correctly?
+> Fixed price, 14 days — **[agentproof-site.onrender.com](https://agentproof-site.onrender.com)**
+> · [sample report](https://agentproof-site.onrender.com/sample-report)
+> · [rules of engagement](https://agentproof-site.onrender.com/rules)
+> · [independence](https://agentproof-site.onrender.com/independence)
+
+---
+
+## The reference audit
 
 We built an open-source customer-support agent on **Dify 1.17.0** behind
 **`claude-sonnet-5`**, gave it a synthetic policy corpus with documented ground
