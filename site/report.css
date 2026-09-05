@@ -1,0 +1,111 @@
+/* Nümunə hesabat — uzun sənəd üçün oxunuş tənzimləməsi.
+   `style.css`-in üstünə gəlir və yalnız `.report` daxilinə toxunur. */
+
+.sample-note{
+  background:var(--panel);
+  border-left:3px solid var(--stamp);
+  padding:20px 22px;
+  margin:34px 0 8px;
+}
+.sample-note .lab{display:block;margin-bottom:8px;color:var(--stamp-ink)}
+.sample-note p{margin:0;max-width:66ch}
+
+.report{padding:26px 0 40px}
+.report h1{
+  font-size:clamp(28px,4.4vw,40px);
+  line-height:1.12;
+  margin:34px 0 22px;
+  max-width:22ch;
+}
+.report h2{
+  font-size:23px;
+  line-height:1.25;
+  margin:52px 0 14px;
+  padding-top:14px;
+  border-top:1px solid var(--rule);
+}
+.report h3{font-size:18px;margin:32px 0 10px}
+.report h4{font-size:15.5px;font-weight:600;margin:24px 0 8px;letter-spacing:-.01em}
+.report p{margin:0 0 15px;max-width:70ch}
+.report ul,.report ol{margin:0 0 16px;padding-left:22px;max-width:70ch}
+.report li{margin-bottom:6px}
+.report li::marker{color:var(--ink-3)}
+
+.report hr{
+  border:0;
+  border-top:1px solid var(--rule);
+  margin:40px 0;
+}
+
+.report blockquote{
+  margin:20px 0;
+  padding:2px 0 2px 18px;
+  border-left:2px solid var(--rule);
+  color:var(--ink-2);
+}
+.report blockquote p{margin-bottom:10px}
+
+/* Cədvəllər — hesabatın sübut hissəsi. Enli olanlar öz içində sürüşür,
+   səhifənin gövdəsi heç vaxt yana sürüşmür. */
+.report table{
+  display:block;
+  overflow-x:auto;
+  border-collapse:collapse;
+  width:100%;
+  margin:22px 0;
+  font-size:14.5px;
+  font-variant-numeric:tabular-nums;
+}
+.report th,.report td{
+  text-align:left;
+  vertical-align:top;
+  padding:9px 16px 9px 0;
+  border-bottom:1px solid var(--rule-soft);
+}
+.report thead th{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  font-weight:400;
+  border-bottom:1px solid var(--rule);
+}
+.report tbody tr:last-child td{border-bottom:1px solid var(--rule)}
+
+.report code{
+  font-family:var(--mono);
+  font-size:.86em;
+  background:var(--panel);
+  padding:1px 5px;
+  border-radius:2px;
+}
+.report pre{
+  overflow-x:auto;
+  background:var(--panel);
+  border:1px solid var(--rule);
+  padding:16px 18px;
+  margin:20px 0;
+  font-size:13.5px;
+  line-height:1.55;
+}
+.report pre code{background:none;padding:0;font-size:inherit}
+
+.report a{color:var(--ink);border-bottom:1px solid var(--rule)}
+.report a:hover{border-bottom-color:var(--ink)}
+
+@media (max-width:640px){
+  .report h2{margin-top:38px}
+  .report table{font-size:13.5px}
+}
+
+/* Cədvəl düzləndirməsi — markdown-dan gələn inline stilin CSP-uyğun əvəzi. */
+.report .ta-r{text-align:right}
+.report .ta-c{text-align:center}
+.report .ta-l{text-align:left}
+
+/* Uzun identifikatorlar (run id, fayl yolu, hash) sətri aşırdı və SƏHİFƏNİ
+   yana sürüşdürürdü — 413px ekranda ölçüldü. Enli məzmun öz konteynerində
+   sürüşməlidir, gövdə heç vaxt. */
+.report{overflow-wrap:break-word}
+.report code{overflow-wrap:anywhere}
