@@ -42,6 +42,27 @@ Hədəflər: [`outreach/targets.md`](outreach/targets.md).
 
 ---
 
+## 1A. Standart yol ƏL İLƏdir, avtomatlaşdırma yox
+
+`outreach/targets.md` §3A: yoxlanan yeddi hədəfin **heç birində**
+avtomatlaşdırılmış girişə açıq icazə yoxdur. Şərtlər ya susur, ya qadağan
+edir; qayda 2 isə qeyri-müəyyəni qadağan sayır.
+
+Ona görə ictimai çat agenti üçün **standart axın budur:**
+
+1. 12 sualı **öz əlinlə** yaz — bir sessiya, ~40 dəqiqə
+2. Cavabları transkript faylına köçür
+3. `python3 evals/import_manual.py transcript.yaml`
+4. `python3 evals/reproduce.py <out>` — eyni təkrarlanma qapısı
+
+Aşağıdakı `--profile preaudit` axını **yalnız yazılı icazə olanda** işlədilir:
+sənədləşdirilmiş API, sandbox, və ya müştəri olandan sonra tam audit.
+
+**`robots.txt` hər hədəf üçün yoxlanılır.** SpareBank 1 Østlandet məhz orada
+kəsildi: `Disallow: /bank/dialoghub/` — onların çatının öz yolu.
+
+---
+
 ## 2. İki mərhələ — niyə belədir
 
 30 sorğu ilə 12 case-i 3 dəfə qaçırmaq mümkün deyil (36 > 30). Amma buna
