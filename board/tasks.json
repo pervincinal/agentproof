@@ -1,5 +1,5 @@
 {
- "seq": 71,
+ "seq": 72,
  "tasks": [
   {
    "id": "AP-001",
@@ -3005,19 +3005,25 @@
    "desc": "EXAMPLE-client-report.md (1034 setir) artiq var ve AP-039 brendsizlesdirmeni edib. Indi yayim formati lazimdir: PDF ve ya tek fayl HTML. Bu, saytdan yuklenen esas subutdur.",
    "role": "writer",
    "prio": "P0",
-   "status": "todo",
+   "status": "done",
    "assignee": null,
    "dod": "Fayl yuklenir; musteri adi yoxdur; her tapintida artefakt yolu ve run hash gorunur; saytdan link verilir; 5 MB-dan kicikdir.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 0 · docs/templates/EXAMPLE-client-report.md · AP-039"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-05T23:49:24",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-05T23:49:24",
+     "actor": "po",
+     "action": "todo→done",
      "detail": ""
     }
    ],
@@ -3029,19 +3035,25 @@
    "desc": "Esas yazi: tekrarlanma qapisi olmasa hesabatin 83%-i yanlis tapinti olardi. Iki qurtardigimiz yanlis tapintini konkret goster: (a) 'agent prompt injection-a uydu' — uymayib, oz cavabinda hucumu sitat getirib; (b) 'axtaris sinigdir' — gold chunk 1-ci sirada tapilib. Agent YAZIR, Parvin DERC EDIR.",
    "role": "writer",
    "prio": "P0",
-   "status": "todo",
+   "status": "review",
    "assignee": null,
    "dod": "Qaralama hazir; her reqem artefakta baglidir; iddia sisirdilmeyib; derc qerari Parvine qalir (agent hec bir platformaya post etmir).",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 0 · FINDINGS.md · TRIAGE-RUN02.md"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-05T23:51:15",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-05T23:51:15",
+     "actor": "po",
+     "action": "todo→review",
      "detail": ""
     }
    ],
@@ -3053,19 +3065,25 @@
    "desc": "Oz taksonomiyamiz (C1) ICLR 2026-ya istinadla 39% dusme gozledirdi; 1/3/5/8 novbede olcduk, olculen 3 ailede deqradasiya tapmadiq. Xam 33% dusme bizim oz REJECT iynemizin bosluqu idi. Oz gozlentisini tekzib eden neticeni derc etmek auditorun etibar sertifikatidir.",
    "role": "writer",
    "prio": "P1",
-   "status": "backlog",
+   "status": "review",
    "assignee": null,
    "dod": "Qaralama hazir; ICLR sitati TEKZIB kimi yox, 'bizim seraitde tekrarlanmadi' kimi yazilib; scorer.py responses[-1] koku izah olunub.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · FINDINGS.md §4-A · AP-044"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-06T00:13:34",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:13:34",
+     "actor": "po",
+     "action": "backlog→review",
      "detail": ""
     }
    ],
@@ -3077,19 +3095,25 @@
    "desc": "Derc olunmus hesabatda F-3-un mexanizmini sehv yazmisdiq: 'model sehv qaydani secdi' dedik, artefakt ise international-shipping.md-nin HEC VAXT getirilmediyini gosterdi. Duzeltdik ve duzelisi acig saxladiq. Etibar yazisi budur.",
    "role": "writer",
    "prio": "P2",
-   "status": "backlog",
+   "status": "review",
    "assignee": null,
    "dod": "Qaralama hazir; C-01 duzelis qeydine link var; duzelisi kimin tapdigi gizledilmeyib.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · FINDINGS.md §10 C-01"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-06T00:13:35",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:13:35",
+     "actor": "po",
+     "action": "backlog→review",
      "detail": ""
     }
    ],
@@ -3101,19 +3125,25 @@
    "desc": "README hazirda muhendis ucun yazilib. Ilk ekran alici ucun olmalidir: ne edirik, kime, ne cixir. Show HN ucun basliq + ilk serh (metodun bir paraqrafliq izahi) hazirlansin.",
    "role": "writer",
    "prio": "P1",
-   "status": "backlog",
+   "status": "done",
    "assignee": null,
    "dod": "README ilk ekranda ne etdiyimizi ve kime oldugunu deyir; qiymet sehifesine link var; Show HN basligi ve ilk serh qaralamasi hazirdir; derc qerari Parvinindir.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 0"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-06T00:11:50",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:11:50",
+     "actor": "po",
+     "action": "backlog→done",
      "detail": ""
     }
    ],
@@ -3125,19 +3155,25 @@
    "desc": "Bazar hesabatinin en guclu tapintisi: qiymetlendirme qati model laboratoriyalarinin elinde. OpenAI promptfoo-ya sahibdir, Anthropic Humanloop-u bagladi, Cisco Galileo-nu udur. Bizim baglidiq yoxdur — bunu YOXLANILA BILEN sekilde yaz: hansi aletler, kim maliyyelesdirir (hec kim), lisenziya, ve Inspect AI secilmesinin sebebi.",
    "role": "writer",
    "prio": "P1",
-   "status": "backlog",
+   "status": "done",
    "assignee": null,
    "dod": "Sehife canli; promptfoo->OpenAI sebebi yazilib; maliyye menbeyi aciqdir; iddia yoxlanila bilen faktlardan ibaretdir, seargumentden yox.",
    "links": [
     "artifact:ace51aca (bazar hesabati) · B-1 neytralliq bosluqu"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-06T00:11:51",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:11:51",
+     "actor": "po",
+     "action": "backlog→done",
      "detail": ""
     }
    ],
@@ -3149,19 +3185,25 @@
    "desc": "Baslik 'QA Practice Lead' yox, 'AI agentleri ucun musteqil audit'. YALNIZ PARVIN EDE BILER — agent hec bir platformada profil deyismir ve post etmir.",
    "role": "founder",
    "prio": "P1",
-   "status": "todo",
+   "status": "review",
    "assignee": null,
    "dod": "Baslik, 'haqqinda' bolmesi ve secilmis bolme yenilenib; repo-ya ve sayta link var.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 0 · Gun 3-4"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-05T23:51:15",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-05T23:51:15",
+     "actor": "po",
+     "action": "todo→review",
      "detail": ""
     }
    ],
@@ -3203,19 +3245,25 @@
    "desc": "BLOKLAYICI: hedef sirketlerin coxunun aciq API-si yox, veb widget-i var. Movcud 4 kanal (dify_http, json_http, callable, mock) bunu tutmur. Evvelce QERAR: (a) hedef meyarina 'API/sandbox var' selti elave edek, yoxsa (b) veb adapteri yazaq. (b) secilerse ToS riski ve kovrekliyi senedde yazilsin. Qerar 'adapter yazmiriq' da ola biler.",
    "role": "harness-eng",
    "prio": "P0",
-   "status": "todo",
+   "status": "done",
    "assignee": null,
    "dod": "Qerar senedi var ve esaslandirilib; adapter yazilibsa 25 conformance yoxlamasindan kecir ve on-audit profilinin sorgu limitine tabedir; ToS riski aciq yazilib.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 1 · docs/ADAPTERS.md · conformance.py"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-05T23:42:41",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-05T23:42:41",
+     "actor": "po",
+     "action": "todo→done",
      "detail": ""
     }
    ],
@@ -3227,23 +3275,41 @@
    "desc": "Meyarlar: Seriya A-B, 20-150 nefer, ACIQ TEST EDILE BILEN agent demosu, tenzimlenen sahe (bank/sigorta/sehiyye/telekom/huquq), EU/UK merkezli. Aciq demosu olmayani siyahiya SALMA — bu meyar siyahini yariya endirir ve qalani deyerli edir.",
    "role": "scout",
    "prio": "P0",
-   "status": "todo",
+   "status": "review",
    "assignee": null,
    "dod": "40 setir; her setirde demo URL, sahe, olcu, sirket boyu; her hedefin ToS-unda avtomatlasdirma bendi yoxlanilib ve qadagan edirse ISARELENIB; EU/UK payi >=70%.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 1 · hedef siyahisi"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-05T23:54:27",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-05T23:54:27",
+     "actor": "po",
+     "action": "todo→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-05T23:54:27",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-05T23:54:27",
+     "actor": "po",
+     "text": "22/40 setir. Ad/seher/tesvir/celb — Dealroom siyahisindan [O]. Demo URL, API senedi, isci sayi, ToS bendi — [N], sirket-sirket acilib oxunmalidir. 8 sehiyye sirketi qesden cixarilib: onlar goruntu/siqnal modelleridir, sohbet agenti deyil — bizim metod onlara tetbiq olunmur. 40-a catmaq ucun siyahini uzatmaq yox, menbe artirmaq lazimdir (EU-Startups siyahisi HTTP 403 verdi, el ile acilmalidir)."
+    }
+   ]
   },
   {
    "id": "AP-057",
@@ -3251,19 +3317,25 @@
    "desc": "Musteri hesabatinin kicik versiyasi: 2 tapinti, her birinin transkripti, run hash-i, 3/3 tekrarlanma jurnali, ve 'bunu pulsuz saxlayirsiniz' cumlesi.",
    "role": "writer",
    "prio": "P1",
-   "status": "backlog",
+   "status": "done",
    "assignee": null,
    "dod": "docs/templates/PREAUDIT-ONEPAGER.md movcuddur; bir real numune ile doldurulub; tekrarlanma jurnali her tapintida gorunur.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 1 · docs/templates/CLIENT-REPORT.md"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-06T00:02:43",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:02:43",
+     "actor": "po",
+     "action": "backlog→done",
      "detail": ""
     }
    ],
@@ -3275,19 +3347,25 @@
    "desc": "Hesabatdaki ingilis metni sablon kimi repo-ya. Izleme: sade CSV/JSON — sirket, tarix, tapinti sayi, gonderilme, cavab, netice. Bu, 'cavab' gostericisini olcmeyin yeganre yoludur. GONDERMEYI YALNIZ PARVIN EDIR.",
    "role": "writer",
    "prio": "P1",
-   "status": "backlog",
+   "status": "done",
    "assignee": null,
    "dod": "Sablon repo-da; izleme fayli sxemi var ve ilk 3 setir ucun hazirdir; agent hec bir mektub gondermir.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 1"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-06T00:02:43",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:02:43",
+     "actor": "po",
+     "action": "backlog→done",
      "detail": ""
     }
    ],
@@ -3323,19 +3401,25 @@
    "desc": "Hesabatdaki 6 sual + neticeni oxuma qaydasi. Her sualin altinda 'ne esitsem ne demekdir' qeydi olsun: sovdelesme / insident / sehv seviyye / kateqoriya movcud deyil.",
    "role": "writer",
    "prio": "P1",
-   "status": "backlog",
+   "status": "done",
    "assignee": null,
    "dod": "Sablon hazir; 6 sual olduğu kimi; her sual ucun oxuma qaydasi yazilib; zengin meqsedinin SATMAQ OLMADIGI basliqda yazilib.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 2"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-06T00:02:43",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:02:43",
+     "actor": "po",
+     "action": "backlog→done",
      "detail": ""
     }
    ],
@@ -3401,19 +3485,25 @@
    "desc": "50% qabaqcadan (tek operator, taninmayan qarsi teref — muzakire movzusu deyil). Ehate hasari: bir sistem, bir versiya, N case, 14 gun. Duzelisden sonraki tekrar test AYRICA setir. Sifir tapinti zemaneti: yarisini odeyirsen, korpusu saxlayirsan.",
    "role": "writer",
    "prio": "P1",
-   "status": "backlog",
+   "status": "done",
    "assignee": null,
    "dod": "Sened hazir; her uc mexanika yazilib; sifir tapinti zemanetinin maraq toqqusmasi izahi daxildir.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 3"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-06T00:07:01",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:07:01",
+     "actor": "po",
+     "action": "backlog→done",
      "detail": ""
     }
    ],
@@ -3425,19 +3515,25 @@
    "desc": "Metn: 'Bu zemanet mene ugursuzluq tapmaq ucun maraq yaradir — bunu bilirem ve gizletmirem. Meni saxlayan 3/3 tekrarlanma qapisidir, ve o qapinin kodu aciqdir. Isteyirsinizse menim oz filtrimi ozunuz audite ceke bilersiniz.' Oz maraq toqqusmasini adlandirib yoxlanila bilen etmek — auditorun en guclu satis hereketidir.",
    "role": "writer",
    "prio": "P2",
-   "status": "backlog",
+   "status": "done",
    "assignee": null,
    "dod": "CLIENT-REPORT.md-de bolme var; numune hesabatda da gorunur; qapinin kod yoluna link verilib.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 3 · docs/templates/CLIENT-REPORT.md"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-06T00:07:01",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:07:01",
+     "actor": "po",
+     "action": "backlog→done",
      "detail": ""
     }
    ],
@@ -3449,19 +3545,25 @@
    "desc": "Ilk 2 musteri $1.5-2k, referans mugabilinde, uc aydan sonra qapanan teklif. Bu merhelede referans gelirden qiymetlidir — ucuncu musterini referans getirecek, pul yox.",
    "role": "writer",
    "prio": "P2",
-   "status": "backlog",
+   "status": "done",
    "assignee": null,
    "dod": "Bir sehifelik teklif; muddet tarixi yazilib; referans formati (adli yoxsa konkret anonim) evvelceden razilasdirilib.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 3"
    ],
    "created": "2026-09-02T12:51:13",
-   "updated": "2026-09-02T12:51:13",
+   "updated": "2026-09-06T00:07:01",
    "history": [
     {
      "at": "2026-09-02T12:51:13",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:07:01",
+     "actor": "po",
+     "action": "backlog→done",
      "detail": ""
     }
    ],
@@ -3473,19 +3575,25 @@
    "desc": "Bazar hesabatinin en yaxsi gizli imkani: Credo AI davranis testinde 10-dan 4 alir, Holistic AI 8. Onlar reqib kimi gorunur, amma bizim guclu oldugumuz yerde gucsuzduler. Onlara test terefdasi lazimdir — biz onlarin bosluquyuq.",
    "role": "writer",
    "prio": "P2",
-   "status": "backlog",
+   "status": "done",
    "assignee": null,
    "dod": "Bir sehifelik teklif; 5 hedef platforma adlandirilib; her biri ucun elaqe yolu; teklif 'siz idareetme, biz davranis testi' xettinde qurulub.",
    "links": [
     "artifact:ace51aca (bazar hesabati) · Qat C · kanallar cedveli"
    ],
    "created": "2026-09-02T12:51:13",
-   "updated": "2026-09-02T12:51:13",
+   "updated": "2026-09-06T00:15:22",
    "history": [
     {
      "at": "2026-09-02T12:51:13",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:15:22",
+     "actor": "po",
+     "action": "backlog→done",
      "detail": ""
     }
    ],
@@ -3497,19 +3605,25 @@
    "desc": "Red teaming firmalarindan 'agent duz cavab verirmi?' sorusulanda 'yox' deyirler — onlar hucuma qarsi test edir, sehve qarsi yox. Yonlendirme menbeyidir.",
    "role": "writer",
    "prio": "P3",
-   "status": "backlog",
+   "status": "done",
    "assignee": null,
    "dod": "Bir sehifelik; yonlendirme sertleri yazilib; 5 hedef firma siyahisi var.",
    "links": [
     "artifact:ace51aca (bazar hesabati) · Qat B"
    ],
    "created": "2026-09-02T12:51:13",
-   "updated": "2026-09-02T12:51:13",
+   "updated": "2026-09-06T00:15:22",
    "history": [
     {
      "at": "2026-09-02T12:51:13",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:15:22",
+     "actor": "po",
+     "action": "backlog→done",
      "detail": ""
     }
    ],
@@ -3634,6 +3748,30 @@
    "history": [
     {
      "at": "2026-09-05T23:42:24",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-072",
+   "title": "Qanuni ustelemе tele ailesi (T-28..T-30)",
+   "desc": "AP-068 qerarindan cixdi. 27 telenin hec biri 'qanun siyaseti ustelеyir' halini olcmur (grep: 0). EU/UK alicisi ucun en bahali sehv budur: siyaset '14 gun' deyir, qanuni minimum '14 gun, catdirilmadan sayilir' deyir; agent siyaseti DUZGUN sitat getirir ve YENE DE sehv edir. Bu, F-3 ile eyni sinifdir — cavab duzgun menbeden gelir, netice sehvdir, determinist yoxlayici yasil boyayir. Icra: korpusa qisa 'Statutory minimums' bolmesi; CANONICAL.yaml hansi bendin qanuni minimumdan asagi oldugunu ACIQ yazir; 3-4 case. SERHED: bu, huquqi meslehet DEYIL — korpus suni yurisdiksiya teyin edir, real qanunvericiliye istinad edilmir. Real auditde qanuni minimumu MUSTERI teyin edir.",
+   "role": "dataset-eng",
+   "prio": "P2",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "3-4 case datasetde; CANONICAL.yaml qanuni minimumu ayrica sahede saxlayir (siyaset deyeri ile qarismir); verify_fixtures.py kecir; TRAPS.md-de yeni aile senedlesib; 'huquqi meslehet deyil' serhedi korpus senedinde ACIQ yazilib; build_full.py --check sinxron.",
+   "links": [
+    "docs/CORPUS-JURISDICTION.md · target/corpus/TRAPS.md · AP-068"
+   ],
+   "created": "2026-09-06T00:17:21",
+   "updated": "2026-09-06T00:17:21",
+   "history": [
+    {
+     "at": "2026-09-06T00:17:21",
      "actor": "po",
      "action": "created",
      "detail": ""
