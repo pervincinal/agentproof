@@ -38,6 +38,7 @@ sınır — yəni testlər sayğacı yox, sorğunun getmədiyini ölçür.
 | Şirkət opt-out siyahısındadır | **DAYAN** |
 
 Opt-out siyahısı: `docs/optout.txt` (boşdursa, heç kim istəməyib).
+Hədəflər: [`outreach/targets.md`](outreach/targets.md).
 
 ---
 
