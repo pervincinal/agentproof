@@ -2711,7 +2711,7 @@
     "README.md"
    ],
    "created": "2026-08-28T13:42:24",
-   "updated": "2026-09-02T12:51:25",
+   "updated": "2026-09-06T00:26:38",
    "history": [
     {
      "at": "2026-08-28T13:42:24",
@@ -2724,6 +2724,12 @@
      "actor": "po",
      "action": "comment",
      "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:26:38",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
     }
    ],
    "comments": [
@@ -2731,6 +2737,11 @@
      "at": "2026-09-02T12:51:25",
      "actor": "po",
      "text": "Bagliliq: AP-062 (3 musteri sohbeti) tamamlanmadan bu task acilmir. Sohbet neticesi (sovdelesme / insident / sehv seviyye / kateqoriya yoxdur) bu backlog-un yeniden prioritetlesdirilmesinin girisidir."
+    },
+    {
+     "at": "2026-09-06T00:26:38",
+     "actor": "po",
+     "text": "AP-061-den asilidir. Uc zengin neticesi (sovdelesme / insident / sehv seviyye / kateqoriya yoxdur) bu backlog-un yeniden prioritetlesdirilmesinin yeganee girisidir — ondan evvel aciq deyil."
     }
    ]
   },
@@ -3377,20 +3388,26 @@
    "desc": "Her biri 2-3 saat. TAPINTI TAPILMASA GONDERME — bu, qaydanin bir hissesidir, yoxsa spam-a cevrilir. Artefaktlar saxlanilir ve mektuba elave olunur.",
    "role": "founder",
    "prio": "P0",
-   "status": "backlog",
+   "status": "blocked",
    "assignee": null,
    "dod": "3 on-audit qacirilib; artefaktlar reports/ altinda; gonderilenler izleme faylinda; her gonderisde 7 qaydanin hamisi yoxlanilib ve qeyd olunub.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 1 · Gun 6-7"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-06T00:26:38",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:26:38",
+     "actor": "po",
+     "action": "backlog→blocked",
+     "detail": "Agent icra ede bilmez: (1) mektub gondermek — agent hec bir poct hesabina girmir; (2) hedef siyahisinin [N] sutunlari (demo URL, API senedi, ToS avtomatlasdirma bendi) hele yoxlanmayib — AP-056 §6, setir basina ~10 deqiqe. Masin hazirdir: --profile preaudit sorgu limitini kodla tetbiq edir, import_manual.py el ile yolu bagladi, bir sehifelik sablon ve mektub metni hazirdir. Bloklayan yeganee sey insan hereketidir."
     }
    ],
    "comments": []
@@ -3431,20 +3448,26 @@
    "desc": "Meqsed satmaq deyil — bir ferziyyeni sinamaq: insanlar bunu uygunluq ucun deyil, SOVDELESME ucun alir. Satmaga calissan, cavablari korlayacaqsan.",
    "role": "founder",
    "prio": "P1",
-   "status": "backlog",
+   "status": "blocked",
    "assignee": null,
    "dod": "3 zeng olub; qeydler sablona yazilib; her birinde tetikleyici adlandirilib VE YA 'adlandirilmadi' aciq qeyd olunub; netice AP-041-e otürülüb.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 2 · AP-041"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-06T00:26:38",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:26:38",
+     "actor": "po",
+     "action": "backlog→blocked",
+     "detail": "Yalniz Parvin ede biler — musteri zengi. Ssenari, 6 sual ve qeyd sablonu hazirdir (docs/outreach/discovery-call.md). Neticesi AP-041-in girisidir."
     }
    ],
    "comments": []
@@ -3635,19 +3658,25 @@
    "desc": "Satis plani EU/UK-dan basladir (vaxt zonasi). Aurora Goods siyasetleri ise neytral/ABS yonumludur. QERAR: EU-ya uygun variant lazimdirmi (GDPR bendleri, EUR, AB istehlakci huquqlari), yoxsa movcud korpus kifayetdir? 'Lazim deyil' de qebul edilen neticedir.",
    "role": "dataset-eng",
    "prio": "P2",
-   "status": "backlog",
+   "status": "done",
    "assignee": null,
    "dod": "Qerar senedi; her iki variantin xerci ve faydasi yazilib; qerar esaslandirilib; lazim deyilse sebeb aciq yazilib.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · cografiya qerari · target/corpus/"
    ],
    "created": "2026-09-02T12:51:13",
-   "updated": "2026-09-02T12:51:13",
+   "updated": "2026-09-06T00:17:21",
    "history": [
     {
      "at": "2026-09-02T12:51:13",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:17:21",
+     "actor": "po",
+     "action": "backlog→done",
      "detail": ""
     }
    ],
@@ -3659,19 +3688,25 @@
    "desc": "14 ayda 8 satinalma oldu ve qalan musteqiller (Braintrust, LangSmith, Arize, Patronus, Comet, Maxim, Fiddler, PromptLayer) tezyiq altindadir. Her yeni satinalma B-1 neytralliq arqumentini GUCLENDIRIR — izlenilmelidir.",
    "role": "scout",
    "prio": "P3",
-   "status": "backlog",
+   "status": "done",
    "assignee": null,
    "dod": "Izleme siyahisi repo-da; novbeti yoxlama tarixi qeyd olunub; her deyisiklikde musteqillik beyanati sehifesi yenilenir.",
    "links": [
     "artifact:ace51aca (bazar hesabati) · konsolidasiya cedveli"
    ],
    "created": "2026-09-02T12:51:13",
-   "updated": "2026-09-02T12:51:13",
+   "updated": "2026-09-06T00:19:16",
    "history": [
     {
      "at": "2026-09-02T12:51:13",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:19:16",
+     "actor": "po",
+     "action": "backlog→done",
      "detail": ""
     }
    ],
@@ -3737,19 +3772,25 @@
    "desc": "AP-055 qerarinin B yolu: yalniz veb-vidceti olan hedefde suallari EL ILE yazib cavablari transkript fayline kocururuk, sonra hemin transkript eyni qrader + tekrarlanma zencirinden kecir. Bu olmadan el ile on-audit ETMIRIK, cunki qradersiz 'tapinti' sadece fikirdir. Dizayn: adapter YOX (25 conformance yoxlamasi replay ucun uygun deyil — rate limit, halt ssenarilerini simulyasiya ede bilmir), evezine 'evals/import_manual.py' — transkript faylini RunRecord-a cevirir, olcumeyen sahelerи (usage, retrieved, conversation_id) None kimi yazir, sifir kimi YOX.",
    "role": "harness-eng",
    "prio": "P2",
-   "status": "backlog",
+   "status": "done",
    "assignee": null,
    "dod": "import_manual.py transkripti RunRecord-a cevirir; olcumeyen her sahe None-dur ve hesabatda 'olculmedi' kimi gorunur; reproduce.py netice uzerinde iserleyir; el ile qacisin ARTEFAKTI avtomatik qacisdan ferqlendirilir (menbe sahesi); test: uydurma deyer yazilmadigi qorunur.",
    "links": [
     "docs/PREAUDIT-ENTRYPOINT.md B yolu · docs/PREAUDIT.md · AP-055"
    ],
    "created": "2026-09-05T23:42:24",
-   "updated": "2026-09-05T23:42:24",
+   "updated": "2026-09-06T00:26:10",
    "history": [
     {
      "at": "2026-09-05T23:42:24",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:26:10",
+     "actor": "po",
+     "action": "backlog→done",
      "detail": ""
     }
    ],
