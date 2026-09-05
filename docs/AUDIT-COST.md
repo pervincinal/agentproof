@@ -448,6 +448,27 @@ Marjanın sıfır olduğu saat sayı:
 *təkrarlanan mərhələlər (korpus + dataset + qaçış + triage + grader auditi +
 hesabat) neçə saat çəkir?* Cavab bilinən kimi döşəmə birbaşa oxunur.
 
+### 10.2 H-i ölçən alət (AP-062)
+
+`agentproof/timesheet.py` §9-dakı «HƏR MÜŞTƏRİDƏ» mərhələlərini eyni adla
+sayır və **yazılmamış mərhələni sıfır kimi göstərmir** — hesabatda `[N]`
+qalır, cəmə qatılmır və döşəmə «ALT HƏDD» damğası ilə çıxır.
+
+```bash
+python -m agentproof.timesheet --engagement acme start triage
+python -m agentproof.timesheet --engagement acme stop
+python -m agentproof.timesheet --engagement acme report --rate 100
+```
+
+**Bağladığı sətirlər.** §11-dəki altı `[N]` əmək sətri — korpus, dataset,
+tam qaçış, triage, grader auditi, hesabat — ilk audit bu alətlə qeyd
+olunandan sonra `[Ö]` olur. `[N]` qalan hər sətir hesabatda görünür, yəni
+qismən doldurulmuş cədvəl tam kimi oxunmur.
+
+**Bağlamadığı.** Alət saatı yazmır — sən yazırsan. Unudulmuş mərhələ
+`[N]` qalır və bu, düzgün nəticədir: ölçülməmiş iş üçün rəqəm uydurmaqdansa
+naməlum yazmaq yaxşıdır.
+
 **İlk müştəri auditində ölçülməli olan yeganə şey budur.** Tövsiyə: ilk audit
 zamanı §9-dakı hər təkrarlanan sətir üçün faktiki saat qeyd olunsun — bu, ikinci
 zəngdən başlayaraq qiyməti təxmin olmaqdan çıxarır.
