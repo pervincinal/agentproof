@@ -24,6 +24,11 @@ and checked whether the *grader* was right.
 **Full finding register:** [`FINDINGS.md`](FINDINGS.md) ·
 **What we did not measure:** [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md)
 
+We also audit other people's agents for a fixed price:
+**[agentproof-site.onrender.com](https://agentproof-site.onrender.com)** ·
+**[Rules of engagement](https://agentproof-site.onrender.com/rules)** — the
+seven constraints we work under when we test a public demo unasked.
+
 ## Why the numbers are shaped like that
 
 A grader that looks correct can be wrong in both directions. Ours marked a
