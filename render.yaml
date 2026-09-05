@@ -36,7 +36,11 @@ services:
         - site/**
 
     # PR onizlemesi lazim deyil — tek adam, tek branch.
-    pullRequestPreviewsEnabled: false
+    # `pullRequestPreviewsEnabled` kohnelib; Render artiq `previews.generation`
+    # istəyir. "off" dirnaq icindedir: dirnaqsiz YAML onu `false` boolean-i kimi
+    # oxuyur ve Render sətir gozleyir.
+    previews:
+      generation: "off"
 
     headers:
       - path: /*
