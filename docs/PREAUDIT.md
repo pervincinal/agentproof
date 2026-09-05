@@ -1,6 +1,6 @@
 # PREAUDIT.md — ön-audit runbook
 
-**Tapşırıq:** AP-054 · **Qayda mənbəyi:** [`site/rules.html`](../site/rules.html) ·
+**Tapşırıq:** AP-054 · **Alıcı:** [`ICP.md`](ICP.md) · **Qayda mənbəyi:** [`site/rules.html`](../site/rules.html) ·
 **Kod:** `agentproof/preaudit.py` · `evals/run.py --profile preaudit`
 
 Ön-audit odur ki, bir şirkətin **açıq demo** agentini heç kim bizi işə
@@ -30,7 +30,8 @@ sınır — yəni testlər sayğacı yox, sorğunun getmədiyini ölçür.
 
 | Yoxlama | Keçmirsə |
 |---|---|
-| Demo **açıqdır** (hesab, açar, dəvət tələb etmir) | **DAYAN** — qayda 1 |
+| Agent saytda **girişsiz danışır** (hesab, açar, dəvət tələb etmir) | **DAYAN** — qayda 1 |
+| Suallar **siyasət haqqındadır**, konkret müştəri haqqında YOX | **DAYAN** — qayda 4 |
 | Sənədləşdirilmiş API və ya lokal qaçan açıq mənbə var | Əl ilə yol — [`PREAUDIT-ENTRYPOINT.md`](PREAUDIT-ENTRYPOINT.md) §B |
 | İstifadə şərtləri avtomatlaşdırılmış girişi qadağan etmir | Əl ilə test et, ya da **DAYAN** — qayda 2 |
 | Şərtlər qeyri-müəyyəndir | Qadağan sayılır — **DAYAN** |

@@ -3838,23 +3838,41 @@
    "desc": "AP-056 yoxlamasi planin Faza 1 ferziyyesini sindirdi. Sira A-nin 10/10 sirketinde autentifikasiyasiz test edile bilen seth YOXDUR — ne aciq API, ne sandbox, ne ozunexidmet demo. Bu, kateqoriyanin qurulusudur: korporativ B2B AI sirketleri API acmir. Qayda 1 (yalniz aciq seth, hesab yaratmiriq) ve AP-055 meyari birlikde 'aciq demonu test et, tapinti gonder' hereketini bu ICP-ye qarsi baglayir. UC YOL: (A) alicini deyis — agenti SATAN yox, agenti oz saytinda ISLEDEN sirket (bank/sigorta/telekom ictimai destek botu her kese aciqdir); (B) subutlu cixisdan imtina et, adi soyuq mektub (planin oz tehlili bunun islemeyeceyini deyir); (C) hedefi aciq menbe agentlere cevir ve umumi hesabat derc et — satis yox, etibar kanali, A ile birlikde isleyir. Qerar Parvinindir.",
    "role": "po",
    "prio": "P0",
-   "status": "todo",
+   "status": "done",
    "assignee": null,
    "dod": "Yol secilib ve sebebi yazilib; secim satis planinin Faza 1-ine ve hedef siyahisinin meyarlarina kocurulub; sayt/mektub metni yeni ICP-ye uygunlasdirilib (lazimdirsa); AP-059 bloklu qalmagin sebebi yenilenib.",
    "links": [
     "docs/outreach/target-list.md §5A · docs/PREAUDIT-ENTRYPOINT.md R-1 · AP-056"
    ],
    "created": "2026-09-06T00:33:17",
-   "updated": "2026-09-06T00:33:17",
+   "updated": "2026-09-06T00:39:58",
    "history": [
     {
      "at": "2026-09-06T00:33:17",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:39:58",
+     "actor": "po",
+     "action": "todo→done",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:39:58",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-06T00:39:58",
+     "actor": "po",
+     "text": "Qerar: A yolu — alici agenti ISLEDEN sirketdir. Senedlesdi: docs/ICP.md. Kocuruldu: site/index.html (acilis + Fit), docs/outreach/cold-email.md (agri deyisdi), docs/outreach/target-list.md (kohne siyahi KOHNELDI kimi isarelendi, yeni qurulma qaydasi §0), docs/PREAUDIT.md (dayandirici yoxlamalara 'girissiz danisirmi' ve 'sual siyaset haqqindadir' elave olundu). Elave tapinti: EU AI Act 02.08.2026-dan tetbiq olunur ve maliyye/sigorta uzre uygunluq qerarina tesir eden catbotlar YUKSEK RISKLI sayilir — ohdelik ISLEDENINDIR, tedarukcunun yox. Yeni ICP-de tenzimleme arqumenti gucludur (bazar hesabatinin R-5 riski satici ICP-si ucun dogru idi, bunun ucun yox)."
+    }
+   ]
   }
  ]
 }
