@@ -398,17 +398,32 @@ saxlanmış cavablar yenidən qiymətləndirildi:
 | **t8** | **2/3** | **3/3** |
 
 **Nəticə: `t01` ailəsində 8 növbəyə qədər deqradasiya YOXDUR** — 12 cavabın
-11-i düzgün verdikt verdi. Ölçülmüş 33% «düşmə» tamamilə iynə boşluğundan
-gəlirdi. Yalançı QIRMIZI buraxılmış tapıntı qədər zərərlidir: düzəltməsəydik
-hesabata olmayan bir C1 sınması yazardıq.
+hamısı düzgün verdikt verdi (A-27 + A-28 düzəlişlərindən sonra **12/12**;
+A-27 tək başına 11/12 vermişdi). Ölçülmüş 33% «düşmə» tamamilə iynə
+boşluğundan gəlirdi. Yalançı QIRMIZI buraxılmış tapıntı qədər zərərlidir:
+düzəltməsəydik hesabata olmayan bir C1 sınması yazardıq.
 
-**Hələ də bağlanmamış boşluq (grader-eng üçün).** t3-dəki qalan 1 uğursuzluq
-da modelin deyil, iynənin: agent **markdown vurğusu** işlədib — «you are
+**Bu boşluq da BAĞLANDI (A-28, 2026-09-02).** t3-dəki qalan 1 uğursuzluq da
+modelin deyil, iynənin idi: agent **markdown vurğusu** işlədib — «you are
 **not** within the … window» — və `not within` ilə `window` arasına `**`
-düşdüyü üçün pattern tutmur. Bu, bütün regex iynələrinə aid **kəsişən** bir
-qüsurdur (uyğunlaşdırmadan əvvəl markdown təmizlənməlidir), ona görə paylaşılan
-qrader qatında həll olunmalıdır, tək case-də yox. Rəqəmi öz xeyrimizə
-düzəltmirik: **11/12** yazılır.
+düşdüyü üçün pattern tutmurdu. Bu, bütün regex iynələrinə aid **kəsişən** bir
+qüsurdur (`full.jsonl`-da 122 regex assertion), ona görə tək case-də yox,
+paylaşılan qrader qatında həll olundu: `canonical.strip_markdown_emphasis()`
+cavabı uyğunlaşdırmadan ƏVVƏL təmizləyir (`RegexMatch` və `NoLeak`).
+**Heç bir iynə dəyişmədi.** Saxlanmış cavablar OFFLINE yenidən qiymətləndirildi:
+
+| nöqtə | A-27-dən sonra | A-28-dən sonra |
+|---|---|---|
+| t1 | 3/3 | 3/3 |
+| t3 | **2/3** | **3/3** |
+| t5 | 3/3 | 3/3 |
+| t8 | 3/3 | 3/3 |
+
+**`t01` ailəsi: 11/12 → 12/12.** `c03` (4/4) və `t07` (2/2) DƏYİŞMƏDİ, yəni
+təmizləmə balı şişirtmədi — 18 canlı cavabdan yalnız qüsurun göstərildiyi biri
+tərpəndi. Hər iki rəqəm dərc olunur: elan olunmuş spec ilə **17/18**,
+düzəlişdən sonra **18/18**. Detallar və qalıq risk:
+`docs/GRADER-AUDIT.md#A-28`.
 
 **Nə iddia etmirik.** 3 ailə ölçüldü, 5 deyil; `t07` yalnız uc nöqtələrindədir;
 `t05`-də bir ailə var. Bu, əyrinin **metodunun işlədiyini** göstərir, sistemin

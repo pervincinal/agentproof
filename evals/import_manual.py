@@ -45,6 +45,9 @@ from agentproof.types import (  # noqa: E402
 #: «bilmirəm» ilə «sıfır» arasındakı fərq bu layihənin əsas qaydasıdır.
 UNMEASURABLE = ("usage", "cost_usd", "latency_ms", "retrieved", "tool_calls")
 
+#: Şablonda doldurulmamış sahənin markeri.
+PLACEHOLDER = "<<PASTE AGENT ANSWER>>"
+
 
 def load_cases(dataset: pathlib.Path) -> dict[str, Case]:
     cases: dict[str, Case] = {}
@@ -90,8 +93,22 @@ def build(transcript: dict[str, Any], cases: dict[str, Case]) -> RunRecord:
             raise SystemExit(f"{where}: datasetdə belə case yoxdur: {case_id!r}")
         if "text" not in entry:
             raise SystemExit(f"{where}: `text` yoxdur")
+        text = str(entry["text"])
+        # Doldurulmamış şablon qiymətləndirilsə, boş mətn bütün inkar
+        # assertion-larından KEÇƏR və mövcud olmayan tapıntı yaradardı.
+        if not text.strip():
+            raise SystemExit(
+                f"{where} ({entry.get('case_id')}): `text` BOŞDUR.\n"
+                "  Doldurulmamış şablon qiymətləndirilmir — boş cavab "
+                "uydurma tapıntı yaradır."
+            )
+        if PLACEHOLDER in text:
+            raise SystemExit(
+                f"{where} ({entry.get('case_id')}): {PLACEHOLDER!r} hələ "
+                "yerindədir — agentin cavabı köçürülməyib."
+            )
         response = AgentResponse(
-            text=entry["text"],
+            text=text,
             raw={
                 "source": "manual_transcript",
                 "measured": False,

@@ -21,7 +21,7 @@ import yaml
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from evals.import_manual import UNMEASURABLE, build, load_cases  # noqa: E402
+from evals.import_manual import PLACEHOLDER, UNMEASURABLE, build, load_cases  # noqa: E402
 
 DATASET = ROOT / "evals" / "datasets" / "full.jsonl"
 CASE_OK = "bva-b-01-return_window_standard-13"
@@ -159,3 +159,14 @@ def test_three_matching_attempts_do_become_a_candidate(tmp_path) -> None:
     assert rerun.returncode == 0, rerun.stderr
     report = json.loads((out / "reproduction.json").read_text())
     assert "stable-fail" in json.dumps(report, ensure_ascii=False)
+
+
+def test_empty_answer_is_refused_not_graded(cases) -> None:
+    """Doldurulmamış şablon uydurma tapıntı yaratmamalıdır."""
+    with pytest.raises(SystemExit, match="BOŞDUR"):
+        build(_transcript([{"case_id": CASE_OK, "attempt": 1, "text": "   "}]), cases)
+
+
+def test_placeholder_left_in_place_is_refused(cases) -> None:
+    with pytest.raises(SystemExit, match="yerindədir"):
+        build(_transcript([{"case_id": CASE_OK, "attempt": 1, "text": PLACEHOLDER}]), cases)
