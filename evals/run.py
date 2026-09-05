@@ -24,6 +24,7 @@ from agentproof.adapters.env_config import (  # noqa: E402
     adapter_config_from_env as _adapter_config_from_env,
 )
 from agentproof.failure import HALT, REASON_HINT  # noqa: E402
+from agentproof.preaudit import BUDGET, BUDGET_EXHAUSTED  # noqa: E402
 from agentproof.graders import registry  # noqa: E402
 from agentproof.graders.calibration import load_report  # noqa: E402
 from agentproof.graders.judge import (  # noqa: E402
@@ -91,6 +92,17 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--seed", type=int, default=None)
     p.add_argument("--baseline", default=None)
     p.add_argument("--max-connections", type=int, default=8)
+    p.add_argument("--profile", default=None, choices=["preaudit"],
+                   help=("`preaudit`: dərc olunmuş qaydaları TƏTBİQ EDİR — "
+                         "tək bağlantı, sorğu büdcəsi, sorğular arası fasilə. "
+                         "site/rules.html §3. Digər bayraqlarla üstələnə bilər."))
+    p.add_argument("--request-budget", type=int, default=None,
+                   help="hədəfə göndəriləcək MAKSIMUM sorğu (təkrarlar daxil)")
+    p.add_argument("--budget-file", default=None,
+                   help=("büdcə sayğacının faylı — iki mərhələli ön-audit "
+                         "eyni büdcəni bölüşsün deyə. Hədəf başına bir fayl."))
+    p.add_argument("--min-request-interval", type=float, default=None,
+                   help="ardıcıl sorğular arasında minimum saniyə")
     p.add_argument("--out", default=None, help="reports/<run_id>/ qovluğu")
     p.add_argument("--fail-on-regression", action="store_true")
     p.add_argument("--fail-on-repeat-mismatch", action="store_true",
@@ -187,6 +199,15 @@ def bind_judges(cases, args) -> list[str]:
     for name in judged:
         registry.get(name).bind(client, config)  # type: ignore[union-attr]
     return judged
+
+
+
+def _halt_hint(reason: str | None) -> str:
+    """Büdcə dayanması xəta deyil — vədin işlədiyinin sübutudur."""
+    if reason == BUDGET_EXHAUSTED:
+        return ("dərc olunmuş sorğu həddi qorundu (site/rules.html §3) — "
+                "bu, qüsur deyil, hasarın işləməsidir")
+    return REASON_HINT.get(reason or "", "")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -319,6 +340,30 @@ def main(argv: list[str] | None = None) -> int:
     # Geri qayıtmayan xəta bayrağı hər qaçışda təmiz başlayır (AP-024).
     HALT.reset()
 
+    # --- ön-audit profili -------------------------------------------------
+    # Qaydalar sənəddə deyil, BURADA tətbiq olunur. Profil yalnız defolt
+    # verir: açıq yazılmış bayraq həmişə üstün gəlir, yəni profil heç vaxt
+    # istifadəçinin qərarını səssizcə dəyişmir.
+    BUDGET.reset()
+    if args.profile == "preaudit":
+        if args.max_connections > 1:
+            args.max_connections = 1
+        budget = args.request_budget if args.request_budget is not None else 30
+        interval = (args.min_request_interval
+                    if args.min_request_interval is not None else 1.0)
+        BUDGET.arm(budget, args.budget_file, interval)
+    elif args.request_budget is not None:
+        BUDGET.arm(args.request_budget, args.budget_file,
+                   args.min_request_interval or 0.0)
+    if BUDGET.armed:
+        print(
+            f"Ön-audit büdcəsi: {BUDGET.remaining} sorğu qalıb "
+            f"({BUDGET.spent}/{BUDGET.limit} istifadə olunub) · "
+            f"bağlantı {args.max_connections} · "
+            f"fasilə {args.min_request_interval or 1.0}s",
+            file=sys.stderr,
+        )
+
     logs = inspect_eval(
         task,
         # Hədəf MODEL deyil, MƏHSULDUR — Inspect model qatı ümumiyyətlə işə düşmür.
@@ -399,7 +444,7 @@ def main(argv: list[str] | None = None) -> int:
         # Yarımçıq qaçış YAŞIL çıxa bilməz: qalan case-lər ümumiyyətlə
         # göndərilmədi, yəni "nə keçdi, nə sındı" — ölçülmədi (AP-024 §3).
         print(
-            f"\nQAÇIŞ DAYANDIRILDI — {HALT.reason}: {REASON_HINT.get(HALT.reason or '', '')}\n"
+            f"\nQAÇIŞ DAYANDIRILDI — {HALT.reason}: {_halt_hint(HALT.reason)}\n"
             f"  ilk görünmə: {HALT.case_id or '?'}\n"
             f"  səbəb      : {HALT.detail}\n"
             "  Qalan case-lər hədəfə GÖNDƏRİLMƏDİ — bu nəticə tam deyil.\n"

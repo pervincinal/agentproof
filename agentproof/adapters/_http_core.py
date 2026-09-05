@@ -33,6 +33,7 @@ from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Sequence
 
 from agentproof.failure import BAD_REQUEST, HALT, HALTING, REASON_HINT, RETRYABLE
+from agentproof.preaudit import BUDGET, BUDGET_EXHAUSTED
 from agentproof.types import AgentResponse, ToolCall, Usage, RetrievedChunk
 
 # --- backoff (AP-024) ------------------------------------------------------
@@ -205,6 +206,11 @@ async def send_with_retry(
     attempt = 0
     while True:
         attempt += 1
+        # Ön-audit büdcəsi HƏR cəhddən əvvəl yoxlanır — təkrar da hədəfin
+        # serverində bir sorğudur, ona görə o da sayılır (`preaudit.py`).
+        if not BUDGET.spend(case_id):
+            HALT.trip(BUDGET_EXHAUSTED, BUDGET.detail(), case_id)
+            return halted_response(context)
         turn = await send_once()
         if turn.error is None or turn.error_class not in RETRYABLE:
             break
