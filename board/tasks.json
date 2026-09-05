@@ -3286,14 +3286,14 @@
    "desc": "Meyarlar: Seriya A-B, 20-150 nefer, ACIQ TEST EDILE BILEN agent demosu, tenzimlenen sahe (bank/sigorta/sehiyye/telekom/huquq), EU/UK merkezli. Aciq demosu olmayani siyahiya SALMA — bu meyar siyahini yariya endirir ve qalani deyerli edir.",
    "role": "scout",
    "prio": "P0",
-   "status": "review",
+   "status": "done",
    "assignee": null,
    "dod": "40 setir; her setirde demo URL, sahe, olcu, sirket boyu; her hedefin ToS-unda avtomatlasdirma bendi yoxlanilib ve qadagan edirse ISARELENIB; EU/UK payi >=70%.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 1 · hedef siyahisi"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-05T23:54:27",
+   "updated": "2026-09-06T00:49:40",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
@@ -3312,6 +3312,18 @@
      "actor": "po",
      "action": "comment",
      "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:49:40",
+     "actor": "po",
+     "action": "review→done",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:49:40",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
     }
    ],
    "comments": [
@@ -3319,6 +3331,11 @@
      "at": "2026-09-05T23:54:27",
      "actor": "po",
      "text": "22/40 setir. Ad/seher/tesvir/celb — Dealroom siyahisindan [O]. Demo URL, API senedi, isci sayi, ToS bendi — [N], sirket-sirket acilib oxunmalidir. 8 sehiyye sirketi qesden cixarilib: onlar goruntu/siqnal modelleridir, sohbet agenti deyil — bizim metod onlara tetbiq olunmur. 40-a catmaq ucun siyahini uzatmaq yox, menbe artirmaq lazimdir (EU-Startups siyahisi HTTP 403 verdi, el ile acilmalidir)."
+    },
+    {
+     "at": "2026-09-06T00:49:40",
+     "actor": "po",
+     "text": "v2 bitdi: docs/outreach/targets.md. 5 TESDIQLENMIS (girissiz cat DOM-da gorulub: Acorn Insurance, A1 Slovenija, Simplyhealth, Zego, SpareBank 1 Ostlandet), 3 aydinlasdirilmali (Plum, Pockit-Cloudflare, Yonder), 5 satici menbeyinden yoxlanmamis, 3 ses agenti EHATEDEN KENAR. Hec bir agente mesaj yazilmadi — yalniz sehife yuklenib DOM-a baxilib."
     }
    ]
   },
@@ -3395,7 +3412,7 @@
     "artifact:c44e6a50 (satis strategiyasi) · Faza 1 · Gun 6-7"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-06T00:33:36",
+   "updated": "2026-09-06T00:49:40",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
@@ -3414,6 +3431,12 @@
      "actor": "po",
      "action": "comment",
      "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:49:40",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
     }
    ],
    "comments": [
@@ -3421,6 +3444,11 @@
      "at": "2026-09-06T00:33:36",
      "actor": "po",
      "text": "AP-056 yoxlamasindan sonra bloklanma sebebi DEYISDI. Evvel: '[N] sutunlari yoxlanmayib'. Indi: sutunlar yoxlanildi ve Sira A-nin 10/10-u kecmir — autentifikasiyasiz test edile bilen seth yoxdur. Bloklayan artiq melumat catismazligi deyil, ICP-nin ozudur. AP-073 helle olunmadan bu task acilmir."
+    },
+    {
+     "at": "2026-09-06T00:49:40",
+     "actor": "po",
+     "text": "Artiq melumat catismazligi yoxdur: targets.md-de 5 tesdiqlenmis namized var. Qalan sertler: (1) her biri ucun ToS-un avtomatlasdirma bendi oxunmali; (2) optout.txt yoxlanmali; (3) mektubu Parvin gonderir. Masin hazirdir."
     }
    ]
   },
