@@ -142,6 +142,30 @@ reproduksiya statusu ayrıca ölçülür: **9 cəhdin 8-i**.
 
 ---
 
+### 2.4 Bizim maraq toqquşmamız ⛔ **MƏCBURİ BÖLMƏ**
+
+
+
+**Toqquşma.** Müqavilədəki sıfır tapıntı şərti — heç bir təkrarlanmış
+uğursuzluq tapılmasa haqqın yarısı ödənilir — bizə **uğursuzluq tapmaq marağı
+yaradır**. Bunu bilirik və gizlətmirik.
+
+**Hasar.** Bizi saxlayan §2.3-dəki reproduksiya qapısıdır: qapıdan keçməyən
+heç nə bu hesabata düşmür və qapı bizim mühakiməmiz deyil, **koddur**.
+
+**Yoxlayın.** Qapının kodu açıqdır — `evals/reproduce.py`, Apache 2.0,
+`github.com/pervincinal/agentproof`. Bu hesabatın hər tapıntısının xam
+qaçış artefaktı sizə verilir, yəni **bizim filtrimizi öz filtrinizlə yenidən
+qaça bilərsiniz.**
+
+**İkinci hasar.** Tapıntı sayı ödənişə **heç bir formada bağlı deyil** — nə
+bonus, nə uğur haqqı. Tapıntı başına ödəniş auditoru tapıntı istehsalçısına
+çevirir.
+
+**Üçüncü tərəf.** Bu auditin sifarişçisi ilə aramızda başqa kommersiya əlaqəsi **yoxdur**. Aurora Goods bu metodologiyanı nümayiş etdirmək üçün bizim qurduğumuz sınaq sistemidir və bu, §2.2-də açıq yazılıb — real müştəri auditində sınanan sistemi biz qurmuruq, çünki quraşdırma işi görmürük.
+
+---
+
 ## 3. Təsdiqlənmiş tapıntılar
 
 **Ümumi reproduksiya mühiti:** `DIFY_BASE_URL=http://localhost:8088/v1`,
