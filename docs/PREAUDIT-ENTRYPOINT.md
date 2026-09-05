@@ -99,9 +99,14 @@ təkrarlanma qapısını tətbiq edir — bir cəhdlik case namizəd sayılmır.
 
 ## Açıq risklər — gizlətmirik
 
-**R-1 · Meyar siyahını yarıya endirir.** Sənədli API tələbi 40 namizədin
-təxminən yarısını kəsə bilər. Ölçülməyib — AP-056 siyahısı qurulanda faktiki
-nisbət yazılacaq. Bu sənəd rəqəm uydurmur.
+**R-1 · ÖLÇÜLDÜ — və proqnozum səhv çıxdı.** «Yarısını kəsə bilər» yazmışdım.
+06.09.2026-da Sıra A-nın **10 şirkətinin 10-u** yoxlanıldı: heç birində
+autentifikasiyasız test edilə bilən səth yoxdur. Nə açıq API, nə sandbox, nə
+özünəxidmət demo — hamısı «book a demo» / «request access».
+
+Bu, meyarın sərtliyi deyil, **kateqoriyanın quruluşudur**: korporativ B2B AI
+şirkətləri API-ni açmır. Yəni bloklayıcı texniki deyil, **ICP-nin özündədir**
+və qərar `docs/outreach/target-list.md` §5A-dadır (AP-073).
 
 **R-2 · Əl ilə yol miqyaslanmır.** 12 sual əl ilə ~40 dəqiqədir. 15 ön-audit
 üçün bu, təkbaşına idarə oluna bilər; 50 üçün yox. Miqyas lazım olanda qərar

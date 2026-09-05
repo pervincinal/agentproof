@@ -1,5 +1,5 @@
 {
- "seq": 72,
+ "seq": 73,
  "tasks": [
   {
    "id": "AP-001",
@@ -3395,7 +3395,7 @@
     "artifact:c44e6a50 (satis strategiyasi) · Faza 1 · Gun 6-7"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-06T00:26:38",
+   "updated": "2026-09-06T00:33:36",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
@@ -3408,9 +3408,21 @@
      "actor": "po",
      "action": "backlog→blocked",
      "detail": "Agent icra ede bilmez: (1) mektub gondermek — agent hec bir poct hesabina girmir; (2) hedef siyahisinin [N] sutunlari (demo URL, API senedi, ToS avtomatlasdirma bendi) hele yoxlanmayib — AP-056 §6, setir basina ~10 deqiqe. Masin hazirdir: --profile preaudit sorgu limitini kodla tetbiq edir, import_manual.py el ile yolu bagladi, bir sehifelik sablon ve mektub metni hazirdir. Bloklayan yeganee sey insan hereketidir."
+    },
+    {
+     "at": "2026-09-06T00:33:36",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-06T00:33:36",
+     "actor": "po",
+     "text": "AP-056 yoxlamasindan sonra bloklanma sebebi DEYISDI. Evvel: '[N] sutunlari yoxlanmayib'. Indi: sutunlar yoxlanildi ve Sira A-nin 10/10-u kecmir — autentifikasiyasiz test edile bilen seth yoxdur. Bloklayan artiq melumat catismazligi deyil, ICP-nin ozudur. AP-073 helle olunmadan bu task acilmir."
+    }
+   ]
   },
   {
    "id": "AP-060",
@@ -3813,6 +3825,30 @@
    "history": [
     {
      "at": "2026-09-06T00:17:21",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
+    }
+   ],
+   "comments": []
+  },
+  {
+   "id": "AP-073",
+   "title": "ICP qerari: sübutlu cixis kime qarsi isleyir",
+   "desc": "AP-056 yoxlamasi planin Faza 1 ferziyyesini sindirdi. Sira A-nin 10/10 sirketinde autentifikasiyasiz test edile bilen seth YOXDUR — ne aciq API, ne sandbox, ne ozunexidmet demo. Bu, kateqoriyanin qurulusudur: korporativ B2B AI sirketleri API acmir. Qayda 1 (yalniz aciq seth, hesab yaratmiriq) ve AP-055 meyari birlikde 'aciq demonu test et, tapinti gonder' hereketini bu ICP-ye qarsi baglayir. UC YOL: (A) alicini deyis — agenti SATAN yox, agenti oz saytinda ISLEDEN sirket (bank/sigorta/telekom ictimai destek botu her kese aciqdir); (B) subutlu cixisdan imtina et, adi soyuq mektub (planin oz tehlili bunun islemeyeceyini deyir); (C) hedefi aciq menbe agentlere cevir ve umumi hesabat derc et — satis yox, etibar kanali, A ile birlikde isleyir. Qerar Parvinindir.",
+   "role": "po",
+   "prio": "P0",
+   "status": "todo",
+   "assignee": null,
+   "dod": "Yol secilib ve sebebi yazilib; secim satis planinin Faza 1-ine ve hedef siyahisinin meyarlarina kocurulub; sayt/mektub metni yeni ICP-ye uygunlasdirilib (lazimdirsa); AP-059 bloklu qalmagin sebebi yenilenib.",
+   "links": [
+    "docs/outreach/target-list.md §5A · docs/PREAUDIT-ENTRYPOINT.md R-1 · AP-056"
+   ],
+   "created": "2026-09-06T00:33:17",
+   "updated": "2026-09-06T00:33:17",
+   "history": [
+    {
+     "at": "2026-09-06T00:33:17",
      "actor": "po",
      "action": "created",
      "detail": ""
