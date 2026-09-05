@@ -81,9 +81,13 @@ yaxındır. Meyar filtri həm texniki, həm kommersiya filtridir.
 4. Transkripti eyni qrader zəncirindən keçir — **hökmü yenə kod verir, mən
    yox.**
 
-Dördüncü addım hələ qurulmayıb; onun üçün ayrıca tapşırıq açılıb (AP-071).
-O olmadan əl ilə ön-audit **etmirik**, çünki qradersiz «tapıntı» sadəcə
-mənim fikrimdir.
+Dördüncü addım qurulub: `evals/import_manual.py` (AP-071). Transkripti
+RunRecord-a çevirir və eyni qraderlərdən keçirir, sonra `reproduce.py` eyni
+təkrarlanma qapısını tətbiq edir — bir cəhdlik case namizəd sayılmır.
+
+Ölçülməyən sahələr (`usage`, gecikmə, retrieval, tool izi) **sıfır yazılmır**:
+`None` qalır və artefaktda `measured: false` ilə işarələnir. Transkriptə onları
+əl ilə yazmağa cəhd edilsə, skript dayanır.
 
 ### C · Nə vaxt tamamilə imtina edirik
 
