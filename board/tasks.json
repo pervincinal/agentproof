@@ -1,5 +1,5 @@
 {
- "seq": 70,
+ "seq": 71,
  "tasks": [
   {
    "id": "AP-001",
@@ -3173,19 +3173,25 @@
    "desc": "Aciq demo uzerinde kicik, tekrarlana bilen qacis. Test qaydalarini KODLA icra edir: <=30 sorgu, tek sessiya, paralel yox, suretlendirilmis rate limit, avtomatik dayanma. Bu, qaydanin sened olmaqdan cixib hasar olmasidir.",
    "role": "harness-eng",
    "prio": "P0",
-   "status": "todo",
+   "status": "done",
    "assignee": null,
    "dod": "'--profile preaudit' movcuddur; sorgu sayi kodla mehdudlasib ve asilsa qacis DAYANIR (xeta ile); runbook sened olunub; qaydalar sehifesine istinad var; mock hedefde test edilib.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 1 · test qaydalari"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-05T23:38:10",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-05T23:38:10",
+     "actor": "po",
+     "action": "todo→done",
      "detail": ""
     }
    ],
@@ -3365,19 +3371,25 @@
    "desc": "AUDIT-COST.md qiymet dosemesini REQEMLE YOX, DUSTURLA verir: doseme = $40 + H x R, cunki H (emek saati) olculmeyib. Model xerci audit basina cemi $20-26 — yeni qiymetin ~1%-i. Doseme tamamile emekdedir ve o naimelumdur. Ilk odenisli auditde her tekrarlanan merhele ucun faktiki saat yazilmalidir.",
    "role": "harness-eng",
    "prio": "P0",
-   "status": "todo",
+   "status": "done",
    "assignee": null,
    "dod": "Sade timesheet mexanizmi (CLI ve ya fayl) movcuddur; merhele adlari AUDIT-COST.md §9 ile eynidir; ilk auditde istifadeye hazirdir; [N] setirlerinin hansilarini bagladigi yazilib.",
    "links": [
     "artifact:ace51aca (bazar hesabati) · artifact:c44e6a50 (satis strategiyasi) · docs/AUDIT-COST.md §9-§10"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:51:12",
+   "updated": "2026-09-05T23:40:31",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
      "actor": "po",
      "action": "created",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-05T23:40:31",
+     "actor": "po",
+     "action": "todo→done",
      "detail": ""
     }
    ],
@@ -3557,14 +3569,14 @@
    "desc": "Sayt qurularken tapildi. (1) README.md 'evals/datasets/ | 150 cases' yazir — faktiki full.jsonl 192 case-dir. (2) docs/LIMITATIONS.md LIM-I03 'Judge kalibrasiyasi REAL qacirilmayib' deyir ve dry-run reqemlerini (agreement 0.30, kappa 0.00) gosterir — halbuki evals/calibration/report.json REAL claude-opus-5 ile olculub: agreement 0.967, kappa 0.95, qapi KECIB (JUDGE-CALIBRATION.md §4.5, 2026-08-27). LIM-I03 baglanmali ve ya yenilenmelidir. Ikisi de DERC OLUNMUS senedlerdedir ve sayt onlara istinad edir.",
    "role": "writer",
    "prio": "P1",
-   "status": "in_progress",
+   "status": "done",
    "assignee": "writer",
    "dod": "README case sayi 192-ye duzeldilib ve build_full.py --check ile uygunlasib; LIM-I03 ya BAGLI kimi isarelenib ya da olculmus reqemlerle yenilenib; her iki duzelis ucun sebeb yazilib; sayt reqemleri ile senedler ust-uste dusur.",
    "links": [
     "site/index.html · README.md · docs/LIMITATIONS.md LIM-I03 · docs/JUDGE-CALIBRATION.md §4.5"
    ],
    "created": "2026-09-02T13:02:11",
-   "updated": "2026-09-05T23:08:55",
+   "updated": "2026-09-05T23:23:28",
    "history": [
     {
      "at": "2026-09-02T13:02:11",
@@ -3583,6 +3595,48 @@
      "actor": "po",
      "action": "assigned",
      "detail": "writer"
+    },
+    {
+     "at": "2026-09-05T23:23:28",
+     "actor": "po",
+     "action": "in_progress→done",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-05T23:23:28",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
+    }
+   ],
+   "comments": [
+    {
+     "at": "2026-09-05T23:23:28",
+     "actor": "po",
+     "text": "Bagladi. (1) Sayt 192 case yazirdi — real 185; full.jsonl-in basinda 7 serh setri var, mən setirleri saymisdim. Canli sayt duzeldi. (2) LIM-I03 kalibrasiyani 'hec olculmeyib' kimi gosterirdi — 2026-08-27-de real qacirilib (96.7%, k=0.95) ve 3 case judge-01-de olculub (2 kecdi, 1 sindi, FINDINGS §7-de derc olunub). Bagli, amma dar qaliq saxlanildi: tam qacis --stage cheap-dir, o 3 case bas pass-rate-e daxil deyil. (3) README 150 -> 185; test sayi tamamile cixarildi, cunki bu commit yazilarken iki defe deyisdi. (4) test_site_figures.py: her derc olunan reqem artefakta baglandi, muhafizesiz reqem derci bloklanir. Hər iki yarim qesden sindirilib yoxlanildi."
+    }
+   ]
+  },
+  {
+   "id": "AP-071",
+   "title": "El ile transkriptden qrader zenciri (manual on-audit)",
+   "desc": "AP-055 qerarinin B yolu: yalniz veb-vidceti olan hedefde suallari EL ILE yazib cavablari transkript fayline kocururuk, sonra hemin transkript eyni qrader + tekrarlanma zencirinden kecir. Bu olmadan el ile on-audit ETMIRIK, cunki qradersiz 'tapinti' sadece fikirdir. Dizayn: adapter YOX (25 conformance yoxlamasi replay ucun uygun deyil — rate limit, halt ssenarilerini simulyasiya ede bilmir), evezine 'evals/import_manual.py' — transkript faylini RunRecord-a cevirir, olcumeyen sahelerи (usage, retrieved, conversation_id) None kimi yazir, sifir kimi YOX.",
+   "role": "harness-eng",
+   "prio": "P2",
+   "status": "backlog",
+   "assignee": null,
+   "dod": "import_manual.py transkripti RunRecord-a cevirir; olcumeyen her sahe None-dur ve hesabatda 'olculmedi' kimi gorunur; reproduce.py netice uzerinde iserleyir; el ile qacisin ARTEFAKTI avtomatik qacisdan ferqlendirilir (menbe sahesi); test: uydurma deyer yazilmadigi qorunur.",
+   "links": [
+    "docs/PREAUDIT-ENTRYPOINT.md B yolu · docs/PREAUDIT.md · AP-055"
+   ],
+   "created": "2026-09-05T23:42:24",
+   "updated": "2026-09-05T23:42:24",
+   "history": [
+    {
+     "at": "2026-09-05T23:42:24",
+     "actor": "po",
+     "action": "created",
+     "detail": ""
     }
    ],
    "comments": []

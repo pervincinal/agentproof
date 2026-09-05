@@ -31,6 +31,7 @@ sınır — yəni testlər sayğacı yox, sorğunun getmədiyini ölçür.
 | Yoxlama | Keçmirsə |
 |---|---|
 | Demo **açıqdır** (hesab, açar, dəvət tələb etmir) | **DAYAN** — qayda 1 |
+| Sənədləşdirilmiş API və ya lokal qaçan açıq mənbə var | Əl ilə yol — [`PREAUDIT-ENTRYPOINT.md`](PREAUDIT-ENTRYPOINT.md) §B |
 | İstifadə şərtləri avtomatlaşdırılmış girişi qadağan etmir | Əl ilə test et, ya da **DAYAN** — qayda 2 |
 | Şərtlər qeyri-müəyyəndir | Qadağan sayılır — **DAYAN** |
 | Şirkət opt-out siyahısındadır | **DAYAN** |
