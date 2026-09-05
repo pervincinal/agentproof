@@ -42,6 +42,18 @@ services:
     previews:
       generation: "off"
 
+    # Render statik saytlari `.html` uzantisini kesir: `/rules` verir,
+    # `/rules.html` ise 404-dur. Sehife linkleri artiq temiz URL isledir;
+    # bu yonlendirmeler kohne ve ya elle yazilmis `.html` linkleri qirilmasin
+    # deye qoyulub.
+    routes:
+      - type: redirect
+        source: /index.html
+        destination: /
+      - type: redirect
+        source: /rules.html
+        destination: /rules
+
     headers:
       - path: /*
         name: X-Content-Type-Options
