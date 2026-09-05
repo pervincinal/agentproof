@@ -1,0 +1,3 @@
+# Test edilməməsini istəyən domenlər — hər ön-auditdən ƏVVƏL yoxlanılır.
+# Bir sətir = bir domen. Səbəb soruşulmur və yazılmır.
+# Mənbə: site/rules.html §Opt out
