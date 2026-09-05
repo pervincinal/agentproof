@@ -75,21 +75,38 @@ qarışdırmaq — grader səhvini hədəfin səhvi kimi göstərmək — uydurm
   hesablanmış düzəldilmiş rate işlədilə bilər.
 - **Mənbə.** `docs/GRADER-AUDIT.md` A-07 (AÇIQ) · `evals/datasets/COVERAGE.md` §3.
 
-### LIM-I03 · Judge kalibrasiyası REAL qaçırılmayıb — **↓ GİZLƏDİR**
+### LIM-I03 · Judge kalibrasiyası REAL qaçırılmayıb — **BAĞLANDI (AP-070, 2026-09-05)**
 
-- **Nə ölçülmədi.** `evals/calibration/report.json` hazırda **dry-run null
-  modelin** nəticəsidir: `judge_model: "dry-run/constant"`, `agreement: 0.30`,
-  `kappa: 0.00`. Qapı (uyğunluq ≥ 85% VƏ κ ≥ 0.70) **heç ölçülməyib**.
-- **Niyə.** `ANTHROPIC_API_KEY` mühitdə yoxdur (AP-003 `blocked`).
-- **Nəticəsi.** `requires_justification` rubrikasına yönləndirilmiş **3 case**
-  (30 gün toqquşması) indiyə qədər ölçülməyib — tam qaçış `--stage cheap` ilə
-  gedir. Yəni R6 bloku natamamdır və "147/150 determinist" rəqəmi izahsız qalır.
-- **İstiqamət.** Uğursuzluqları gizlədir: determinist grader-in **prinsipcə**
-  ayıra bilmədiyi 3 hal ümumiyyətlə qiymətləndirilməyib. PLAN.md qaydası №2-yə
-  görə kalibrasiya olunmamış judge nəticəsi **dərc oluna bilməz** — yəni bu
-  bölmədən hesabata heç bir rəqəm düşmür.
-- **Azaltma.** AP-003 (API açarı mühitə verilməlidir) → sonra AP-004.
-- **Mənbə.** `docs/JUDGE-CALIBRATION.md` §4 · `evals/calibration/report.json`.
+- **Nə idi.** `evals/calibration/report.json` **dry-run null modelin**
+  nəticəsi idi (`judge_model: "dry-run/constant"`, `agreement: 0.30`,
+  `kappa: 0.00`), ona görə qapı (uyğunluq ≥ 85% VƏ κ ≥ 0.70) ölçülməmiş
+  sayılırdı və `requires_justification` rubrikasına yönləndirilmiş **3 case**
+  qiymətləndirilməmiş qalırdı. Səbəb: `ANTHROPIC_API_KEY` mühitdə yox idi
+  (AP-003 `blocked`).
+- **Necə bağlandı.** AP-003 açıldıqdan sonra kalibrasiya **2026-08-27-də real
+  modellə** qaçırıldı və 3 case `judge-01` qaçışında ölçüldü. Bu sənəd isə
+  həmin tarixdən sonra **yenilənmədi** — məhdudiyyət artıq mövcud olmadığı
+  halda açıq göründü. Boşluq ölçmədə deyil, **sənədin özündə** idi; bunu
+  ictimai sayt hazırlanarkən rəqəmlər artefaktla tutuşdurulanda gördük.
+- **Ölçülmüş nəticə.** `evals/calibration/report.json`: `judge_model:
+  "claude-opus-5"`, `dry_run: false`, uyğunluq **96.7%** (29/30), Cohen's κ
+  **0.95**, n = 30, rubrika `requires_justification@v1` **dəyişmədən**,
+  `labels_sha256: 7580a521aa2f61a5a7…`. Qapı **KEÇDİ** — birinci iterasiyada.
+- **3 case ölçüldü və nəticəsi dərc olundu.**
+  `reports/judge-01/FPDP6Ucx9PD24VBWWe7WCw.json`: `n_graded: 3`,
+  `n_passed: 2`, `n_failed: 1`. Sınan case
+  `r6j-collision-30kg-domestic-vs-intl` `FINDINGS.md` §7-də tam təhlili ilə
+  yazılıb: cavabın **rəqəmi də, nəticəsi də düzgündür**, yalnız söykəndiyi
+  qayda səhvdir (beynəlxalq §3.1 = 30.0 kq qəbul həddi, halbuki sual daxili
+  §4.3 = 30.0 kq-dan yuxarı 25 AZN əlavə haqq). Determinist grader bunu
+  **YAŞIL boyayardı** — judge qatının niyə lazım olduğunun sübutu budur.
+- **Qalıq (AÇIQ, dar).** Tam qaçış hələ də `--stage cheap` ilə gedir, ona görə
+  bu 3 case **baş sətir pass-rate-inə daxil deyil** — onlar ayrıca `judge-01`
+  qaçışında ölçülüb. Baş rəqəmi oxuyan adam bu 3 case-in orada olmadığını
+  bilməlidir. Bu, ölçülməmişlik deyil, **hesablama sərhədidir**.
+- **Mənbə.** `docs/JUDGE-CALIBRATION.md` §4.5 ·
+  `evals/calibration/report.json` ·
+  `reports/judge-01/FPDP6Ucx9PD24VBWWe7WCw.json` · `FINDINGS.md` §7.
 
 ### LIM-I04 · Judge-in mövqe (position) yanlılığı ölçülmədi — **⊘ TƏTBİQ OLUNMUR**
 
@@ -259,6 +276,7 @@ qarışdırmaq — grader səhvini hədəfin səhvi kimi göstərmək — uydurm
 
 | ID | Nə idi | Necə bağlandı | Təsdiq |
 |---|---|---|---|
+| **LIM-I03** | Judge kalibrasiyası dry-run null modelin rəqəmlərini göstərirdi (`agreement 0.30`, `kappa 0.00`) və 3 `requires_justification` case-i ölçülməmiş sayılırdı | Kalibrasiya 2026-08-27-də real `claude-opus-5` ilə qaçırıldı; sənəd bu tarixdən sonra yenilənməmişdi, AP-070-də düzəldildi | Uyğunluq **96.7%**, κ **0.95**, n=30, rubrika dəyişmədən; 3 case `judge-01`-də ölçüldü (2 keçdi, 1 sındı və `FINDINGS.md` §7-də dərc olundu) |
 | **A-08** | Çılpaq rəqəm iynəsi (`contains_all: ["3"]`) tarixin, sifariş nömrəsinin, onluq kəsrin içində tapılırdı → **yalançı YAŞIL** (6 case) | Case yamaqla yox, **grader səviyyəsində**: `graders/deterministic/text.py` → `numeric_spec` + `contains_number`; rəqəm yalnız **müstəqil kəmiyyət tokeni** kimi axtarılır | 8/8 müstəqil yoxlama, hər iki istiqamət (`14` → `within 14 calendar days` tutulur, `2026-08-14` tutulmur) |
 | **A-01 – A-05** | AZ/RU morfoloji boşluqları: düşən sait (`невозможен`), inkar şəkilçisi (`bitməyib`), natamam hərf sinfi, `ANY_FIGURE` yalnız ingiliscə vahidlər | `build_full.py` §1b-də pattern-lər genişləndirildi; 20 qeyri-ingilis case-in 18-ində ən azı bir pattern düzəldildi | 133 parametrləşdirilmiş test (`test_multilingual_patterns.py`); `pytest` 339 → 472 |
 | **Adapter — çoxnövbəli** | `dify_http` yalnız sonuncu istifadəçi növbəsini göndərirdi və `conversation_id`-ni zəncirləmirdi → 15 çoxnövbəli case tək-növbəli kimi ölçülərdi | Adapter bütün növbələri BİR söhbətdə ardıcıl göndərir; hər növbənin mətni/tool/`usage`/retrieval-ı ayrıca qalır | Canlı Dify-da təsdiqləndi (`pw-02-…-t3` — üç növbə eyni `conversation_id`-də); `test_multi_turn.py`, `test_isolation.py` |

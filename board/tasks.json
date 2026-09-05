@@ -2897,14 +2897,14 @@
    "desc": "Hesabatdaki qiymet pillesi: $3-6k giris / $12-18k tam / $2-4k ay. Struktur: ne edirik, NE ETMIRIK (qurmuruq), ne qeder, kim ucun. Addimlar: 1) metn 2) statik HTML site/ qovlugunda 3) GitHub Pages. Hesabatin qaydasi: qiymeti gizleden auditor meslehetci kimi oxunur.",
    "role": "writer",
    "prio": "P0",
-   "status": "in_progress",
+   "status": "done",
    "assignee": "writer",
    "dod": "Sayt canlidir; qiymet sehifede reqemle yazilib; 'elaqe saxlayin' formu qiymeti EVEZ ETMIR; mobil oxunur; test qaydalari ve numune hesabata link var.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 0"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:53:15",
+   "updated": "2026-09-05T23:07:39",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
@@ -2923,9 +2923,33 @@
      "actor": "po",
      "action": "assigned",
      "detail": "writer"
+    },
+    {
+     "at": "2026-09-02T13:02:41",
+     "actor": "po",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-05T23:07:39",
+     "actor": "po",
+     "action": "review→done",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-05T23:07:39",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
     }
    ],
-   "comments": []
+   "comments": [
+    {
+     "at": "2026-09-05T23:07:39",
+     "actor": "po",
+     "text": "Canli: https://agentproof-site.onrender.com — Render blueprint (render.yaml), statik, pulsuz. Deploy 43.6s. Uc qusur canli saytda tapildi ve baglandi: (1) Render .html uzantisini kesir, butun naviqasiya 404 idi; (2) /rules/ formasinda nisbi CSS 404 verirdi, sehife stilsiz acilirdi; (3) pullRequestPreviewsEnabled kohnelmisdi. Lokal onizleme artiq Render kimi davranir (site/_dev_server.py)."
+    }
+   ]
   },
   {
    "id": "AP-046",
@@ -2933,14 +2957,14 @@
    "desc": "Satis hesabatindaki 7 sert qayda olduğu kimi derc olunur: yalniz aciq demo/sandbox; ToS yoxlanilir; <=30 sorgu tek sessiya; real sexsi melumat yox; tapinti evvelce yalniz sirkete; yazili razilq olmadan derc yoxdur; artefakt pulsuz verilir. Bu, marketinq deyil — auditorun etibar aktividir ve on-auditin huquqi-etik hasaridir.",
    "role": "writer",
    "prio": "P0",
-   "status": "in_progress",
+   "status": "done",
    "assignee": "writer",
    "dod": "7 qayda derc olunub; saytdan ve README-den linklenib; on-audit runbook-u bu sehifeye istinad edir; her qaydanin yaninda 'niye' bir cumle var.",
    "links": [
     "artifact:c44e6a50 (satis strategiyasi) · Faza 1 · on-audit"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-02T12:53:15",
+   "updated": "2026-09-05T23:07:39",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
@@ -2959,6 +2983,18 @@
      "actor": "po",
      "action": "assigned",
      "detail": "writer"
+    },
+    {
+     "at": "2026-09-02T13:02:41",
+     "actor": "po",
+     "action": "in_progress→review",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-05T23:07:39",
+     "actor": "po",
+     "action": "review→done",
+     "detail": ""
     }
    ],
    "comments": []
@@ -3521,20 +3557,32 @@
    "desc": "Sayt qurularken tapildi. (1) README.md 'evals/datasets/ | 150 cases' yazir — faktiki full.jsonl 192 case-dir. (2) docs/LIMITATIONS.md LIM-I03 'Judge kalibrasiyasi REAL qacirilmayib' deyir ve dry-run reqemlerini (agreement 0.30, kappa 0.00) gosterir — halbuki evals/calibration/report.json REAL claude-opus-5 ile olculub: agreement 0.967, kappa 0.95, qapi KECIB (JUDGE-CALIBRATION.md §4.5, 2026-08-27). LIM-I03 baglanmali ve ya yenilenmelidir. Ikisi de DERC OLUNMUS senedlerdedir ve sayt onlara istinad edir.",
    "role": "writer",
    "prio": "P1",
-   "status": "todo",
-   "assignee": null,
+   "status": "in_progress",
+   "assignee": "writer",
    "dod": "README case sayi 192-ye duzeldilib ve build_full.py --check ile uygunlasib; LIM-I03 ya BAGLI kimi isarelenib ya da olculmus reqemlerle yenilenib; her iki duzelis ucun sebeb yazilib; sayt reqemleri ile senedler ust-uste dusur.",
    "links": [
     "site/index.html · README.md · docs/LIMITATIONS.md LIM-I03 · docs/JUDGE-CALIBRATION.md §4.5"
    ],
    "created": "2026-09-02T13:02:11",
-   "updated": "2026-09-02T13:02:11",
+   "updated": "2026-09-05T23:08:55",
    "history": [
     {
      "at": "2026-09-02T13:02:11",
      "actor": "po",
      "action": "created",
      "detail": ""
+    },
+    {
+     "at": "2026-09-05T23:08:55",
+     "actor": "po",
+     "action": "todo→in_progress",
+     "detail": ""
+    },
+    {
+     "at": "2026-09-05T23:08:55",
+     "actor": "po",
+     "action": "assigned",
+     "detail": "writer"
     }
    ],
    "comments": []

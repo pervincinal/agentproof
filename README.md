@@ -46,7 +46,7 @@ before you trust it.**
 | Path | |
 |---|---|
 | `agentproof/` | Harness — adapters, 11 deterministic graders, calibrated LLM judge, reproduction gate, reporting |
-| `evals/datasets/` | 150 cases + generator + coverage rationale (boundary probes, pairwise) |
+| `evals/datasets/` | 185 cases + generator + coverage rationale (boundary probes, pairwise) |
 | `target/corpus/` | Synthetic corpus: 8 policy docs, 96 canonical parameters, 89 planted traps |
 | `target/tools/` | 5-tool mock service, clock pinned to `2026-09-01` |
 | `target/app/` | Dify app DSL + step-by-step import guide |
@@ -60,7 +60,7 @@ Built on [Inspect AI](https://github.com/UKGovernmentBEIS/inspect_ai)
 
 ```bash
 python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python -m pytest              # 1278 tests
+.venv/bin/python -m pytest              # full suite
 ```
 
 Standing up the target system (Dify + Ollama + the mock tool service) is
