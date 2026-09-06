@@ -95,6 +95,20 @@ yazır. Onsuz sən bir ay sonra öz datasetini oxuya bilməyəcəksən.
 Qraderlər: `contains_all` (rəqəm gəlməlidir), `contains_none` (səhv iddia
 gəlməməlidir), `regex_match` (verdikt formaları).
 
+### 3A · Yalnız İKİ DƏFƏ təsdiqlənmiş qaydanı götür
+
+Sənəd oxuma vasitələri PDF cədvəllərini həmişə eyni çıxarmır. Simplyhealth
+araşdırmasında **birinci keçid qualifying period sətrini TƏRSİNƏ qaytardı** və
+yalnız üçüncü keçiddə düzəldi.
+
+Ona görə qayda: **ən azı iki müstəqil keçiddə eyni çıxmayan rəqəm datasetə
+salınmır.** Tək keçidlik rəqəm üzərinə tapıntı qurmaq — mənbəni yoxlamadan
+ittiham etməkdir.
+
+Ölü link də adi haldır (Simplyhealth-in iki rəsmi şərt PDF-i **404** verir).
+Ona görə «dərc olunmayıb» yazma — **«oxuya bildiyimiz səhifələrdə tapılmadı»**
+yaz. Fərq hesabatda görünməlidir.
+
 ### 4 · Şablon qur, əl ilə doldur
 
 ```bash
@@ -153,6 +167,8 @@ Yəni əl ilə toplanmış cavab avtomatik qaçışdan **daha yumşaq qiymətlə
 
 | Fayl | Hədəf | Case | Mənbə |
 |---|---|---:|---|
-| `acorn.jsonl` | Acorn Insurance (UK) | 12 | `acorninsure.co.uk/faqs/`, `/policy-cancellation/` — 06.09.2026 |
+| `acorn.jsonl` | Acorn Insurance (UK) | 15 | FAQ, ləğv səhifəsi, **TOBA v7.3** — 06.09.2026 |
+| `acorn-v1.jsonl` | Acorn — sual mətninin 1-ci versiyası | 8 | DONDURULMUŞ; `preaudit/acorn/v1-session1` ona qarşı qiymətləndirilib |
+| `simplyhealth.jsonl` | Simplyhealth (UK) | 15 | 5 HTML səhifə + 3 PDF cədvəli — 06.09.2026 |
 
 Növbəti namizədlər: `docs/outreach/targets.md` §3.
