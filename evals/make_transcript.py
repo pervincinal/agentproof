@@ -93,10 +93,19 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--target", required=True)
     p.add_argument("--url", default="")
     p.add_argument("--repeat", type=int, default=1)
+    p.add_argument("--only", default=None,
+                   help=("yalnız bu case id-ləri (vergüllə). Mərhələ 2 üçün: "
+                         "namizədləri TƏKRARLA, hamısını yox"))
     p.add_argument("--out", required=True)
     args = p.parse_args(argv)
 
     cases, limit = load(pathlib.Path(args.dataset))
+    if args.only:
+        wanted = {x.strip() for x in args.only.split(",") if x.strip()}
+        missing = wanted - {c["id"] for c in cases}
+        if missing:
+            raise SystemExit(f"datasetdə belə case yoxdur: {sorted(missing)}")
+        cases = [c for c in cases if c["id"] in wanted]
     if not cases:
         raise SystemExit("datasetdə case yoxdur")
 
