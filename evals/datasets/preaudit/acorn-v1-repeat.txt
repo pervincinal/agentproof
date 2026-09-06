@@ -16,6 +16,18 @@
 @tester Parvin
 @note əl ilə — şərtlərdə avtomatlaşdırmaya açıq icazə yoxdur
 
+=== acorn-bva-50days-edge-50 #1
+SUAL: It is exactly the 50th day of my black box policy. If I cancel today, not for mileage and with no claims, which fees apply?
+# GÖZLƏNİLƏN: Kəsilmə nöqtəsi. FAQ «within the first 50 days» deyir — 50-ci gün DAXİLDİR.
+CAVAB:
+<<PASTE AGENT ANSWER>>
+
+=== acorn-bva-50days-edge-50 #2
+SUAL: It is exactly the 50th day of my black box policy. If I cancel today, not for mileage and with no claims, which fees apply?
+# GÖZLƏNİLƏN: Kəsilmə nöqtəsi. FAQ «within the first 50 days» deyir — 50-ci gün DAXİLDİR.
+CAVAB:
+<<PASTE AGENT ANSWER>>
+
 === acorn-r6-claim-window-fleet-vs-private #1
 SUAL: I have a commercial fleet policy with you. One of my vans had an accident. How quickly do I have to report it?
 # GÖZLƏNİLƏN: TƏLƏ: ümumi qayda 24 saat, FLEET qaydası 72 saatdır. Agent ümumi qaydanı tətbiq edərsə səhvdir.
