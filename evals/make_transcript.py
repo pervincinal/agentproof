@@ -48,7 +48,8 @@ def load(dataset: pathlib.Path) -> tuple[list[dict], int | None]:
     return out, limit
 
 
-def render(cases: list[dict], target: str, url: str, repeat: int) -> str:
+def render(cases: list[dict], target: str, url: str, repeat: int,
+           first_attempt: int = 1) -> str:
     """Düz mətn şablonu.
 
     YAML İŞLƏDİLMİR: agentin cavabında dırnaq, iki nöqtə və sətir keçidi olur;
@@ -65,8 +66,11 @@ def render(cases: list[dict], target: str, url: str, repeat: int) -> str:
         "#   4. Dırnaq, iki nöqtə, boş sətir — hamısı olar. Heç nə escape etmə.",
         "#   5. Cavab gəlmirsə həmin `===` blokunu BÜTÖVLÜKDƏ sil. Boş buraxma.",
         "#",
-        f"# Təkrar: hər sual {repeat} dəfə. Təkrarlanma qapısı 3/3 tələb edir —",
-        "# əvvəlcə namizədləri tap, sonra YALNIZ sınanları 2 dəfə də soruş.",
+        f"# Cəhdlər: #{first_attempt} … #{first_attempt + repeat - 1}. Təkrarlanma qapısı 3/3 tələb edir.",
+        "#",
+        "# ⚠️ HƏR CƏHD AYRI SÖHBƏTDƏ OLMALIDIR. Eyni pəncərədə təkrar soruşsan,",
+        "#    agent öz əvvəlki cavabını görür — bu, müstəqil cəhd deyil və",
+        "#    təkrarlanma ölçüsünü korlayır.",
         "",
         f"@target {target}",
         f"@url {url}",
@@ -76,7 +80,7 @@ def render(cases: list[dict], target: str, url: str, repeat: int) -> str:
         "",
     ]
     for i, c in enumerate(cases, 1):
-        for attempt in range(1, repeat + 1):
+        for attempt in range(first_attempt, first_attempt + repeat):
             lines.append(f"=== {c['id']} #{attempt}")
             lines.append(f"SUAL: {c['input']}")
             if c.get("note"):
@@ -93,6 +97,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--target", required=True)
     p.add_argument("--url", default="")
     p.add_argument("--repeat", type=int, default=1)
+    p.add_argument("--from-attempt", type=int, default=1,
+                   help=("cəhd nömrəsi buradan başlasın. Mərhələ 2-də MÜTLƏQ "
+                         "lazımdır: #1 artıq birinci sessiyada var, yenisi #2-dən "
+                         "başlamalıdır, yoxsa birləşdirəndə toqquşur"))
     p.add_argument("--only", default=None,
                    help=("yalnız bu case id-ləri (vergüllə). Mərhələ 2 üçün: "
                          "namizədləri TƏKRARLA, hamısını yox"))
@@ -119,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
                 + "\n".join(f"  {n} simvol — {cid}" for cid, n in over)
                 + "\n  Şablon qurulmadı. Sualları qısalt, sonra yenidən qaç."
             )
-    text = render(cases, args.target, args.url, args.repeat)
+    text = render(cases, args.target, args.url, args.repeat, args.from_attempt)
     out = pathlib.Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(text)
