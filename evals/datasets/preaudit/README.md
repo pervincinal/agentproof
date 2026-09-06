@@ -65,15 +65,20 @@ gəlməməlidir), `regex_match` (verdikt formaları).
 ```bash
 python3 evals/make_transcript.py evals/datasets/preaudit/<ad>.jsonl \
   --target <ad> --url <sayt> --repeat 1 \
-  --out evals/datasets/preaudit/<ad>-transcript.yaml
+  --out evals/datasets/preaudit/<ad>-transcript.txt
 ```
+
+**Format düz mətndir, YAML yox.** Səbəb praktikdir: agentin cavabında dırnaq,
+iki nöqtə, tire və boş sətir olur — onu YAML sətrinə yapışdırmaq faylı
+sındırır və insan işin ortasında qalır. `CAVAB:` sətrindən sonrakı hər şey
+cavabdır; heç nə escape edilmir.
 
 Skript mesaj sayını **dərc olunmuş 30 həddi ilə** tutuşdurur.
 
 Çatı aç, sualları yaz, cavabları yapışdır. Sonra:
 
 ```bash
-python3 evals/import_manual.py evals/datasets/preaudit/<ad>-transcript.yaml \
+python3 evals/import_manual.py evals/datasets/preaudit/<ad>-transcript.txt \
   --dataset evals/datasets/preaudit/<ad>.jsonl --out preaudit/<ad>/phase1
 python3 evals/reproduce.py preaudit/<ad>/phase1
 ```

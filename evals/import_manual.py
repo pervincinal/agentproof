@@ -25,6 +25,7 @@ import argparse
 import hashlib
 import json
 import pathlib
+import re
 import sys
 import uuid
 from typing import Any
@@ -47,6 +48,70 @@ UNMEASURABLE = ("usage", "cost_usd", "latency_ms", "retrieved", "tool_calls")
 
 #: Şablonda doldurulmamış sahənin markeri.
 PLACEHOLDER = "<<PASTE AGENT ANSWER>>"
+
+
+
+# ------------------------------------------------------- düz mətn formatı
+#: Case blokunun başlanğıcı: `=== <case_id> #<attempt>`
+_BLOCK = re.compile(r"^===\s+(\S+)\s+#(\d+)\s*$")
+#: Bu sətirdən SONRAKI hər şey cavabdır.
+_ANSWER_MARK = "CAVAB:"
+
+
+def parse_text(raw: str) -> dict[str, Any]:
+    """Düz mətn transkriptini oxuyur.
+
+    NİYƏ YAML DEYİL: agentin cavabında dırnaq, iki nöqtə, mötərizə və sətir
+    keçidi olur. Onu YAML sətrinə yapışdırmaq faylı sındırır və insan
+    ortada qalır. Burada cavab sərbəst mətndir — heç nə escape edilmir.
+    """
+    meta: dict[str, str] = {}
+    entries: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+    collecting = False
+
+    for line in raw.splitlines():
+        m = _BLOCK.match(line)
+        if m:
+            if current is not None:
+                entries.append(current)
+            current = {"case_id": m.group(1), "attempt": int(m.group(2)), "text": ""}
+            collecting = False
+            continue
+        if current is None:
+            if line.startswith("@"):
+                key, _, val = line[1:].partition(" ")
+                meta[key.strip()] = val.strip()
+            continue
+        if not collecting:
+            if line.strip() == _ANSWER_MARK:
+                collecting = True
+            continue
+        current["text"] += line + "\n"
+
+    if current is not None:
+        entries.append(current)
+
+    for e in entries:
+        e["text"] = e["text"].strip()
+
+    return {
+        "target": meta.get("target", ""),
+        "demo_url": meta.get("url", ""),
+        "tested_at": meta.get("date", ""),
+        "tester": meta.get("tester", ""),
+        "note": meta.get("note", ""),
+        "responses": entries,
+    }
+
+
+def read_transcript(path: pathlib.Path) -> dict[str, Any]:
+    raw = path.read_text()
+    if path.suffix.lower() in (".txt", ".md") or raw.lstrip().startswith("==="):
+        return parse_text(raw)
+    if "\n=== " in raw:
+        return parse_text(raw)
+    return yaml.safe_load(raw)
 
 
 def load_cases(dataset: pathlib.Path) -> dict[str, Case]:
@@ -182,7 +247,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", default=None, help="reports/<run_id>/ qovluğu")
     args = p.parse_args(argv)
 
-    transcript = yaml.safe_load(pathlib.Path(args.transcript).read_text())
+    transcript = read_transcript(pathlib.Path(args.transcript))
     cases = load_cases(pathlib.Path(args.dataset))
     record = build(transcript, cases)
 

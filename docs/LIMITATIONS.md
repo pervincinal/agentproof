@@ -226,28 +226,33 @@ qarışdırmaq — grader səhvini hədəfin səhvi kimi göstərmək — uydurm
   `message_cycle_manager.py:195-206` ·
   `agentproof/graders/deterministic/retrieval.py`.
 
-### LIM-I10 · Markdown vurğusu verdikt ifadəsinin içində regex iynəsini pozur — **↑ ŞİŞİRDİR** (AÇIQ)
+### LIM-I10 · Markdown vurğusu verdikt ifadəsinin içində regex iynəsini pozur — **BAĞLANDI (A-28, 2026-09-02)**
 
-- **Nə ölçülmür.** Agent verdikt ifadəsinin **ortasına** markdown vurğusu
-  qoyanda determinist iynə tutmur və düzgün cavab **uğursuzluq** kimi yazılır.
-  Real nümunə (AP-017, `c1curve-t01-…-t3`): «So actually you are **not** within
-  the standard return window» — `(?:no longer|not) within[^.]{0,30}window`
-  pattern-i `not` ilə `within` arasındakı `**` səbəbindən uyğunlaşmır.
-- **Niyə açıqdır.** Bu, tək case-in və ya tək makronun qüsuru deyil: **bütün**
-  regex iynələrinə aid **kəsişən** qüsurdur (`REJECT`, `WARRANTY_OVER`,
-  `UNAVAILABLE`, `REJECT_AZ/RU` …). Case yamağı ilə bağlanmamalıdır —
-  uyğunlaşdırmadan əvvəl cavab mətnindən markdown işarələri normallaşdırılmalıdır,
-  yəni paylaşılan **qrader qatında** həll olunmalıdır.
-- **İstiqamət.** Yalançı QIRMIZI istehsal edir → uğursuzluq sayını **ÇOX**
-  göstərir. AP-017-də ölçülmüş təsir: `t01` ailəsinin 12 cavabından **1-i** məhz
-  bu səbəbdən uğursuz sayılır (11/12 rəqəmi bu bənd bağlanmadığı üçün belədir və
-  öz xeyrimizə düzəldilmir).
-- **Nə qədər yayğın olduğu ÖLÇÜLMƏYİB.** Bu qüsurun bütün dataset üzrə neçə
-  case-ə toxunduğu sayılmayıb; yalnız AP-017 qaçışında bir dəfə müşahidə olunub.
-- **Azaltma.** Qrader qatında markdown normallaşdırma + hər iki istiqamətli test
-  (vurğulu və vurğusuz eyni cavab).
-- **Mənbə.** `FINDINGS.md` §4-A.6 · `evals/datasets/COVERAGE.md` §12.2 ·
-  `evals/datasets/build_full.py` (A-27 qeydi) ·
+- **Nə idi.** Agent verdikt ifadəsinin **ortasına** markdown vurğusu qoyanda
+  determinist iynə tutmurdu və düzgün cavab **uğursuzluq** kimi yazılırdı.
+  Real nümunə (AP-017, `c1curve-t01-…-t3`, təkrar 1): «So actually you are
+  **not** within the standard return window» — `(?:no longer|not)
+  within[^.]{0,30}window` pattern-i `not` ilə `within` arasındakı `**`
+  səbəbindən uyğunlaşmırdı.
+- **Necə bağlandı.** Case yamağı ilə YOX — qüsur **bütün** regex iynələrinə aid
+  **kəsişən** qüsur idi (`full.jsonl`-da 122 regex assertion: `REJECT`,
+  `WARRANTY_OVER`, `UNAVAILABLE`, `REJECT_AZ/RU` …), ona görə paylaşılan
+  **qrader qatında** həll olundu: `canonical.strip_markdown_emphasis()` cavab
+  mətnini uyğunlaşdırmadan ƏVVƏL təmizləyir (`RegexMatch`, `NoLeak`).
+  **Heç bir iynə dəyişmədi.**
+- **Ölçülmüş təsir.** 18 saxlanmış canlı cavab OFFLINE yenidən qiymətləndirildi:
+  **17/18 → 18/18**; `t01` ailəsi **11/12 → 12/12**, `c03` (4/4) və `t07` (2/2)
+  DƏYİŞMƏDİ. Hər iki rəqəm dərc olunur.
+- **Əks istiqamət də bağlandı.** `must_not_match` iynələrində eyni qüsur
+  **yalançı YAŞIL** verirdi (vurğulanmış səhv rədd iynədən yayınırdı); indi
+  tutulur. Qəbul tərəfi ayrıca pinləndi — 6 real QƏBUL cavabı hələ də tutulmur.
+- **Qalıq (AÇIQ).** `contains_all` / `contains_none` bu addımdan keçmir —
+  onlar token sərhədi yolundadır (A-06/A-08) və `*` orada **iynə markeridir**.
+  Vurğu iynənin İÇİNƏ düşəndə (`«**30** gün»`) həmin qatda qüsur qalır; canlı
+  qaçışda belə hal hələ ÖLÇÜLMƏYİB, ona görə spekulyativ düzəliş edilmədi.
+- **Mənbə.** `docs/GRADER-AUDIT.md#A-28` · `FINDINGS.md` §4-A.6 ·
+  `evals/datasets/COVERAGE.md` §12.2 ·
+  `agentproof/tests/test_grader_markdown_emphasis.py` ·
   `reports/ap017-curve-t01/logs/*.eval`.
 
 ### LIM-I11 · `--repeat N` determinist qraderlərdə qərarı dəyişmir — **↔ İKİ TƏRƏFLİ**
@@ -336,7 +341,8 @@ qarışdırmaq — grader səhvini hədəfin səhvi kimi göstərmək — uydurm
   ailə daxilində qalan hər şey hərfbəhərf eyni — yalnız **məsafə** dəyişir
   (0/2/4/7). Analizator: `evals/degradation.py`.
 - **Ölçülmüş nəticə.** **Ölçülən 3 ailədə 8 növbəyə qədər deqradasiya
-  TAPILMADI** (12 saxlanmış cavabın 11-i düzgün). Xam çıxışdakı «t8-də 33%
+  TAPILMADI** (12 saxlanmış cavabın hamısı düzgün — A-27 + A-28 düzəlişlərindən
+  sonra **12/12**; A-27 tək başına 11/12 vermişdi). Xam çıxışdakı «t8-də 33%
   düşmə» bizim `REJECT` iynəmizin boşluğu idi (A-27), modelin sınması yox.
 - **Qalan əhatə məhdudiyyəti — bu bənd BAĞLANMIR.**
   - **3 ailə ölçüldü, 5 yox:** `t07` yalnız uc nöqtələrindədir (t1, t8; t3/t5

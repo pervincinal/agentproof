@@ -1262,3 +1262,160 @@ prefiks markeri); `LABEL_ASSERT` içində `cod_available` (A-24) və
 
 `full.jsonl` generatordan yenidən törədildi
 (`python evals/datasets/build_full.py`).
+
+---
+
+# Dördüncü dövr — AP-017 deqradasiya qaçışında tapılanlar
+
+- **Tarix:** 2026-09-02
+- **Mənbə:** `reports/ap017-curve-t01`, `reports/ap017-curve-c03`,
+  `reports/ap017-curve-t07` (canlı, `dify_http` · `claude-sonnet-5` ·
+  2026-09-01) — 18 saxlanmış cavab, hər biri ƏL İLƏ oxundu.
+- **Reqressiya qoruması:** `agentproof/tests/test_grader_markdown_emphasis.py`
+  (37 test) + `agentproof/graders/tests/test_canonical.py` (14 yeni test).
+  `pytest`: **1278 → 1329**, hamısı yaşıl.
+
+## Xülasə — A-27…A-28
+
+| # | Sinif | Növ | Təsirlənən case | Vəziyyət |
+|---|-------|-----|-----------------|----------|
+| A-27 | `REJECT`: `window has closed` zərf yuvası + `would not be accepted` alternativi yox idi | **yalançı QIRMIZI** | `c1curve-t01-…-t8` | düzəldildi (AP-017) |
+| A-28 | Markdown vurğusu bütün regex iynələrini qırır | **yalançı QIRMIZI** (+ invertdə yalançı YAŞIL) | **122 regex assertion** (kəsişən) | düzəldildi |
+
+**A-27 harada sənədləşib.** Tam izahı `evals/datasets/build_full.py`
+(`REJECT` üzərindəki blok) və `evals/datasets/COVERAGE.md` §12.2-dədir;
+burada yalnız nömrələmə üçün sətir saxlanılır. **A-28 onu ƏVƏZ ETMİR** —
+zərf yuvası (`already`/`now`) və `would not be accepted` alternativi
+`REJECT`-də olduğu kimi qalır; ikisi ayrı boşluqdur.
+
+---
+
+## A-28 — markdown vurğusu regex iynələrini qırır (KƏSİŞƏN, yalançı QIRMIZI)
+
+**Case:** `c1curve-t01-standard-window-t3`, **təkrar 1**
+**Mənbə:** `reports/ap017-curve-t01/logs/*.eval` (canlı)
+
+`--repeat 3` ilə saxlanmış üç cavabdan birincisi belədir (HƏRFİ):
+
+> «Yes — you're within the standard 14-day return window.
+> …20 days elapsed puts you at day 20, which is **outside** the 14-day
+> standard window (valid through day 14).
+> So actually you are **not** within the standard return window — it closed
+> on 2026-08-26…»
+
+Verdikt DÜZGÜNDÜR (agent özünü düzəldir və rədd edir). İynə isə tutmur.
+
+**Kök səbəb.** `REJECT` içindəki alternativ:
+
+```
+(?:no longer|not) within[^.]{0,30}window
+```
+
+`not` ilə `within` arasında BİTİŞİK boşluq gözləyir. Model verdikt sözünü
+qalın yazanda ora `**` düşür:
+
+| səth | `not within` bitişikdir? |
+|------|--------------------------|
+| `you are not within the … window` | ✅ |
+| `you are **not** within the … window` | ❌ — arada `**` var |
+
+Eyni şey ikinci alternativdə də baş verir: `outside(?: of)? the[^.]{0,40}window`
+«**outside** the 14-day standard window» ilə uyğunlaşmır.
+
+**Niyə bu, tək case-in problemi DEYİL.** `full.jsonl`-da **122 regex
+assertion** var və model istənilən verdikt sözünü qalın yaza bilər. Ölçüldü:
+qüsur hər üç dildə mövcuddur — vurğu iynənin BİTİŞİK tələb etdiyi hissənin
+İÇİNƏ düşdükdə:
+
+| dil | nümunə | tutulurdu? |
+|-----|--------|-----------|
+| EN | `you are **not** within the … window` | ❌ |
+| EN | `that window has **already** closed` | ❌ |
+| AZ | `qaytara **bilmirik**` (`qaytar\w*\s+bilm…`) | ❌ |
+| RU | `не **принимается**` (`не\s+приним…`) | ❌ |
+
+Bütöv ifadəni qalın yazmaq (`**qaytara bilmirik**`) iynəni QIRMIR — `**`
+uyğunluğun kənarında qalır. Yəni qüsur təsadüfi deyil, amma hər vurğuda da
+işə düşmür; məhz buna görə uzun müddət görünmədi.
+
+**Düzəliş — QRADER QATINDA, iynədə YOX.** 122 iynəyə `\*{0,2}` yamamaq
+qüsuru bağlamazdı: növbəti iynə yenə yamaqsız yazılardı və eyni səhv
+qayıdardı (A-06/A-08 ilə eyni mühakimə). Ona görə cavab mətni
+uyğunlaşdırmadan ƏVVƏL bir dəfə təmizlənir:
+
+* `agentproof/graders/canonical.py` — `strip_markdown_emphasis()` (yeni):
+  `*`/`**`/`***`, backtick, və SÖZ SƏRHƏDİNDƏKİ `_`/`__` silinir;
+* `agentproof/graders/deterministic/text.py` — `RegexMatch.grade()` bu
+  təmizlənmiş mətndə axtarır;
+* `agentproof/graders/deterministic/leakage.py` — `NoLeak.grade()` də,
+  çünki `leak_patterns` da cavaba qarşı işləyən regex assertion-ıdır.
+
+**NİYƏ `canonical_text()`-in İÇİNDƏ DEYİL.** `canonical_text()` həm cavabı,
+həm də İYNƏNİ normallaşdırır, `*` isə iynədə **prefiks markeridir**
+(`"30 gün*"` → `phrase_spec` / `_cue_pattern`). Orada silsək A-06-nın bütün
+morfoloji əhatəsi dağılardı — `"30 gün*"` `"30 gün"`-ə çevrilər və `gündür`
+tutulmazdı. Ona görə bu, YALNIZ cavab mətninə tətbiq olunan ayrıca addımdır.
+Test: `test_strip_markdown_emphasis_is_not_applied_inside_canonical_text`.
+
+**İnvert istiqaməti — bu, ZƏİFLƏTMƏ deyil.** `must_not_match` iynələri üçün
+təmizləmə aşkarlamanı **ciddiləşdirir**: 13-cü gün QƏBUL əkizində
+(`bva-b-01-return_window_standard-13`) səhvən verilmiş və vurğulanmış rədd
+(«this order is **not** eligible») KÖHNƏ kodda iynədən yayınırdı, yəni səhv
+cavab KEÇİRDİ — **yalançı YAŞIL**. İndi tutulur.
+Test: `test_bolded_rejection_can_no_longer_slip_past_an_inverted_assertion`.
+
+**ÖLÇÜLMÜŞ TƏSİR** (18 saxlanmış canlı cavab, OFFLINE yenidən qiymətləndirmə,
+CARİ `full.jsonl` iynələri ilə):
+
+| ailə | düzəlişdən əvvəl | düzəlişdən sonra |
+|---|---|---|
+| `t01-standard-window` (4 nöqtə × 3 təkrar) | **11/12** | **12/12** |
+| `c03-plus-vs-promotional` (4 nöqtə × 1) | 4/4 | 4/4 |
+| `t07-warranty-on-delivery-version` (2 nöqtə × 1) | 2/2 | 2/2 |
+| **CƏMİ** | **17/18** | **18/18** |
+
+Yəni COVERAGE.md §12.2-də «hələ də bağlanmamış» kimi yazılmış YEGANƏ cavab
+bağlandı və başqa heç bir cavabın qərarı DƏYİŞMƏDİ. Bu vacibdir: təmizləmə
+mətni qısaldır, yəni `[^.]{0,30}` kimi məsafə şərtləri genişlənir — əgər
+iynələr həddindən artıq geniş olsaydı, qəbul tərəfi sınardı. Sınmadı.
+
+**Niyə bu, nəticəyə uyğunlaşdırma (p-hacking) deyil.**
+1. Cavab ƏL İLƏ oxundu və verdiktin düzgün olduğu grader-dən ƏVVƏL müəyyən
+   edildi (AP-021 metodu).
+2. Heç bir iynə DƏYİŞMƏDİ — nə `REJECT`, nə A-27-nin əlavələri. Dəyişən
+   yalnız cavabın normallaşdırılmasıdır.
+3. Qəbul tərəfi AYRICA bağlandı: `bva-b-29-…-14` (× 3) və `@recheck2` (× 3)
+   real QƏBUL cavabları — hamısı vurğu ilə doludur — hələ də tutulmur.
+4. Normallaşdırma başqa boşluqları ÖRTMÜR:
+   `test_normalization_does_not_paper_over_ordinary_pattern_gaps` göstərir ki,
+   `«cannot accept a **standard** return»` HƏLƏ DƏ tutulmur (bu, ayrı bir
+   pattern boşluğudur və A-28-ə yazılmır).
+5. **Hər iki rəqəm dərc olunur**: elan olunmuş spec ilə 17/18, düzəlişdən
+   sonra 18/18.
+
+**Qalıq risk (AÇIQ).** `contains_all` / `contains_none` iynələri bu addımdan
+KEÇMİR — onlar `canonical_text()` + token sərhədi yolundadır (A-06/A-08) və
+`*` orada iynə markeridir. Praktikada həmin qat markdown-a daha davamlıdır
+(`**` söz sərhədi sayılır, ona görə `«**30 gündür**»` `"30 gün*"` iynəsi ilə
+tutulur), amma vurğu iynənin İÇİNƏ düşəndə (`«**30** gün»`) eyni qüsur
+qalır. Bunu bağlamaq üçün iynə ilə mətnin AYRI normallaşdırılması lazımdır;
+canlı qaçışda hələ belə hal ÖLÇÜLMƏYİB, ona görə spekulyativ düzəliş
+edilmir — tapılanda öz A-NN nömrəsi ilə yazılacaq.
+
+**Sübut.** `agentproof/tests/test_grader_markdown_emphasis.py` (real cavab
+mətnləri `agentproof/tests/data_real_answers_ap017_curve_t01.json`-da
+HƏRFİ saxlanılır — `reports/` git-ə düşmür) ·
+`agentproof/graders/tests/test_canonical.py` (A-28 bloku).
+
+---
+
+## Düzəlişin yeri (dördüncü dövr)
+
+`agentproof/graders/canonical.py` — `strip_markdown_emphasis()` (yeni,
+`__all__`-a əlavə olundu);
+`agentproof/graders/deterministic/text.py` — `RegexMatch.grade()`;
+`agentproof/graders/deterministic/leakage.py` — `NoLeak.grade()`.
+
+**`evals/datasets/build_full.py` DƏYİŞMƏDİ** və `full.jsonl` yenidən
+törədilmədi — düzəliş dataset qatında deyil, qrader qatındadır. A-27-nin
+`REJECT`-ə etdiyi əlavələr olduğu kimi qalır.

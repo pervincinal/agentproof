@@ -170,3 +170,59 @@ def test_empty_answer_is_refused_not_graded(cases) -> None:
 def test_placeholder_left_in_place_is_refused(cases) -> None:
     with pytest.raises(SystemExit, match="yerindədir"):
         build(_transcript([{"case_id": CASE_OK, "attempt": 1, "text": PLACEHOLDER}]), cases)
+
+
+# ---------------------------------------------------- düz mətn formatı (AP-071)
+# NİYƏ: agentin cavabında dırnaq, iki nöqtə, tire və boş sətir olur. YAML
+# sətrinə yapışdırmaq faylı sındırırdı və insanı ortada qoyurdu.
+
+def _text_transcript(answer: str, case_id: str = CASE_OK) -> str:
+    return (
+        "@target acorn\n@url https://x\n@date 2026-09-06\n@tester P\n\n"
+        f"=== {case_id} #1\nSUAL: nə isə\nCAVAB:\n{answer}\n"
+    )
+
+
+def test_text_format_survives_quotes_colons_and_blank_lines() -> None:
+    from evals.import_manual import parse_text
+
+    answer = 'He said: "£55 fee" — and a £34 "device fee".\n\nSecond paragraph: it applies.'
+    t = parse_text(_text_transcript(answer))
+    assert t["target"] == "acorn"
+    assert len(t["responses"]) == 1
+    assert t["responses"][0]["text"] == answer
+
+
+def test_text_format_keeps_the_question_out_of_the_answer() -> None:
+    from evals.import_manual import parse_text
+
+    t = parse_text(_text_transcript("only the answer"))
+    assert "nə isə" not in t["responses"][0]["text"]
+
+
+def test_text_format_reads_multiple_attempts() -> None:
+    from evals.import_manual import parse_text
+
+    raw = (
+        "@target acorn\n\n"
+        f"=== {CASE_OK} #1\nCAVAB:\nbir\n\n"
+        f"=== {CASE_OK} #2\nCAVAB:\niki\n"
+    )
+    t = parse_text(raw)
+    assert [r["attempt"] for r in t["responses"]] == [1, 2]
+    assert [r["text"] for r in t["responses"]] == ["bir", "iki"]
+
+
+def test_text_format_placeholder_still_refused(cases) -> None:
+    from evals.import_manual import PLACEHOLDER, parse_text
+
+    with pytest.raises(SystemExit, match="yerindədir"):
+        build(parse_text(_text_transcript(PLACEHOLDER)), cases)
+
+
+def test_reader_picks_the_format_from_the_content(tmp_path) -> None:
+    from evals.import_manual import read_transcript
+
+    p = tmp_path / "t.txt"
+    p.write_text(_text_transcript("cavab"))
+    assert read_transcript(p)["target"] == "acorn"

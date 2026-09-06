@@ -10,7 +10,7 @@ Sən yalnız çatı açıb sualı yazır və cavabı yapışdırırsan.
 
     python3 evals/make_transcript.py evals/datasets/preaudit/acorn.jsonl \\
         --target acorn --url https://www.acorninsure.co.uk/ --repeat 1 \\
-        --out evals/datasets/preaudit/acorn-transcript.yaml
+        --out evals/datasets/preaudit/acorn-transcript.txt
 """
 
 from __future__ import annotations
@@ -36,36 +36,41 @@ def load(dataset: pathlib.Path) -> list[dict]:
 
 
 def render(cases: list[dict], target: str, url: str, repeat: int) -> str:
-    q = lambda s: s.replace("\\", "\\\\").replace('"', '\\"')
+    """Düz mətn şablonu.
+
+    YAML İŞLƏDİLMİR: agentin cavabında dırnaq, iki nöqtə və sətir keçidi olur;
+    onu YAML sətrinə yapışdırmaq faylı sındırır. Burada `CAVAB:` sətrindən
+    sonrakı hər şey cavabdır — heç nə escape edilmir.
+    """
     lines = [
         "# ƏL İLƏ ÖN-AUDİT TRANSKRİPTİ — doldurulacaq",
         "#",
-        "# 1. Çatı aç, sualı OLDUĞU KİMİ yaz.",
-        "# 2. Agentin cavabını `text` sahəsinə yapışdır.",
-        "# 3. Kəsmə, düzəltmə, xülasə etmə — qrader tam mətni oxuyur.",
-        "# 4. Cavab gəlmirsə sətri SİL; boş buraxma (skript boş mətni rədd edir).",
+        "# NECƏ DOLDURULUR",
+        "#   1. Çatı aç, `SUAL:` sətrindəki mətni OLDUĞU KİMİ yaz.",
+        "#   2. Agentin cavabını `CAVAB:` sətrinin ALTINA yapışdır.",
+        "#   3. Kəsmə, xülasə etmə, orfoqrafiya düzəltmə — qrader tam mətni oxuyur.",
+        "#   4. Dırnaq, iki nöqtə, boş sətir — hamısı olar. Heç nə escape etmə.",
+        "#   5. Cavab gəlmirsə həmin `===` blokunu BÜTÖVLÜKDƏ sil. Boş buraxma.",
         "#",
         f"# Təkrar: hər sual {repeat} dəfə. Təkrarlanma qapısı 3/3 tələb edir —",
-        "# yəni namizədləri tapandan sonra YALNIZ sınanları 2 dəfə də soruş.",
+        "# əvvəlcə namizədləri tap, sonra YALNIZ sınanları 2 dəfə də soruş.",
         "",
-        f"target: {target}",
-        f"demo_url: {url}",
-        'tested_at: "YYYY-MM-DD"',
-        "tester: Parvin",
-        'note: "əl ilə — şərtlərdə avtomatlaşdırmaya açıq icazə yoxdur"',
+        f"@target {target}",
+        f"@url {url}",
+        "@date YYYY-MM-DD",
+        "@tester Parvin",
+        "@note əl ilə — şərtlərdə avtomatlaşdırmaya açıq icazə yoxdur",
         "",
-        "responses:",
     ]
-    for c in cases:
-        lines.append(f"  # --- {c['id']}  [{c.get('severity', 'medium')}]")
-        lines.append(f"  #     SUAL: {c['input']}")
-        if c.get("note"):
-            lines.append(f"  #     GÖZLƏNİLƏN: {c['note']}")
+    for i, c in enumerate(cases, 1):
         for attempt in range(1, repeat + 1):
-            lines.append(f'  - case_id: "{c["id"]}"')
-            lines.append(f"    attempt: {attempt}")
-            lines.append(f'    text: "{q(PLACEHOLDER)}"')
-        lines.append("")
+            lines.append(f"=== {c['id']} #{attempt}")
+            lines.append(f"SUAL: {c['input']}")
+            if c.get("note"):
+                lines.append(f"# GÖZLƏNİLƏN: {c['note']}")
+            lines.append("CAVAB:")
+            lines.append(PLACEHOLDER)
+            lines.append("")
     return "\n".join(lines) + "\n"
 
 
