@@ -41,6 +41,7 @@ __all__ = [
     "cue_matches",
     "phrase_spec",
     "contains_phrase",
+    "strip_markdown_emphasis",
 ]
 
 TokenKind = Literal["quantity", "date", "word"]
@@ -140,6 +141,50 @@ def canonical_text(text: str, fold_case: bool = True) -> str:
     out = re.sub(r"[^\S\n]+", " ", out)
     out = re.sub(r"\n+", "\n", out)
     return out.strip()
+
+
+# --------------------------------------------------- markdown vurğusu (A-28)
+# `**`, `*`/`***`, `_`/`__`, backtick — RENDERƏ AİD işarələrdir, MƏTNƏ deyil.
+# Model verdikti vurğulayanda («you are **not** within the … window») ifadənin
+# ORTASINA iki ulduz düşür və hər regex iynəsi orada qırılır. Bu, tək case-in
+# deyil, `full.jsonl`-dakı BÜTÜN 122 regex assertion-ının qüsurudur, ona görə
+# iynələrə `\*{0,2}` yamamaq YOX, cavab mətnini uyğunlaşdırmadan ƏVVƏL
+# təmizləmək düzgün yerdir (docs/GRADER-AUDIT.md#A-28).
+#
+# NİYƏ `canonical_text()`-in İÇİNDƏ DEYİL: `canonical_text()` həm cavabı, həm
+# də İYNƏNİ normallaşdırır, `*` isə iynədə PREFİKS MARKERİDİR (`"30 gün*"` →
+# `phrase_spec` / `_cue_pattern`). Orada silsək A-06-nın morfoloji əhatəsini
+# dağıdardıq. Ona görə bu, YALNIZ cavab mətninə tətbiq olunan AYRICA addımdır.
+#
+# `_` yalnız SÖZ SƏRHƏDİNDƏ silinir (CommonMark da belə davranır): `order_id`,
+# `snake_case` toxunulmaz qalır, `_italic_` isə açılır.
+_MD_EMPHASIS = re.compile(
+    r"""
+      \*{1,3}              # *italic*, **bold**, ***hər ikisi***
+    | `+                   # `code`, ``code``
+    | (?<![^\W_])_{1,3}    # _italic_ açan: solunda hərf/rəqəm YOXDUR
+    | _{1,3}(?![^\W_])     # _italic_ bağlayan: sağında hərf/rəqəm YOXDUR
+    """,
+    re.VERBOSE | re.UNICODE,
+)
+
+
+def strip_markdown_emphasis(text: str) -> str:
+    """Vurğu/kod işarələrini çıxarır — MƏTNİ dəyişmədən.
+
+        strip_markdown_emphasis("you are **not** within the window")
+            → "you are not within the window"
+        strip_markdown_emphasis("`returns-and-refunds.md` §2.1")
+            → "returns-and-refunds.md §2.1"
+        strip_markdown_emphasis("field order_id is unchanged")
+            → "field order_id is unchanged"   # söz içi `_` QALIR
+
+    Sətir uzunluğu qısalır, yəni `[^.]{0,30}` kimi məsafə məhdudiyyətləri
+    yalnız GENİŞLƏNİR — `must_not_match` iynələri isə buna görə DAHA ciddi
+    olur (vurğulanmış bayat dəyər artıq gizlənə bilmir). Hər iki istiqamət
+    `agentproof/tests/test_grader_markdown_emphasis.py`-də bağlanıb.
+    """
+    return _MD_EMPHASIS.sub("", text or "")
 
 
 # ------------------------------------------------------------------ vahidlər

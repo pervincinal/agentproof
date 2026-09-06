@@ -10,6 +10,7 @@ from agentproof.graders.canonical import (
     contains_phrase,
     numeric_spec,
     phrase_spec,
+    strip_markdown_emphasis,
 )
 from agentproof.types import AgentResponse, Case, GradeResult
 
@@ -126,12 +127,29 @@ class ContainsNone:
 
 @grader
 class RegexMatch:
-    """`expect.pattern` cavabda tapılmalıdır (`re.search`).
+    r"""`expect.pattern` cavabda tapılmalıdır (`re.search`).
 
     expect:
       pattern: str            — məcburi
       ignore_case: bool       — default True
       must_not_match: bool    — default False (tərsinə çevirir)
+
+    Uyğunlaşdırmadan ƏVVƏL cavabdan markdown vurğusu çıxarılır
+    (`canonical.strip_markdown_emphasis`).
+
+    Niyə (docs/GRADER-AUDIT.md#A-28): AP-017 canlı qaçışında agent DÜZGÜN rədd
+    verdikti verdi, amma onu vurğuladı — «you are **not** within the … window».
+    `(?:no longer|not) within[^.]{0,30}window` alternativi `not` ilə `within`
+    arasındakı `**` üzündən tutmadı və case «sındı» göstərdi — **yalançı
+    QIRMIZI**. Qüsur bu case-in deyil, QRADER QATININ qüsurudur: eyni risk
+    `full.jsonl`-dakı hər regex assertion-ına aiddir, çünki model istənilən
+    verdikt sözünü qalın yaza bilər. Ona görə 122 iynəyə `\*{0,2}` yamamaq
+    əvəzinə mətn bir dəfə, PAYLAŞILAN yerdə təmizlənir.
+
+    `must_not_match` iynələri üçün bu, ZƏİFLƏTMƏ yox, CİDDİLƏŞDİRMƏDİR:
+    13-cü gün QƏBUL əkizində (`bva-b-01-…-13`, `REJECT` invert) səhvən
+    verilmiş və vurğulanmış rədd («this order is **not** eligible») köhnə
+    kodda iynədən yayınırdı — **yalançı YAŞIL**. İndi tutulur.
     """
 
     name = "regex_match"
@@ -141,7 +159,8 @@ class RegexMatch:
         pattern = str(require(case, "pattern", self.name))
         flags = re.IGNORECASE if case.expect.get("ignore_case", True) else 0
         invert = bool(case.expect.get("must_not_match", False))
-        match = re.search(pattern, response.text, flags)
+        haystack = strip_markdown_emphasis(response.text)
+        match = re.search(pattern, haystack, flags)
         matched = match is not None
         passed = (not matched) if invert else matched
         return GradeResult(
@@ -156,7 +175,10 @@ class RegexMatch:
             evidence={
                 "pattern": pattern,
                 "invert": invert,
+                # `match` TƏMİZLƏNMİŞ mətndən gəlir — `answer_excerpt` isə XAM
+                # qalır ki, triage edən adam agentin əsl yazdığını görsün.
                 "match": match.group(0) if match else None,
+                "markdown_stripped": haystack != response.text,
                 "answer_excerpt": response.text[:400],
             },
         )

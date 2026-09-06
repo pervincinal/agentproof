@@ -23,6 +23,7 @@ from agentproof.graders.canonical import (
     extract_quantities,
     numeric_spec,
     parse_quantity,
+    strip_markdown_emphasis,
 )
 
 
@@ -283,3 +284,51 @@ def test_contains_number_does_not_leak_out_of_dates_ids_or_larger_numbers(text):
 def test_contains_number_distinguishes_zero_and_empty_text():
     assert contains_number("The fee is 0 AZN for Aurora Plus members.", "0")
     assert not contains_number("", "14")
+
+
+# --------------------------------------------------- markdown vurğusu (A-28)
+@pytest.mark.parametrize("text,expected", [
+    ("you are **not** within the window", "you are not within the window"),
+    ("that window has **already** closed", "that window has already closed"),
+    ("*italic* and __bold__ and ***both***", "italic and bold and both"),
+    ("see `returns-and-refunds.md` §2.1", "see returns-and-refunds.md §2.1"),
+    ("``double backtick``", "double backtick"),
+    ("Qəbul **edilmir**.", "Qəbul edilmir."),
+    ("Возврат не **принимается**.", "Возврат не принимается."),
+    ("", ""),
+])
+def test_strip_markdown_emphasis_removes_render_markers(text, expected):
+    assert strip_markdown_emphasis(text) == expected
+
+
+@pytest.mark.parametrize("text", [
+    "the field order_id is unchanged",
+    "a snake_case_name stays whole",
+    "call get_return_window(order_id) first",
+    "no markers here at all",
+])
+def test_strip_markdown_emphasis_leaves_intra_word_underscores(text):
+    """CommonMark da söz İÇİNDƏ `_`-ı vurğu saymır — `order_id` toxunulmazdır."""
+    assert strip_markdown_emphasis(text) == text
+
+
+def test_asterisk_is_removed_even_where_it_is_not_emphasis():
+    """Bilinən və QƏBUL EDİLMİŞ güzəşt.
+
+    Prosada `*` praktiki olaraq yalnız vurğu markeri kimi görünür, ona görə
+    onu şərtsiz silirik. Vurma işarəsi kimi işlənən nadir halda mətn bir
+    boşluq itirir — bu, heç bir iynənin qərarını dəyişmir, çünki iynələr
+    `*`-a istinad etmir (`full.jsonl`-da belə pattern YOXDUR).
+    """
+    assert strip_markdown_emphasis("5 * 3 = 15") == "5  3 = 15"
+
+
+def test_strip_markdown_emphasis_is_not_applied_inside_canonical_text():
+    """`canonical_text()` `*`-a TOXUNMAMALIDIR — orada `*` iynə markeridir.
+
+    A-06 morfoloji əhatəsi buna dayanır: `"30 gün*"` PREFİKS iynəsidir.
+    `canonical_text()` içində silsək iynə `"30 gün"`-ə çevrilər və
+    `gündür` tutulmazdı.
+    """
+    assert canonical_text("30 gün*") == "30 gün*"
+    assert canonical_text("**bold**") == "**bold**"

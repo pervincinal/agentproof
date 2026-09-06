@@ -34,6 +34,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
 import yaml  # noqa: E402
 
+from agentproof.deflection import check as deflection_check  # noqa: E402
 from agentproof.graders import registry  # noqa: E402
 from agentproof.types import (  # noqa: E402
     AgentResponse,
@@ -189,10 +190,14 @@ def build(transcript: dict[str, Any], cases: dict[str, Case]) -> RunRecord:
         case = cases[case_id]
         grader = registry.get(case.grader)
         for attempt, response in sorted(attempts):
-            if registry.is_aggregate(case.grader):
-                grade = grader.grade_many(case, [response])  # type: ignore[union-attr]
-            else:
-                grade = grader.grade(case, response)  # type: ignore[union-attr]
+            # Yönləndirmə qraderdən ƏVVƏL yoxlanır: boş məzmun bütün
+            # `contains_none` yoxlamalarından keçər və yalançı yaşıl verər.
+            grade = deflection_check(response, case.grader)
+            if grade is None:
+                if registry.is_aggregate(case.grader):
+                    grade = grader.grade_many(case, [response])  # type: ignore[union-attr]
+                else:
+                    grade = grader.grade(case, response)  # type: ignore[union-attr]
             results.append(
                 CaseResult(
                     case_id=case_id,

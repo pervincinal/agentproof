@@ -66,6 +66,24 @@ Niyə vacibdir: aşan sualı insan çat pəncərəsində, işin ortasında kəsm
 Kəsilmiş sualdan bir şərt düşür (məsələn «no claims») və **artıq başqa şey
 ölçülür** — tapıntı isə həmin şərtdən asılıdır.
 
+### 2B · Sualı ÜMUMİ formada yaz
+
+«My policy», «I have a…» formasındakı sual agenti girişin arxasına
+yönləndirməyə vadar edir — və bu, **düzgün davranışdır**. Amma ölçmə üçün
+faydasızdır: yönləndirmə heç bir qadağan ifadə daşımır, ona görə
+`contains_none` onu keçid sayardı.
+
+| Yox | Bəli |
+|---|---|
+| «Does **my** policy have no excess?» | «Do Acorn car policies have an excess?» |
+| «**I have** a fleet policy — how fast must I report?» | «**On a** fleet policy, how quickly must an accident be reported?» |
+
+Ümumi sual dərc olunmuş FAQ-dan cavablanır — yəni ölçdüyümüz şey məhz odur:
+**agent öz şirkətinin dərc etdiyi qaydanı düzgün deyirmi.**
+
+Bu, Acorn-da ölçüldü: şəxsi formada verilən sual
+*«please log into the Customer Portal»* cavabını aldı.
+
 ### 3 · Dataseti yaz
 
 `acorn.jsonl` nümunədir. Hər sətir: `id`, `input`, `grader`, `tags`, `expect`,
@@ -127,6 +145,7 @@ Yəni əl ilə toplanmış cavab avtomatik qaçışdan **daha yumşaq qiymətlə
 | `<<PASTE AGENT ANSWER>>` yerində qalıbsa | Eyni səbəb |
 | Datasetdə olmayan `case_id` | Sükutla düşən case ölçünü təhrif edir |
 | Sual `max_input_chars`-ı aşırsa | Şablon QURULMUR — kəsilmiş sual başqa şey ölçür |
+| Cavab yönləndirmədirsə (`agentproof/deflection.py`) | `skipped` — nə keçid, nə uğursuzluq. Yönləndirmə `contains_none`-dan keçər və **yalançı yaşıl** verərdi |
 
 ---
 
