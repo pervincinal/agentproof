@@ -49,10 +49,27 @@ axtar:
 yoxlayıcını aldadır: cavabda rəqəm var, yəni «keçdi» görünür, halbuki səhv
 qaydaya söykənib. Bu, `LIM-I02` və `F-3` ilə eyni sinifdir.
 
+### 2A · Çat pəncərəsinin simvol həddini ölç
+
+Çatı aç və uzun bir mesaj yaz — çoxunda hədd var. Acorn-da **140 simvoldur**.
+
+Həddi datasetin başına maşın oxunan direktivlə yaz:
+
+```
+//! max_input_chars = 140
+```
+
+Bundan sonra həm test, həm şablon generatoru hər sualı ona qarşı yoxlayır və
+aşan olsa **şablonu ümumiyyətlə qurmur**.
+
+Niyə vacibdir: aşan sualı insan çat pəncərəsində, işin ortasında kəsməli olur.
+Kəsilmiş sualdan bir şərt düşür (məsələn «no claims») və **artıq başqa şey
+ölçülür** — tapıntı isə həmin şərtdən asılıdır.
+
 ### 3 · Dataseti yaz
 
 `acorn.jsonl` nümunədir. Hər sətir: `id`, `input`, `grader`, `tags`, `expect`,
-`severity`, `note`.
+`severity`, `note`. Başında `//! max_input_chars = N` direktivi.
 
 `note` sahəsi **məcburidir** — doğru cavabın niyə doğru olduğunu və mənbəni
 yazır. Onsuz sən bir ay sonra öz datasetini oxuya bilməyəcəksən.
@@ -109,6 +126,7 @@ Yəni əl ilə toplanmış cavab avtomatik qaçışdan **daha yumşaq qiymətlə
 | Boş `text` | Doldurulmamış şablon bütün inkar assertion-larından keçər və **uydurma tapıntı** yaradardı |
 | `<<PASTE AGENT ANSWER>>` yerində qalıbsa | Eyni səbəb |
 | Datasetdə olmayan `case_id` | Sükutla düşən case ölçünü təhrif edir |
+| Sual `max_input_chars`-ı aşırsa | Şablon QURULMUR — kəsilmiş sual başqa şey ölçür |
 
 ---
 

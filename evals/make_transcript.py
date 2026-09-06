@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+import re
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
@@ -25,14 +26,26 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 from evals.import_manual import PLACEHOLDER  # noqa: E402
 
 
-def load(dataset: pathlib.Path) -> list[dict]:
-    out = []
+#: Datasetin başındakı maşın oxunan direktiv: `//! max_input_chars = 140`
+_DIRECTIVE = re.compile(r"^//!\s*max_input_chars\s*=\s*(\d+)\s*$")
+
+
+def load(dataset: pathlib.Path) -> tuple[list[dict], int | None]:
+    """Case-ləri və (varsa) mesaj simvol həddini qaytarır."""
+    out: list[dict] = []
+    limit: int | None = None
     for line in dataset.read_text().splitlines():
         line = line.strip()
-        if not line or line.startswith("//"):
+        if not line:
+            continue
+        m = _DIRECTIVE.match(line)
+        if m:
+            limit = int(m.group(1))
+            continue
+        if line.startswith("//"):
             continue
         out.append(json.loads(line))
-    return out
+    return out, limit
 
 
 def render(cases: list[dict], target: str, url: str, repeat: int) -> str:
@@ -83,9 +96,20 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", required=True)
     args = p.parse_args(argv)
 
-    cases = load(pathlib.Path(args.dataset))
+    cases, limit = load(pathlib.Path(args.dataset))
     if not cases:
         raise SystemExit("datasetdə case yoxdur")
+
+    # Çat pəncərəsinin simvol həddi. Aşan sual pəncərəyə SIĞMIR — insan onu
+    # işin ortasında kəsməli olur və kəsilmiş sual başqa şey ölçür.
+    if limit:
+        over = [(c["id"], len(c["input"])) for c in cases if len(c["input"]) > limit]
+        if over:
+            raise SystemExit(
+                f"⛔ {len(over)} sual {limit} simvol həddini aşır:\n"
+                + "\n".join(f"  {n} simvol — {cid}" for cid, n in over)
+                + "\n  Şablon qurulmadı. Sualları qısalt, sonra yenidən qaç."
+            )
     text = render(cases, args.target, args.url, args.repeat)
     out = pathlib.Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -94,7 +118,10 @@ def main(argv: list[str] | None = None) -> int:
     total = len(cases) * args.repeat
     print(f"{out}")
     print(f"  {len(cases)} sual × {args.repeat} təkrar = {total} mesaj")
-    print(f"  dərc olunmuş hədd: 30 — {'✅ altında' if total <= 30 else '⛔ AŞIR'}")
+    print(f"  dərc olunmuş sorğu həddi: 30 — {'✅ altında' if total <= 30 else '⛔ AŞIR'}")
+    if limit:
+        longest = max(len(c["input"]) for c in cases)
+        print(f"  mesaj simvol həddi: {limit} — ən uzun sual {longest} ✅")
     return 0
 
 
