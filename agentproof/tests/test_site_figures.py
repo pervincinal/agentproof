@@ -80,8 +80,8 @@ def test_dataset_size_is_not_overstated() -> None:
 
 
 def test_limitation_count_matches_the_document() -> None:
-    assert "43" in dict(_figures())
-    assert _limitations() == 43
+    assert "44" in dict(_figures())
+    assert _limitations() == 44
 
 
 def test_finding_count_matches_the_register() -> None:
@@ -106,7 +106,7 @@ def test_judge_calibration_figures_match_the_report() -> None:
 
 def test_every_published_figure_is_guarded() -> None:
     """Mühafizəsiz rəqəm dərc oluna bilməz."""
-    guarded = {"185", "29 → 5", "96.7%", "43", "25", "4"}
+    guarded = {"185", "29 → 5", "96.7%", "44", "25", "4"}
     published = {v for v, _ in _figures()}
     unguarded = published - guarded
     assert not unguarded, f"bu rəqəmləri heç nə yoxlamır: {sorted(unguarded)}"

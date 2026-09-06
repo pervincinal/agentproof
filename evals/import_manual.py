@@ -115,6 +115,17 @@ def read_transcript(path: pathlib.Path) -> dict[str, Any]:
     return yaml.safe_load(raw)
 
 
+def dataset_signature(dataset: pathlib.Path) -> str:
+    """Dataset FAYLININ imzası — seçimdən ASILI DEYİL.
+
+    Bunsuz iki əl ilə qaçış (məsələn 8 case-lik birinci sessiya və 2 case-lik
+    təkrar) fərqli `dataset_hash` daşıyır və `merge_runs.py` onları
+    birləşdirməkdən İMTİNA edir — düzgün olaraq, çünki eyni id başqa datasetdə
+    başqa case ola bilər. Fayl imzası bu sərhədi aradan qaldırır.
+    """
+    return hashlib.sha256(dataset.read_bytes()).hexdigest()[:16]
+
+
 def load_cases(dataset: pathlib.Path) -> dict[str, Case]:
     cases: dict[str, Case] = {}
     for line in dataset.read_text().splitlines():
@@ -142,7 +153,8 @@ def _reject_invented_values(entry: dict[str, Any], where: str) -> None:
         )
 
 
-def build(transcript: dict[str, Any], cases: dict[str, Case]) -> RunRecord:
+def build(transcript: dict[str, Any], cases: dict[str, Case],
+          full_dataset_hash: str = "") -> RunRecord:
     name = transcript.get("target")
     if not name:
         raise SystemExit("transkriptdə `target` yoxdur (şirkət adı)")
@@ -222,6 +234,7 @@ def build(transcript: dict[str, Any], cases: dict[str, Case]) -> RunRecord:
         target_version=transcript.get("target_version", ""),
         model="",                            # naməlum — vidcet modeli demir
         dataset_hash=digest,
+        full_dataset_hash=full_dataset_hash,
         started_at=str(transcript.get("tested_at", "")),
         results=results,
         totals={
@@ -253,8 +266,9 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     transcript = read_transcript(pathlib.Path(args.transcript))
-    cases = load_cases(pathlib.Path(args.dataset))
-    record = build(transcript, cases)
+    dataset = pathlib.Path(args.dataset)
+    cases = load_cases(dataset)
+    record = build(transcript, cases, dataset_signature(dataset))
 
     out = pathlib.Path(args.out) if args.out else pathlib.Path("reports") / record.run_id
     out.mkdir(parents=True, exist_ok=True)

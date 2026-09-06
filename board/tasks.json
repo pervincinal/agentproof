@@ -3293,7 +3293,7 @@
     "artifact:c44e6a50 (satis strategiyasi) · Faza 1 · hedef siyahisi"
    ],
    "created": "2026-09-02T12:51:12",
-   "updated": "2026-09-06T00:49:40",
+   "updated": "2026-09-06T00:55:18",
    "history": [
     {
      "at": "2026-09-02T12:51:12",
@@ -3324,6 +3324,12 @@
      "actor": "po",
      "action": "comment",
      "detail": ""
+    },
+    {
+     "at": "2026-09-06T00:55:18",
+     "actor": "po",
+     "action": "comment",
+     "detail": ""
     }
    ],
    "comments": [
@@ -3336,6 +3342,11 @@
      "at": "2026-09-06T00:49:40",
      "actor": "po",
      "text": "v2 bitdi: docs/outreach/targets.md. 5 TESDIQLENMIS (girissiz cat DOM-da gorulub: Acorn Insurance, A1 Slovenija, Simplyhealth, Zego, SpareBank 1 Ostlandet), 3 aydinlasdirilmali (Plum, Pockit-Cloudflare, Yonder), 5 satici menbeyinden yoxlanmamis, 3 ses agenti EHATEDEN KENAR. Hec bir agente mesaj yazilmadi — yalniz sehife yuklenib DOM-a baxilib."
+    },
+    {
+     "at": "2026-09-06T00:55:18",
+     "actor": "po",
+     "text": "v2 genislendirildi: 8 TESDIQLENMIS (Acorn Insurance, Vipps MobilePay, A1 Slovenija, Simplyhealth, Zego, The AA, SpareBank 1 Ostlandet, Plum). Olcme duzelisi: ilk kecidde ANA SEHIFEYE baxmisdim ve uc sirkete yanlis 'cat yoxdur' yazmisdim — destek cati yardim merkezinde yuklenir. Tovsiye olunan birinci on-audit: Acorn Insurance (UK, sigorta, en kicik teskilat, cat ana sehifede)."
     }
    ]
   },

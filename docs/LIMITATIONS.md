@@ -108,6 +108,37 @@ qarışdırmaq — grader səhvini hədəfin səhvi kimi göstərmək — uydurm
   `evals/calibration/report.json` ·
   `reports/judge-01/FPDP6Ucx9PD24VBWWe7WCw.json` · `FINDINGS.md` §7.
 
+### LIM-I12 · «Eyni səbəb» qrader səbəbidir, davranış deyil — **↑ ŞİŞİRDİR**
+
+- **Nə ölçülmür.** `evals/reproduce.py` cəhdləri **qraderin `reason` sətrinə**
+  görə qruplaşdırır və 3/3 eyni səbəb → `stable-fail` yazır. Amma iki cavab
+  eyni qrader səbəbi ilə sınıb **fərqli davranış** göstərə bilər.
+- **Təsdiqlənmiş nümunə (Acorn ön-auditi, 06.09.2026).**
+  `acorn-bva-50days-edge-50` üç cəhddə də `contains_all: [55, 34]`
+  yoxlamasından sınıb — qrader səbəbi eyni. Davranış isə fərqli idi:
+
+  | Cəhd | Nə etdi |
+  |---|---|
+  | 1 | «31 günlük cooling-off» iddiası **var** |
+  | 2 | cooling-off ümumiyyətlə **adlanmır** |
+  | 3 | «cooling-off yalnız 31 gün+ polislərə aiddir» — **başqa formada səhv** |
+
+  Qapı bunu `stable-fail` saydı və **doğru saydı** — çünki 3/3 olan davranış
+  var: *dərc olunmuş haqq heç vaxt deyilmir*. Amma daha cəlbedici iddia
+  (*«cooling-off müddətini səhv deyir»*) yalnız **2/3**-dür.
+- **İstiqamət.** Şişirdir: səthi oxunuşda `stable-fail` etiketi hesabatçını
+  **ən maraqlı** davranışı 3/3 sanmağa aparır. Aurora auditində bu, F-3
+  mexanizminin səhv yazılması ilə eyni tələdir.
+- **Azaltma (indi tətbiq olunur).** `stable-fail` səbətinə düşən hər case-in
+  **hər cəhdinin mətni əl ilə oxunur** və hesabata düşən cümlə **davranış
+  səviyyəsində** 3/3 olduğu təsdiqlənəndən sonra yazılır. Təkrarlanmayan
+  davranış §«Kənarda qalanlar»a keçir, nisbəti ilə birlikdə.
+- **Bağlanmır, çünki.** Davranış oxşarlığını avtomatik ölçmək semantik
+  müqayisə tələb edir — yəni ikinci bir judge qatı, o da öz kalibrasiyası ilə.
+  Hazırda insan oxuması daha ucuz və daha dürüstdür.
+- **Mənbə.** `preaudit/acorn/TRIAGE-merged.md` §O-1 ·
+  `preaudit/acorn/merged/merged.json`.
+
 ### LIM-I04 · Judge-in mövqe (position) yanlılığı ölçülmədi — **⊘ TƏTBİQ OLUNMUR**
 
 - **Nə ölçülmədi.** Cüt müqayisədə cavabların yerini dəyişib verdikt sabitliyini
