@@ -148,6 +148,16 @@ qalmamalıdır**; LIM-I03 üç ay məhz buna görə səhv göründü.
 ## 5. Göndərmə
 
 Bir səhifəlik: `docs/templates/PREAUDIT-ONEPAGER.md` (AP-057).
+
+**Göndərişdən əvvəl məcburi yoxlama:**
+
+```bash
+python3 evals/verify_quotes.py preaudit/<ad>/ONEPAGER-DRAFT.md \
+  preaudit/<ad>/merged/merged.json
+```
+
+Sənəddəki hər agent sitatı artefaktda **hərfbəhərf** olmalıdır. Kəsilmə `…`
+ilə göstərilə bilər, amma parçalar eyni cavabda və **eyni sırada** olmalıdır.
 Məktub şablonu və izləmə faylı: AP-058.
 
 **Tapıntı tapılmayıbsa GÖNDƏRMƏ.** Tapıntısız məktub — sadəcə soyuq

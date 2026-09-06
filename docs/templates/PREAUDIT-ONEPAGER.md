@@ -10,6 +10,12 @@
   nə də saxlanmış hissə.
 
   DOLDURULMAYAN SAHƏ SİLİNMİR — «ölçülmədi» yazılır.
+
+  GÖNDƏRİŞDƏN ƏVVƏL MƏCBURİ:
+      python3 evals/verify_quotes.py <bu fayl> <merged.json>
+  Sənəddəki hər agent sitatı artefaktda hərfbəhərf olmalıdır. Sitatı
+  «səliqələşdirmək» — bir söz əlavə etmək, tire dəyişmək — hesabatın
+  qalanının da etibarını itirir. Skript bunu tutur.
 -->
 
 # {{Şirkət}} — {{məhsul}} üzərində ön-audit
