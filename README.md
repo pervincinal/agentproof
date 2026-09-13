@@ -12,10 +12,10 @@ engineer can lift whatever is useful under Apache 2.0.
 > **Who this is for.** If you sell an AI agent into banking, insurance,
 > healthcare, telecoms or legal, your customers' procurement now asks a
 > question SOC 2 does not answer: does the agent actually answer correctly?
-> Fixed price, 14 days — **[agentproof-site.onrender.com](https://agentproof-site.onrender.com)**
-> · [sample report](https://agentproof-site.onrender.com/sample-report)
-> · [rules of engagement](https://agentproof-site.onrender.com/rules)
-> · [independence](https://agentproof-site.onrender.com/independence)
+> Fixed price, 14 days — **[agentproof.tech](https://agentproof.tech)**
+> · [sample report](https://agentproof.tech/sample-report)
+> · [rules of engagement](https://agentproof.tech/rules)
+> · [independence](https://agentproof.tech/independence)
 
 ---
 
@@ -44,8 +44,8 @@ and checked whether the *grader* was right.
 **What we did not measure:** [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md)
 
 We also audit other people's agents for a fixed price:
-**[agentproof-site.onrender.com](https://agentproof-site.onrender.com)** ·
-**[Rules of engagement](https://agentproof-site.onrender.com/rules)** — the
+**[agentproof.tech](https://agentproof.tech)** ·
+**[Rules of engagement](https://agentproof.tech/rules)** — the
 seven constraints we work under when we test a public demo unasked.
 
 ## Why the numbers are shaped like that

@@ -1,7 +1,8 @@
 # Render Blueprint — AgentProof sayti
 #
 # Render Dashboard -> New -> Blueprint -> bu repo-nu sec -> Apply.
-# Deploy-dan sonra unvan: https://agentproof-site.onrender.com
+# Ünvan: https://agentproof.tech — Render ünvanı (agentproof-site.onrender.com)
+# ehtiyat kimi işləməyə davam edir, amma heç yerdə paylaşılmır.
 #
 # BU BLUEPRINT TAM MUSTEQILDIR: bir statik servis, baza yox, env deyiseni yox,
 # pul yox. Basqa layihelerin (pomodoro, performai) hec bir resursuna toxunmur.
@@ -75,6 +76,9 @@ services:
           base-uri 'self';
           form-action 'none'
 
-    # domains:
-    #   - agentproof.io
-    #   - www.agentproof.io
+    # Öz domen — Namecheap-də alınıb 13.09.2026. Render TLS sertifikatını
+    # özü verir və www ↔ kök arasında yönləndirməni özü edir. Domen yalnız
+    # DNS yazıları qurulandan sonra təsdiqlənir.
+    domains:
+      - agentproof.tech
+      - www.agentproof.tech

@@ -22,7 +22,7 @@
 
 | | |
 |---|---|
-| **Kim etdi** | AgentProof — müstəqil audit · agentproof-site.onrender.com |
+| **Kim etdi** | AgentProof — müstəqil audit · agentproof.tech |
 | **Nə vaxt** | {{tarix}} |
 | **Nə test olundu** | {{açıq demo URL}} |
 | **Neçə sual** | {{n}} · hər namizəd {{k}} dəfə təkrarlandı |
@@ -49,7 +49,7 @@ arası fasilə ilə. Autentifikasiyanın arxasına keçmədik, hesab yaratmadıq
 real şəxsi məlumat daxil etmədik və başqa istifadəçinin datasına çıxmağa
 cəhd etmədik.
 
-Bütün qaydalar dərc olunub: **agentproof-site.onrender.com/rules**
+Bütün qaydalar dərc olunub: **agentproof.tech/rules**
 Sorğu həddi sənəddə deyil, kodda saxlanılır — büdcə bitəndə qaçış dayanır.
 
 **Test etmədiyimiz istəyirsinizsə**, domeninizi yazın; dayanırıq, topladığımızı
@@ -137,7 +137,7 @@ deyilsə bunu deyəcəyəm — quraşdırma işi görmürük, ona görə sizi on
 inandırmaqda marağımız yoxdur.
 
 Tam audit: sabit qiymət, 14 gün, sizin korpusunuz üzərində.
-**agentproof-site.onrender.com**
+**agentproof.tech**
 
 ---
 
