@@ -44,7 +44,11 @@ def _load(path: pathlib.Path) -> tuple[list[dict], int | None]:
 
 
 def test_there_is_at_least_one_preaudit_dataset() -> None:
-    assert DATASETS, "preaudit/ boşdur — bu test mənasız keçərdi"
+    # Real şirkət datasetləri repo-dan kənardadır (biznes materialı,
+    # ~/agentproof-private). Onlar mövcuddursa yoxlanır; yoxdursa bu test
+    # skip olur — çünki metod açıq, hədəf işi gizlidir.
+    if not DATASETS:
+        pytest.skip("preaudit/ datasetləri repo-da yoxdur (biznes — kənarda saxlanılır)")
 
 
 @pytest.mark.parametrize("path", DATASETS, ids=lambda p: p.stem)

@@ -20,3 +20,14 @@ reports/full-run-02/*
 .pytest_cache/
 
 target/plugins/*.difypkg
+
+# --- Biznes materialları: repo-dan KƏNAR ---
+# Metod və kod açıqdır; müştəri işi, hədəf siyahısı və satış şablonları deyil.
+# Yerli surət: ~/agentproof-private
+/preaudit/
+/docs/outreach/
+/evals/datasets/preaudit/*-transcript*.txt
+/evals/datasets/preaudit/*-attempt*.txt
+# Real şirkət datasetləri (ad + tapıntı = biznes). Sintetik Aurora deyil.
+/evals/datasets/preaudit/acorn*.jsonl
+/evals/datasets/preaudit/simplyhealth*.jsonl

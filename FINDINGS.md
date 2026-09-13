@@ -54,8 +54,9 @@ qayda gətirilmir. Mexanizm təhlili: `docs/ARCHITECTURE.md §5.5, §6`.
 qaçışla (2026-09-01, $2.08) çoxnövbəli deqradasiya əyrisini ölçdük; taksonomiyamızın
 C1 rejimi ICLR 2026 işinə istinadla **39% düşmə** gözlədirdi. Ölçdüyümüz 3 ailədə
 8 növbəyə qədər deqradasiya **tapılmadı**: xam rəqəmdəki 33% düşmə tamamilə öz
-pattern boşluğumuzdan gəlirdi və düzəlişdən sonra 12 saxlanmış cavabın **11-i**
-düzgündür. Gözlədiyimizi tapmadıq — və bunu §4-A-da olduğu kimi yazırıq.
+pattern boşluğumuzdan gəlirdi və iki qrader düzəlişindən (A-27, A-28) sonra
+12 saxlanmış cavabın **hamısı** düzgündür. Gözlədiyimizi tapmadıq — və bunu
+§4-A-da olduğu kimi yazırıq.
 
 > **Nə DEYİLƏ BİLMƏZ.** Bu rəqəmlər bir konfiqurasiya, bir model, bir embedder
 > və süni korpus üçün etibarlıdır. Mütləq mənada ekstrapolyasiya (“production-da
@@ -760,27 +761,44 @@ Bunu gizlətmirik — düzəldilmiş rəqəm cədvəldədir, artefakt isə oldu�
 ### 4-A.5 Əsl nəticə
 
 **Ölçülən 3 ailədə 8 növbəyə qədər deqradasiya YOXDUR.** `t01` ailəsinin
-12 saxlanmış cavabından **11-i** düzgün verdikt verdi; `c03` və `t07` ailələri
-bütün ölçülmüş nöqtələrdə keçdi. Ölçülən 33% «düşmə» **tamamilə** iynə
-boşluğundan gəlirdi.
+12 saxlanmış cavabından **11-i** düzgün verdikt verdi (A-27-dən sonra); qalan
+biri də §4-A.6-da göstərildiyi kimi iynənin qüsuru idi və A-28 ilə bağlandı,
+yəni ailə **12/12**-dir. `c03` və `t07` ailələri bütün ölçülmüş nöqtələrdə
+keçdi. Ölçülən 33% «düşmə» **tamamilə** iynə boşluğundan gəlirdi.
 
 Yalançı QIRMIZI buraxılmış tapıntı qədər zərərlidir: düzəltməsəydik, hesabata
 **olmayan bir C1 sınması** yazardıq — üstəlik ən çox gözlədiyimiz yerdə, yəni
 təsdiq yanlılığının ən güclü olduğu nöqtədə.
 
-### 4-A.6 Qalan 1/12 də modelin deyil — və bu boşluq HƏLƏ AÇIQDIR
+### 4-A.6 Qalan 1/12 də modelin deyil — BAĞLANDI (A-28)
 
-t3-dəki yeganə uğursuzluq da agentin deyil, iynənindir: agent **markdown
+t3-dəki yeganə uğursuzluq da agentin deyil, iynənin idi: agent **markdown
 vurğusunu verdikt ifadəsinin içinə** qoydu —
 
 > «So actually you are **not** within the standard return window — it closed on
 > 2026-08-26.»
 
-`(?:no longer|not) within[^.]{0,30}window` pattern-i tutmur, çünki `not` ilə
-`within` arasına `**` düşüb. Bu, **tək case-in problemi deyil**: bütün regex
-iynələrinə aid kəsişən qüsurdur və paylaşılan qrader qatında həll olunmalıdır
-(uyğunlaşdırmadan əvvəl markdown normallaşdırılmalıdır), case yamağı ilə yox.
-**Açıq bənd; rəqəmi öz xeyrimizə düzəltmirik: 11/12 yazılır.**
+`(?:no longer|not) within[^.]{0,30}window` pattern-i tutmurdu, çünki `not` ilə
+`within` arasına `**` düşüb. Bu, **tək case-in problemi deyil**: `full.jsonl`-da
+122 regex assertion var və model istənilən verdikt sözünü qalın yaza bilər.
+Ona görə case yamağı ilə yox, paylaşılan **qrader qatında** bağlandı —
+`canonical.strip_markdown_emphasis()` cavabı uyğunlaşdırmadan ƏVVƏL təmizləyir
+(`RegexMatch`, `NoLeak`). **Heç bir iynə dəyişmədi.**
+
+Saxlanmış 18 canlı cavab OFFLINE yenidən qiymətləndirildi:
+
+| ailə | A-27-dən sonra | A-28-dən sonra |
+|---|---|---|
+| `t01-standard-window` | **11/12** | **12/12** |
+| `c03-plus-vs-promotional` | 4/4 | 4/4 |
+| `t07-warranty-on-delivery-version` | 2/2 | 2/2 |
+| **cəmi** | **17/18** | **18/18** |
+
+Yəni yalnız qüsurun göstərildiyi cavab tərpəndi — normallaşdırma balı
+şişirtmədi. **Hər iki rəqəm dərc olunur: 17/18 və 18/18.** Qəbul tərəfi ayrıca
+bağlandı (6 real QƏBUL cavabı hələ də tutulmur), `must_not_match` tərəfi isə
+əksinə CİDDİLƏŞDİ: vurğulanmış səhv rədd artıq iynədən yayına bilmir.
+Detallar və qalıq risk: `docs/GRADER-AUDIT.md#A-28`.
 
 Eyni cavabda ikinci, daha kiçik bir müşahidə var və onu da gizlətmirik: cavab
 səhv cümlə ilə başlayır («Yes — you're within the standard 14-day return
