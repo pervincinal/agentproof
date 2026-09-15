@@ -69,12 +69,53 @@ _PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
             re.IGNORECASE,
         ),
     ),
+    # --- Az\u0259rbaycanca (AZ) ---
+    # N\u0130Y\u018f VAR. birmarket \u00abMirai\u00bb agenti az\u0259rbaycanca cavab verir. Z\u0259man\u0259t
+    # sual\u0131na: \u00abBu sual\u0131n cavab\u0131n\u0131 m\u0259lumat bazas\u0131nda tapa bilm\u0259dim\u00bb \u2014 bu,
+    # y\u00f6nl\u0259ndirm\u0259dir, amma ingilis nax\u0131\u015flar tutmad\u0131 v\u0259 YALAN\u00c7I-QIRMIZI verdi
+    # (Acorn-dak\u0131 yalan\u00e7\u0131-ya\u015f\u0131l\u0131n \u0259ksi). Bir dild\u0259 iyn\u0259, ba\u015fqa dild\u0259 cavab \u2014
+    # A-01 s\u0259hvinin eynisi.
+    (
+        "cannot_help_az",
+        re.compile(
+            r"cavab(?:\u0131n\u0131)?\s+(?:m\u0259lumat\s+bazas\u0131nda\s+)?tapa\s+bilm\u0259dim"
+            r"|tapa\s+bilm\u0259dim"
+            r"|(?:k\u00f6m\u0259k|yard\u0131m)\s+ed\u0259\s+bilm\u0259r\u0259m"
+            r"|(?:bu\s+bar\u0259d\u0259\s+)?m\u0259lumat(?:\u0131m)?\s+yoxdur"
+            r"|d\u0259qiq\s+(?:cavab|m\u0259lumat)\s+ver\u0259\s+bilm\u0259r\u0259m"
+            r"|sual\u0131n\u0131z\u0131\s+daha\s+(?:\u0259trafl\u0131|d\u0259qiq)\s+ifad\u0259\s+edin",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "human_handoff_az",
+        re.compile(
+            r"operator(?:la|a)\s+(?:\u0259laq\u0259|m\u00fcraci\u0259t|dan\u0131\u015f)"
+            r"|\u00e7a\u011fr\u0131\s+m\u0259rk\u0259zi(?:n\u0259)?\s+(?:m\u00fcraci\u0259t|z\u0259ng|\u0259laq\u0259)"
+            r"|qaynar\s+x\u0259tt(?:\u0259|in\u0259)?\s*(?:m\u00fcraci\u0259t|z\u0259ng)?"
+            r"|d\u0259st\u0259k\s+xidm\u0259tin\u0259\s+(?:m\u00fcraci\u0259t|yaz\u0131n)",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "login_required_az",
+        re.compile(
+            r"(?:\u015f\u0259xsi\s+)?hesab(?:\u0131n\u0131z)?(?:a|\u0131na)\s+daxil\s+ol"
+            r"|\u00ab?M\u0259nim\s+sifari\u015fim\u00bb?\s+b\u00f6lm\u0259",
+            re.IGNORECASE,
+        ),
+    ),
 )
 
-#: Yönləndirmə + REAL məlumat bir yerdə ola bilər. Cavabda bunlardan biri
+#: Yönləndirmə + REAL məlumat bir yerdə ola bilər. Cavabda ÖLÇÜLƏ BİLƏN dəyər
 #: varsa, agent nəsə DEDİ — yönləndirmə sayılmır və normal qiymətləndirilir.
+#:
+#: «İstənilən rəqəm» DEYİL — rəqəm + VAHİD. Yoxsa «915 qaynar xəttinə müraciət
+#: edin» kimi təmiz yönləndirmə telefon nömrəsinə görə «məzmun» sayılırdı və
+#: yönləndirmə təsnifatından yayınırdı. Telefon nömrəsi qayda dəyəri deyil.
 _HAS_SUBSTANCE = re.compile(
-    r"\d"                       # istənilən rəqəm: müddət, haqq, hədd
+    r"\d[\s.,]*\s*(?:gün|ay|il|manat|₼|AZN|saat|dəqiqə|iş\s+günü|%|faiz|"
+    r"day|days|month|months|year|years|hour|hours|week|weeks|£|\$|€|min\b)"
     r"|\bno\s+excess\b"
     r"|\b(?:covered|not\s+covered|eligible|not\s+eligible)\b",
     re.IGNORECASE,

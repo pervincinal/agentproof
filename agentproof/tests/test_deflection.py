@@ -97,3 +97,38 @@ def test_word_boundaries_are_right() -> None:
     """
     assert classify("please log into the Customer Portal") == "login_required"
     assert classify("put you through to one of our advisers") == "human_handoff"
+
+
+# ---------------------------------------------------- Azərbaycanca (birmarket)
+# birmarket «Mirai» agenti azərbaycanca cavab verir. İngilis-only naxışlar
+# «tapa bilmədim»-i buraxıb YALANÇI-QIRMIZI verdi — A-01 səhvinin eynisi.
+
+@pytest.mark.parametrize("text,kind", [
+    ("Bu sualın cavabını məlumat bazasında tapa bilmədim.", "cannot_help_az"),
+    ("Zəhmət olmasa, sualınızı daha ətraflı ifadə edin.", "cannot_help_az"),
+    ("Bu barədə məlumatım yoxdur.", "cannot_help_az"),
+    ("Zəhmət olmasa operatorla əlaqə saxlayın.", "human_handoff_az"),
+    ("915 qaynar xəttinə müraciət edin.", "human_handoff_az"),
+    ("Çağrı mərkəzinə müraciət edin.", "human_handoff_az"),
+    ("Hesabınıza daxil olun.", "login_required_az"),
+])
+def test_azerbaijani_deflection(text, kind):
+    from agentproof.deflection import classify
+    assert classify(text) == kind
+
+
+@pytest.mark.parametrize("text", [
+    "Kreditin maksimal məbləği 15 000 AZN təşkil edir.",
+    "Taksit minimum 3 aydan rəsmiləşdirilə bilər.",
+    "Ekspress çatdırılma 2 saat ərzində olur.",
+    "Məhsulu 14 gün ərzində geri qaytara bilərsiniz.",
+])
+def test_azerbaijani_real_answer_is_not_deflection(text):
+    from agentproof.deflection import classify
+    assert classify(text) is None
+
+
+def test_phone_number_alone_is_not_substance():
+    """Telefon nömrəsi qayda dəyəri deyil — yönləndirməni gizlətməməlidir."""
+    from agentproof.deflection import classify
+    assert classify("915 qaynar xəttinə müraciət edin.") == "human_handoff_az"
